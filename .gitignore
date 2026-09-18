@@ -40,6 +40,10 @@ data/dip/
 # Verification artefacts
 tools/shots/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Editor and OS
 .DS_Store
 *.log
