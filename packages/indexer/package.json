@@ -1,0 +1,24 @@
+{
+  "name": "@toran/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:index": "node src/build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.3.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/build.d.ts",
+      "default": "./src/build.mjs"
+    },
+    "./bm25": {
+      "types": "./src/bm25.d.ts",
+      "default": "./src/bm25.mjs"
+    }
+  },
+  "types": "./src/build.d.ts"
+}
