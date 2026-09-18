@@ -15,7 +15,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
-    "verify": "npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest",
+    "verify": "npm run typecheck && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest",
     "verify:contrast": "node tools/contrast-check.mjs",
     "verify:render": "node tools/verify-system.mjs",
     "verify:a11y": "node tools/a11y-check.mjs",

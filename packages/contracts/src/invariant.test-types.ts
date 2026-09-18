@@ -47,18 +47,21 @@ const noPage = pageLocator({ volume: 1, observed: true });
 void noPage;
 
 // A locator cannot be an arbitrary object.
-// @ts-expect-error kind must be one of the known locator kinds
+// The directive sits on the offending property rather than the call, because
+// a formatter is free to wrap the call and @ts-expect-error only suppresses
+// the line directly beneath it.
 const bogus = citation({
   corpus: 'baws',
   workId: 'w',
   pageId: 'p',
+  // @ts-expect-error kind must be one of the known locator kinds
   locator: { kind: 'vibes' },
 });
 void bogus;
 
 // The corpus is closed.
-// @ts-expect-error not a corpus
 const badCorpus = citation({
+  // @ts-expect-error not a corpus
   corpus: 'twitter',
   workId: 'w',
   pageId: 'p',
