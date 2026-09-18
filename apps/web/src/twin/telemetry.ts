@@ -25,6 +25,9 @@ export interface TwinTelemetry {
    * bake) are excluded; they scale with the screen, not with the content.
    */
   textureBytes: number;
+  /** When the shared search engine began loading, and when it became ready. */
+  searchStarted: number | null;
+  searchReady: number | null;
   /**
    * Every frame interval recorded while the entry flight is running. The
    * rolling fps average includes start-up frames, so it cannot say whether the
@@ -55,6 +58,8 @@ export function telemetry(): TwinTelemetry {
     frame: { fps: 0, ms: 0, calls: 0, triangles: 0, geometries: 0, textures: 0 },
     entryFrames: [],
     textureBytes: 0,
+    searchStarted: null,
+    searchReady: null,
     // Device health comes from a fixture until the fleet service exists.
     statusSource: 'fixture',
   };

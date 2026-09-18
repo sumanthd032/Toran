@@ -2,6 +2,7 @@
 
 @import '../src/design/fonts.css';
 @import '../src/design/tokens.css';
+@import '../src/kiosk/carousel-fonts.css';
 
 /* Expose the semantic tokens to Tailwind utilities. */
 @theme inline {

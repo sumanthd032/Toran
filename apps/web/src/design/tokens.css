@@ -27,34 +27,6 @@
   --m-light: #e8e1d3;
   --m-brass-lit: #c89b52;
 
-  /* ---- semantic. Light is the page, the reading surface. ---- */
-  --surface: var(--m-paper);
-  --surface-raised: var(--m-vellum);
-  --surface-sunken: #e6dfd2;
-  --border: var(--m-rule);
-  --border-strong: #ab9f89;
-  --text: var(--m-ink);
-  --text-soft: var(--m-ink-soft);
-  --text-inverse: var(--m-light);
-  --accent: var(--m-brass);
-  --accent-hover: #7f5624;
-  /* Brass at 7:1 stops reading as brass, so text gets a deeper variant. */
-  --accent-text: var(--m-brass-deep);
-  --section: var(--m-sandstone);
-  --section-text: var(--m-sandstone-deep);
-  --danger: var(--m-correction);
-  --confirmed: var(--m-verdigris);
-  --focus: var(--m-brass);
-
-  /* Patina. Visitor attention accumulates as wear. Aggregate only. */
-  --patina-1: color-mix(in srgb, var(--m-brass) 8%, transparent);
-  --patina-2: color-mix(in srgb, var(--m-brass) 16%, transparent);
-  --patina-3: color-mix(in srgb, var(--m-brass) 25%, transparent);
-  --patina-4: color-mix(in srgb, var(--m-brass) 34%, transparent);
-
-  /* An unconfirmed provenance edge can never look confirmed. */
-  --unconfirmed: color-mix(in srgb, var(--m-correction) 40%, transparent);
-
   /* ---- type ---- */
   --font-read: 'Spectral', 'Noto Serif Devanagari', Georgia, serif;
   --font-ui: 'Archivo', system-ui, sans-serif;
@@ -67,7 +39,18 @@
     accessibility profile on the Sutra card and reaches 2 at 200%.
   */
   --type-scale: 1;
-  --t-ambient: calc(96px * var(--type-scale));
+  /*
+    The ambient headline has to be legible from 3 m, which is a physical
+    requirement, so it is set in physical units. ADA 703.5.5 asks for a
+    character height of 5/8 inch plus 1/8 inch per foot of viewing distance
+    beyond 6 feet: 28.1 mm at 3 m. Spectral's capitals measure 0.672 em, read
+    from the font file rather than assumed, so a 46 mm em gives a 30.9 mm
+    capital, about ten percent over the minimum so that calibration error
+    cannot push it under. --device-scale makes the millimetres real on a
+    calibrated panel. The first value here was 96px, which on the kiosk's
+    15.6 inch 1080p panel is an 11 mm capital. DECISIONS.md D-062.
+  */
+  --t-ambient: calc(46mm * var(--device-scale));
   --t-display: calc(64px * var(--type-scale));
   --t-title: calc(48px * var(--type-scale));
   --t-heading: calc(32px * var(--type-scale));
@@ -119,6 +102,41 @@
   --dur-camera: 1400ms;
 }
 
+/*
+  Semantic colours, on any element. A kiosk running inside the dark Twin sets
+  data-theme="light" on its own root and gets the reading surface there,
+  without changing the page around it.
+*/
+:root,
+[data-theme='light'] {
+  --surface: var(--m-paper);
+  --surface-raised: var(--m-vellum);
+  --surface-sunken: #e6dfd2;
+  --border: var(--m-rule);
+  --border-strong: #ab9f89;
+  --text: var(--m-ink);
+  --text-soft: var(--m-ink-soft);
+  --text-inverse: var(--m-light);
+  --accent: var(--m-brass);
+  --accent-hover: #7f5624;
+  /* Brass at 7:1 stops reading as brass, so text gets a deeper variant. */
+  --accent-text: var(--m-brass-deep);
+  --section: var(--m-sandstone);
+  --section-text: var(--m-sandstone-deep);
+  --danger: var(--m-correction);
+  --confirmed: var(--m-verdigris);
+  --focus: var(--m-brass);
+
+  /* Patina. Visitor attention accumulates as wear. Aggregate only. */
+  --patina-1: color-mix(in srgb, var(--m-brass) 8%, transparent);
+  --patina-2: color-mix(in srgb, var(--m-brass) 16%, transparent);
+  --patina-3: color-mix(in srgb, var(--m-brass) 25%, transparent);
+  --patina-4: color-mix(in srgb, var(--m-brass) 34%, transparent);
+
+  /* An unconfirmed provenance edge can never look confirmed. */
+  --unconfirmed: color-mix(in srgb, var(--m-correction) 40%, transparent);
+}
+
 /* Dark is the hall. A dim memorial interior with brass catching light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
@@ -146,7 +164,7 @@
   }
 }
 
-:root[data-theme='dark'] {
+[data-theme='dark'] {
   --surface: var(--m-hall);
   --surface-raised: var(--m-slab);
   --surface-sunken: #0d0b0a;

@@ -28,6 +28,7 @@ next-env.d.ts
 apps/web/public/index/
 apps/web/public/models/
 apps/web/public/ort/
+apps/web/public/kiosk/
 
 # Archive packages. Large, and fully reproducible from pipeline/sources.json.
 # data/README.md and data/fixity.json are kept.

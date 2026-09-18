@@ -67,9 +67,16 @@ const I18nContext = createContext<I18nValue | null>(null);
 export function I18nProvider({
   children,
   initial = DEFAULT_LANGUAGE,
+  applyToDocument = true,
 }: {
   children: ReactNode;
   initial?: string;
+  /**
+   * False for a nested provider, such as a kiosk running inside the Twin. It
+   * then leaves the document alone and its caller puts lang and dir on its
+   * own root element, so a Marathi kiosk does not switch the whole page.
+   */
+  applyToDocument?: boolean;
 }) {
   const [lang, setLangState] = useState(initial);
 
@@ -82,10 +89,11 @@ export function I18nProvider({
   // The document element carries lang and dir so CSS :lang() and the Indic
   // font stack apply, and so assistive technology announces correctly.
   useEffect(() => {
+    if (!applyToDocument) return;
     const root = document.documentElement;
     root.lang = lang;
     root.dir = dir;
-  }, [lang, dir]);
+  }, [lang, dir, applyToDocument]);
 
   const t = useCallback(
     (key: MessageKey, vars?: Vars): string => {

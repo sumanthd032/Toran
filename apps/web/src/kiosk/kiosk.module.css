@@ -1,0 +1,368 @@
+/*
+  The kiosk. Paper surface, and a layout that belongs to the body of a
+  standing visitor: the upper two thirds for the eye, the bottom third for the
+  hand. Everything below is driven by data-state, the proxemic state.
+*/
+
+.root {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-read);
+  overflow: hidden;
+}
+
+/* ---- operator status strip ---- */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-3);
+  padding: 6px var(--s-4);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-soft);
+  background: var(--surface-sunken);
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.status b {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* ---- stage: the upper two thirds ---- */
+
+.stage {
+  grid-row: 2;
+  grid-column: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity var(--dur-slow) var(--ease),
+    transform var(--dur-slow) var(--ease);
+}
+
+/*
+  Ambient: a wall label that moves. No interface at all. It spans the stage
+  and the reach zone together, because hidden controls still hold their row,
+  and sharing space with them pushed the passage up into the headline.
+*/
+.ambient {
+  grid-row: 2 / -1;
+  grid-column: 1;
+  z-index: 2;
+  background: var(--surface);
+  transition:
+    opacity var(--dur-slow) var(--ease),
+    transform var(--dur-slow) var(--ease);
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  /* The headline takes what it needs; the rest shares whatever is left and
+     never pushes the passage or the carousel off the screen. */
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--s-3) var(--s-8);
+  padding: var(--s-4) var(--s-8) var(--s-6);
+}
+
+.headline {
+  grid-column: 1 / -1;
+  align-self: start;
+  margin: 0;
+  font-size: var(--t-ambient);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.passage {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  transition: transform var(--dur-slow) var(--ease);
+  transform-origin: 100% 100%;
+}
+
+.passageText {
+  grid-area: 1 / 1;
+  align-self: end;
+  margin: 0;
+  /* Atmosphere at a distance, readable from the implicit zone. Scales with
+     the panel so a smaller screen does not push the citation off the edge. */
+  font-size: clamp(20px, min(2.4vw, 3.6vh), 42px);
+  line-height: 1.42;
+  text-wrap: pretty;
+  transition: opacity 1400ms var(--ease);
+}
+
+.passageText[data-shown='false'] {
+  opacity: 0;
+}
+
+/* A debate has many voices, so a sitting and a paragraph number do not say who
+   spoke. The name sits between the words and the citation, as in a transcript. */
+.passageSpeaker {
+  display: block;
+  margin-block-start: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+.carouselRow {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.invite {
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  color: var(--accent-text);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.carousel {
+  display: grid;
+  min-height: calc(var(--t-display) * 1.5);
+  align-items: end;
+}
+
+.carouselPhrase {
+  grid-area: 1 / 1;
+  font-size: var(--t-display);
+  line-height: 1.35;
+  color: var(--section-text);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 700ms var(--ease),
+    transform 700ms var(--ease);
+}
+
+/* Nastaliq rises and falls well beyond the other scripts' line box. */
+.carouselPhrase:lang(ur) {
+  line-height: 1.9;
+}
+
+.carouselPhrase[data-shown='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Engaged: the channel's own application. */
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-6) var(--s-2);
+  overflow: hidden;
+}
+
+.appHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  border-bottom: 2px solid var(--section);
+  padding-bottom: var(--s-2);
+}
+
+.appTitle {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.appBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- reach zone: the bottom third ---- */
+
+.reach {
+  grid-row: 3;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-6) var(--s-4);
+  border-top: var(--hairline) solid var(--border);
+  transition:
+    opacity var(--dur-slow) var(--ease),
+    transform var(--dur-slow) var(--ease);
+}
+
+.nav,
+.languages {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+/* ---- the states ---- */
+
+.root[data-state='ambient'] .app,
+.root[data-state='implicit'] .app {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.root[data-state='ambient'] .reach,
+.root[data-state='implicit'] .reach {
+  opacity: 0;
+  transform: translateY(40%);
+  pointer-events: none;
+}
+
+.root[data-state='implicit'] .passage {
+  transform: scale(1.06);
+}
+
+.root[data-state='implicit'] .invite {
+  opacity: 1;
+}
+
+.root[data-state='subtle'] .ambient,
+.root[data-state='personal'] .ambient,
+.root[data-state='decaying'] .ambient {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+  Decaying. The interface settles instead of asking whether anyone is still
+  there: content dims, the controls sink back toward the bottom edge, slowly.
+  Any touch brings it all back.
+*/
+.root[data-state='decaying'] .app {
+  opacity: 0.55;
+  transform: scale(0.985);
+  transition-duration: 1800ms;
+}
+
+.root[data-state='decaying'] .reach {
+  opacity: 0.35;
+  transform: translateY(30%);
+  transition-duration: 1800ms;
+}
+
+/* ---- channel content ---- */
+
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-width: 44ch;
+  padding-top: var(--s-4);
+}
+
+.about {
+  margin: 0;
+  font-size: var(--t-heading);
+  line-height: 1.4;
+}
+
+.pendingNote {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.quiet {
+  color: var(--text-soft);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+}
+
+.reading {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30ch), 1fr));
+  align-content: start;
+  gap: var(--s-2);
+  overscroll-behavior: contain;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.hitText {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.speaker {
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+.suggest {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.suggestRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.searchBar {
+  display: flex;
+  gap: var(--s-2);
+  align-items: flex-end;
+}
+
+.searchField {
+  flex: 1;
+}

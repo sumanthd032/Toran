@@ -27,6 +27,7 @@
     "verify:search": "node tools/benchmark-search.mjs",
     "verify:twin": "node tools/verify-twin.mjs",
     "shoot:twin": "node tools/shoot-twin.mjs",
+    "build:ambient": "node tools/build-ambient.mjs",
     "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts"
   },
   "devDependencies": {
