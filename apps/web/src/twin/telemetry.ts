@@ -1,0 +1,67 @@
+/**
+ * Timing and render counters, exposed on window for the verification script
+ * and the on-screen performance overlay. Measured, not asserted.
+ */
+
+export interface TwinTelemetry {
+  navigationStart: number;
+  firstFrame: number | null;
+  entryStart: number | null;
+  entryEnd: number | null;
+  tier: string;
+  renderer: string;
+  texturesMs: number | null;
+  frame: {
+    fps: number;
+    ms: number;
+    calls: number;
+    triangles: number;
+    geometries: number;
+    textures: number;
+  };
+  /**
+   * Bytes of sampled texture data in the scene: width x height x 4, plus a
+   * third for mipmaps. Render targets (bloom, the reflector, the environment
+   * bake) are excluded; they scale with the screen, not with the content.
+   */
+  textureBytes: number;
+  /**
+   * Every frame interval recorded while the entry flight is running. The
+   * rolling fps average includes start-up frames, so it cannot say whether the
+   * flight itself stutters; this can.
+   */
+  entryFrames: number[];
+  statusSource: 'fixture' | 'fleet';
+}
+
+declare global {
+  interface Window {
+    __toranTwin?: TwinTelemetry;
+  }
+}
+
+export function telemetry(): TwinTelemetry {
+  if (typeof window === 'undefined') {
+    throw new Error('telemetry is browser only');
+  }
+  window.__toranTwin ??= {
+    navigationStart: performance.timeOrigin,
+    firstFrame: null,
+    entryStart: null,
+    entryEnd: null,
+    tier: 'unknown',
+    renderer: 'unknown',
+    texturesMs: null,
+    frame: { fps: 0, ms: 0, calls: 0, triangles: 0, geometries: 0, textures: 0 },
+    entryFrames: [],
+    textureBytes: 0,
+    // Device health comes from a fixture until the fleet service exists.
+    statusSource: 'fixture',
+  };
+  return window.__toranTwin;
+}
+
+export function recordTiming(key: 'firstFrame' | 'entryStart' | 'entryEnd'): void {
+  if (typeof window === 'undefined') return;
+  telemetry()[key] = performance.now();
+}
