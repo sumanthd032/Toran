@@ -13,7 +13,7 @@ import { useTwinState } from './state';
 
 export function DeviceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
-  const { selected, select } = useTwinState();
+  const { selected, openDevice } = useTwinState();
   const health = fixtureHealth();
   const ordered = [...DEVICES].sort(
     (a, b) => CHANNEL_ORDER.indexOf(a.channel) - CHANNEL_ORDER.indexOf(b.channel),
@@ -48,8 +48,8 @@ export function DeviceSheet({ open, onClose }: { open: boolean; onClose: () => v
                 variant={selected === d.deviceId ? 'primary' : 'secondary'}
                 aria-pressed={selected === d.deviceId}
                 onClick={() => {
-                  select(d.deviceId);
                   onClose();
+                  openDevice(d.deviceId);
                 }}
                 style={{ justifyContent: 'space-between' }}
               >

@@ -24,10 +24,24 @@ const BOUNDARY = new THREE.Box3(
   new THREE.Vector3(4, 5, 5),
 );
 
-export function CameraRig({ replayToken }: { replayToken: number }) {
+export function CameraRig({
+  replayToken,
+  skipEntry,
+}: {
+  replayToken: number;
+  skipEntry: boolean;
+}) {
   const controls = useRef<CameraControls>(null);
   const { camera, gl } = useThree();
-  const { setEntered } = useTwinState();
+  const { setEntered, entered, phase } = useTwinState();
+
+  // One rule, one place: the visitor can move the camera only when they are
+  // in the hall and nothing is open. The entry and the device transitions
+  // pose the camera directly and must not be fought by the controls.
+  useEffect(() => {
+    const c = controls.current;
+    if (c !== null) c.enabled = entered && phase === 'hall';
+  }, [entered, phase]);
   const flight = useMemo(() => new Flight(ENTRY), []);
   const started = useRef<number | null>(null);
   const running = useRef(false);
@@ -43,20 +57,15 @@ export function CameraRig({ replayToken }: { replayToken: number }) {
     running.current = false;
     started.current = null;
     const c = controls.current;
-    if (c !== null) {
-      c.setLookAt(...HOME.position, ...HOME.target, false);
-      c.enabled = true;
-    }
+    if (c !== null) c.setLookAt(...HOME.position, ...HOME.target, false);
     setEntered(true);
     recordTiming('entryEnd');
   }, [setEntered]);
 
   // Start, or restart on replay.
   useEffect(() => {
-    const c = controls.current;
-    if (c !== null) c.enabled = false;
     setEntered(false);
-    if (prefersReducedMotion()) {
+    if (prefersReducedMotion() || skipEntry) {
       camera.position.set(...HOME.position);
       camera.lookAt(...HOME.target);
       recordTiming('entryStart');
@@ -70,7 +79,18 @@ export function CameraRig({ replayToken }: { replayToken: number }) {
     started.current = null;
     // Front-load shader compilation rather than paying for it mid-flight.
     void gl.compileAsync(scene, camera);
-  }, [replayToken, camera, flight, finish, position, target, setEntered, gl, scene]);
+  }, [
+    replayToken,
+    camera,
+    flight,
+    finish,
+    position,
+    target,
+    setEntered,
+    gl,
+    scene,
+    skipEntry,
+  ]);
 
   // Tap to skip.
   useEffect(() => {

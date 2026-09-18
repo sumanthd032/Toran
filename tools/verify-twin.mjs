@@ -17,6 +17,8 @@ const GPU = [
 ];
 const axeSource = fs.readFileSync('node_modules/axe-core/axe.min.js', 'utf8');
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
 let failures = 0;
 const check = (label, ok, detail = '') => {
   if (!ok) failures++;
@@ -58,7 +60,20 @@ for (const tier of ['high', 'low']) {
   await page.waitForFunction(() => window.__toranTwin?.entryEnd != null, {
     timeout: 30000,
   });
-  await new Promise((r) => setTimeout(r, 1200));
+  // Every frame from here until the search engine has loaded, so the warm-up's
+  // cost to the hall is measured rather than assumed. DECISIONS.md D-068.
+  await page.evaluate(() => {
+    const frames = [];
+    window.__hallFrames = frames;
+    let last = performance.now();
+    const step = (now) => {
+      frames.push([now, now - last]);
+      last = now;
+      const ready = window.__toranTwin.searchReady;
+      if (ready == null || now < ready + 1000) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
   const t = await page.evaluate(() => window.__toranTwin);
   const frames = [...t.entryFrames].sort((a, b) => a - b);
   const p95 = frames[Math.floor(frames.length * 0.95)] ?? 0;
@@ -75,18 +90,60 @@ for (const tier of ['high', 'low']) {
     p95 < 20,
     `${frames.length} frames, p95 ${p95.toFixed(1)}ms, worst ${worst.toFixed(1)}ms`,
   );
+
+  // The engine must not load while the visitor is turning the camera: its
+  // load drops frames, and a dropped frame is only visible when things move.
+  if (tier === 'high') {
+    await page.mouse.move(640, 300);
+    await page.mouse.down();
+    for (let i = 0; i < 30; i++) {
+      await page.mouse.move(640 + (i % 2 ? 24 : -24), 300 + i);
+      await wait(100);
+    }
+    const duringDrag = await page.evaluate(() => window.__toranTwin.searchStarted);
+    await page.mouse.up();
+    const releasedAt = await page.evaluate(() => performance.now());
+    await page.waitForFunction(() => window.__toranTwin.searchStarted != null, {
+      timeout: 10000,
+    });
+    const after = await page.evaluate(
+      (at) => window.__toranTwin.searchStarted - at,
+      releasedAt,
+    );
+    check(
+      `[${tier}] the search engine waits while the camera is turned`,
+      duringDrag === null && after > 1000 && after < 2500,
+      `${duringDrag === null ? 'nothing loaded during a 3 s drag' : 'loaded during the drag'}, started ${Math.round(after)}ms after release`,
+    );
+  }
+
+  // The warm-up is a transient, once per page load, and is reported. The
+  // steady state is the hall after it, which is where a visitor spends the
+  // rest of the visit.
+  await page.waitForFunction(() => window.__toranTwin.searchReady != null, {
+    timeout: 60000,
+  });
+  await wait(1500);
+  const { settled, hall } = await page.evaluate(() => ({
+    settled: window.__toranTwin,
+    hall: window.__hallFrames,
+  }));
+  const loading = hall.filter(([at]) => at >= settled.searchStarted && at <= settled.searchReady);
+  console.log(
+    `  INFO  [${tier}] hall while the search engine loads  ${loading.length} frames in ${((settled.searchReady - settled.searchStarted) / 1000).toFixed(1)}s, ${loading.filter(([, gap]) => gap > 20).length} over 20ms`,
+  );
   check(
     `[${tier}] steady state 60fps`,
-    t.frame.fps > 57,
-    `${t.frame.fps.toFixed(1)} fps, ${t.frame.calls} draws, ${t.frame.triangles.toLocaleString('en')} triangles`,
+    settled.frame.fps > 57,
+    `${settled.frame.fps.toFixed(1)} fps, ${settled.frame.calls} draws, ${settled.frame.triangles.toLocaleString('en')} triangles`,
   );
-  check(`[${tier}] draw call budget`, t.frame.calls <= 150, `${t.frame.calls} of 150`);
+  check(`[${tier}] draw call budget`, settled.frame.calls <= 150, `${settled.frame.calls} of 150`);
   check(
     `[${tier}] triangle budget`,
-    t.frame.triangles <= 250000,
-    `${t.frame.triangles.toLocaleString('en')} of 250,000`,
+    settled.frame.triangles <= 250000,
+    `${settled.frame.triangles.toLocaleString('en')} of 250,000`,
   );
-  const mb = t.textureBytes / 1048576;
+  const mb = settled.textureBytes / 1048576;
   check(
     `[${tier}] texture memory budget`,
     mb <= 40,
@@ -182,17 +239,25 @@ const browser = await puppeteer.launch({
     `${offline} offline`,
   );
 
+  // Since step 5 a row opens its device. Visit it, come back, and the sheet
+  // still marks it.
   await clickButton(/Manuscripts/);
-  await page.waitForFunction(() => !document.querySelector('dialog[open]'), {
-    timeout: 3000,
+  await page.waitForFunction(() => window.__toranTwin.transitionPhase === 'open', {
+    timeout: 10000,
   });
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => window.__toranTwin.transitionPhase === 'hall', {
+    timeout: 10000,
+  });
+  // The hall's interface fades back in over --dur-slow, 620ms.
+  await wait(700);
   await clickButton(/13 devices/);
   await page.waitForSelector('dialog[open]', { timeout: 3000 });
   const pressed = await page.$$eval('dialog[open] li button[aria-pressed="true"]', (b) =>
     b.map((n) => n.textContent),
   );
   check(
-    'selection survives the round trip',
+    'the device visited stays selected after the round trip',
     pressed.length === 1 && /Manuscripts/.test(pressed[0] ?? ''),
     pressed.join(' '),
   );

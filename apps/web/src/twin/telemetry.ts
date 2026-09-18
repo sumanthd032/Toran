@@ -25,6 +25,16 @@ export interface TwinTelemetry {
    * bake) are excluded; they scale with the screen, not with the content.
    */
   textureBytes: number;
+  /** Frame intervals while a device transition runs, in or out. */
+  transitionFrames: number[];
+  /** The screen rectangle at the moment the camera arrives, CSS pixels. */
+  arrivalRect: { x: number; y: number; w: number; h: number } | null;
+  /** Camera pose before a device opened and after it closed, to prove the return is exact. */
+  poseBeforeOpen: number[] | null;
+  poseAfterClose: number[] | null;
+  transitionPhase: string;
+  /** Frames the hall has drawn. Must not advance while an application covers it. */
+  framesDrawn: number;
   /** When the shared search engine began loading, and when it became ready. */
   searchStarted: number | null;
   searchReady: number | null;
@@ -58,6 +68,12 @@ export function telemetry(): TwinTelemetry {
     frame: { fps: 0, ms: 0, calls: 0, triangles: 0, geometries: 0, textures: 0 },
     entryFrames: [],
     textureBytes: 0,
+    transitionFrames: [],
+    arrivalRect: null,
+    poseBeforeOpen: null,
+    poseAfterClose: null,
+    transitionPhase: 'hall',
+    framesDrawn: 0,
     searchStarted: null,
     searchReady: null,
     // Device health comes from a fixture until the fleet service exists.

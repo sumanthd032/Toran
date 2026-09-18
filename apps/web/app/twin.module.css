@@ -41,14 +41,19 @@
   pointer-events: none;
   opacity: 0;
   transform: translateY(-6px);
+  /* Hidden outright once faded, so nothing reads or measures a ghost. */
+  visibility: hidden;
   transition:
     opacity var(--dur-slow) var(--ease),
-    transform var(--dur-slow) var(--ease);
+    transform var(--dur-slow) var(--ease),
+    visibility 0s linear var(--dur-slow);
 }
 
 .wordmark[data-shown='true'] {
   opacity: 1;
   transform: none;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .name {
@@ -67,9 +72,14 @@
 
 .controls {
   opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease);
+  visibility: hidden;
+  transition:
+    opacity var(--dur-slow) var(--ease),
+    visibility 0s linear var(--dur-slow);
 }
 
 .controls[data-shown='true'] {
   opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }

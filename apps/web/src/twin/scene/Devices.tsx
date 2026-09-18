@@ -117,10 +117,13 @@ function NamePlate({
   y: number;
 }) {
   const { t, lang } = useI18n();
-  const { entered } = useTwinState();
+  const { entered, open } = useTwinState();
   const status = statusOf(health);
   const name = t(`device.channel.${device.channel}` as MessageKey);
   const ref = useRef<THREE.MeshBasicMaterial>(null);
+  // The camera passes close to the plate of the device it is flying to, where
+  // a billboard would fill the frame. That one plate steps aside.
+  const inTransit = open === device.deviceId;
 
   const map = useMemo(() => labelTexture(name, status, lang), [name, status, lang]);
   useEffect(() => () => map.dispose(), [map]);
@@ -129,8 +132,8 @@ function NamePlate({
   useFrame((_, delta) => {
     const m = ref.current;
     if (m === null) return;
-    const target = entered ? 0.96 : 0;
-    m.opacity += (target - m.opacity) * Math.min(1, delta * 3);
+    const target = entered && !inTransit ? 0.96 : 0;
+    m.opacity += (target - m.opacity) * Math.min(1, delta * (inTransit ? 8 : 3));
     m.visible = m.opacity > 0.01;
   });
 
@@ -159,7 +162,7 @@ function Device({
   health: DeviceHealth | undefined;
 }) {
   const spec = useMemo(() => formSpec(device.form), [device.form]);
-  const { hover, select, selected } = useTwinState();
+  const { hover, openDevice, entered, phase } = useTwinState();
 
   return (
     <group position={device.position} rotation={[0, device.rotationY, 0]}>
@@ -178,7 +181,9 @@ function Device({
         onPointerOut={() => hover(null)}
         onClick={(e) => {
           e.stopPropagation();
-          select(selected === device.deviceId ? null : device.deviceId);
+          // A drag to look around ends in a click too. Only a tap opens.
+          if (!entered || phase !== 'hall' || e.delta > 8) return;
+          openDevice(device.deviceId);
         }}
       >
         <boxGeometry args={[spec.hit[0] * 2, spec.hit[1] * 2, spec.hit[2] * 2]} />

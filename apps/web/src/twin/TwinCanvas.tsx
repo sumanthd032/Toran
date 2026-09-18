@@ -30,6 +30,7 @@ import { Lights } from './scene/Lights';
 import { Shadows } from './scene/Shadows';
 import { Toran } from './scene/Toran';
 import { recordTiming, telemetry } from './telemetry';
+import { TransitionDirector } from './transition/Director';
 
 /**
  * Per-frame counters. info.autoReset is off, so these include every pass the
@@ -97,6 +98,7 @@ function Probe({ tier }: { tier: Tier }) {
     if (s.length > 60) s.shift();
     const mean = s.reduce((a, b) => a + b, 0) / s.length;
     const tel = telemetry();
+    tel.framesDrawn += 1;
     if (tel.entryStart !== null && tel.entryEnd === null) tel.entryFrames.push(dt);
     const f = tel.frame;
     f.ms = mean;
@@ -110,7 +112,15 @@ function Probe({ tier }: { tier: Tier }) {
   return null;
 }
 
-function Scene({ tier, replayToken }: { tier: Tier; replayToken: number }) {
+function Scene({
+  tier,
+  replayToken,
+  skipEntry,
+}: {
+  tier: Tier;
+  replayToken: number;
+  skipEntry: boolean;
+}) {
   const health = useMemo(() => fixtureHealth(), []);
   return (
     <>
@@ -175,7 +185,8 @@ function Scene({ tier, replayToken }: { tier: Tier; replayToken: number }) {
       <Shadows />
       <Devices health={health} />
       <Atmosphere />
-      <CameraRig replayToken={replayToken} />
+      <CameraRig replayToken={replayToken} skipEntry={skipEntry} />
+      <TransitionDirector tier={tier} />
       <Probe tier={tier} />
       {tier === 'high' && (
         <EffectComposer multisampling={4}>
@@ -199,6 +210,12 @@ export interface TwinCanvasProps {
   pinned: boolean;
   onTier: (tier: Tier) => void;
   replayToken: number;
+  skipEntry: boolean;
+  /**
+   * False while a device's application covers the hall. The GPU has no reason
+   * to draw a building nobody can see, and on a tablet that is battery and heat.
+   */
+  rendering: boolean;
 }
 
 export default function TwinCanvas({
@@ -206,11 +223,14 @@ export default function TwinCanvas({
   pinned,
   onTier,
   replayToken,
+  skipEntry,
+  rendering,
 }: TwinCanvasProps) {
   const start = ENTRY[0];
   return (
     <QualityContext.Provider value={tier}>
       <Canvas
+        frameloop={rendering ? 'always' : 'never'}
         dpr={tier === 'high' ? [1, 1.75] : 1}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{
@@ -240,7 +260,7 @@ export default function TwinCanvas({
             onFallback={() => onTier('low')}
           />
         )}
-        <Scene tier={tier} replayToken={replayToken} />
+        <Scene tier={tier} replayToken={replayToken} skipEntry={skipEntry} />
       </Canvas>
     </QualityContext.Provider>
   );
