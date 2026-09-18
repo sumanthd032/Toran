@@ -14,7 +14,9 @@
     "@toran/contracts": "*",
     "next": "^15.5.25",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "@toran/indexer": "*",
+    "@huggingface/transformers": "^3.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
