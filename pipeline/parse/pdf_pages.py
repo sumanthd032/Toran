@@ -92,15 +92,22 @@ def strip_slug_lines(page_text: str) -> str:
     return "\n".join(kept)
 
 
-def _candidate(page_text: str) -> tuple[str | None, str]:
+def _running_head(page_text: str) -> tuple[str | None, str, int | None]:
     """
-    The number in this page's running head, if it has one.
+    The number in this page's running head, its kind, and which line the head
+    is on, if the page has one.
 
     The head is not always the first line: a slug line may precede it, and a
     chapter opening may push it down, so the first few lines are tried.
     """
-    lines = [l.rstrip() for l in page_text.split("\n") if l.strip()]
-    for raw in lines[:3]:
+    lines = page_text.split("\n")
+    seen = 0
+    for index, raw in enumerate(lines):
+        if not raw.strip():
+            continue
+        seen += 1
+        if seen > 3:
+            break
         if SLUG.search(raw.strip()):
             continue
         # Verso heads sit flush left, recto heads are centred, so the line is
@@ -111,17 +118,45 @@ def _candidate(page_text: str) -> tuple[str | None, str]:
 
         m = VERSO.match(head)
         if m:
-            return m.group(1), "arabic"
+            return m.group(1), "arabic", index
         m = RECTO.match(head)
         if m:
-            return m.group(2), "arabic"
+            return m.group(2), "arabic", index
         m = ROMAN_VERSO.match(head)
         if m and roman_to_int(m.group(1)):
-            return m.group(1), "roman"
+            return m.group(1), "roman", index
         m = ROMAN_RECTO.match(head)
         if m and roman_to_int(m.group(2)):
-            return m.group(2), "roman"
-    return None, "none"
+            return m.group(2), "roman", index
+    return None, "none", None
+
+
+def _candidate(page_text: str) -> tuple[str | None, str]:
+    value, kind, _ = _running_head(page_text)
+    return value, kind
+
+
+# The book's own running head, verbatim. On statistical table pages the layout
+# engine merges it into a table row mid page, so it is not found by position.
+# Prose refers to the book in title case, never in this form, so removing this
+# exact string wherever it appears cannot remove content.
+BOOK_HEAD = re.compile(r"\s*DR\.\s+BABASAHEB\s+AMBEDKAR\s*:\s*WRITINGS\s+AND\s+SPEECHES\s*")
+
+
+def strip_running_head(page_text: str) -> str:
+    """
+    Remove the running head from a page's text.
+
+    "114 DR. BABASAHEB AMBEDKAR : WRITINGS AND SPEECHES" is furniture: the page
+    number and the book or chapter title, printed on every page. The page
+    number is kept in the record as the citation. Left in the text, the head
+    was indexed as content and came back as the top line of search results.
+    """
+    _, _, index = _running_head(page_text)
+    lines = page_text.split("\n")
+    if index is not None:
+        del lines[index]
+    return BOOK_HEAD.sub(" ", "\n".join(lines))
 
 
 def _dominant_offset(candidates: dict[int, int]) -> dict[int, int]:
@@ -178,14 +213,15 @@ def parse(pdf: Path) -> list[Page]:
         else:
             printed, numbering, observed = None, "none", False
 
+        body = strip_running_head(text)
         pages.append(
             Page(
                 pdf_index=idx,
                 printed=printed,
                 numbering=numbering,
                 observed=observed,
-                text=text,
-                chars=len(text.strip()),
+                text=body,
+                chars=len(body.strip()),
             )
         )
     return pages
