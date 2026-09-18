@@ -9,7 +9,7 @@
 
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { DEVICES } from '../devices';
+import { DEVICES } from '@/fleet/devices';
 import { HALL } from '../layout';
 import { hallMaterials } from '../materials';
 import { formSpec } from './deviceForms';

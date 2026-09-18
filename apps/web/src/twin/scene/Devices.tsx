@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { DeviceHealth } from '@toran/contracts';
 import { useI18n, type MessageKey } from '@/i18n';
-import { DEVICES, statusOf, type HallDevice } from '../devices';
+import { DEVICES, statusOf, type HallDevice } from '@/fleet/devices';
 import { mergeParts, type Part } from '../geometry';
 import { hallMaterials } from '../materials';
 import { label as labelTexture, screen as screenTexture } from '../textures';

@@ -5,7 +5,7 @@
  */
 
 import * as THREE from 'three';
-import type { DeviceForm } from '../devices';
+import type { DeviceForm } from '@/fleet/devices';
 import { box, type Part } from '../geometry';
 
 export interface ScreenSpec {

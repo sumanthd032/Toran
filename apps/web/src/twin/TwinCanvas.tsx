@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { CameraRig } from './camera/CameraRig';
 import { ENTRY } from './camera/director';
-import { fixtureHealth } from './devices';
+import { fixtureHealth } from '@/fleet/devices';
 import { hallMaterials } from './materials';
 import { QualityContext, type Tier } from './quality';
 import { Architecture } from './scene/Architecture';

@@ -8,7 +8,7 @@
 
 import { Badge, Button, Dialog } from '@/design/primitives';
 import { useI18n, type MessageKey } from '@/i18n';
-import { CHANNEL_ORDER, DEVICES, fixtureHealth, statusOf } from './devices';
+import { CHANNEL_ORDER, DEVICES, fixtureHealth, statusOf } from '@/fleet/devices';
 import { useTwinState } from './state';
 
 export function DeviceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {

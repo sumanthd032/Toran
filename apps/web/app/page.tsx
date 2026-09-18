@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Button, ReachZone } from '@/design/primitives';
 import { useI18n } from '@/i18n';
 import { DeviceSheet } from '@/twin/DeviceSheet';
-import { DEVICES } from '@/twin/devices';
+import { DEVICES } from '@/fleet/devices';
 import { PerfOverlay } from '@/twin/PerfOverlay';
 import { pinnedTier, type Tier } from '@/twin/quality';
 import { TwinStateProvider, useTwinState } from '@/twin/state';
