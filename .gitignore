@@ -1,0 +1,35 @@
+# Planning and design docs. Local development only, never pushed.
+PROJECT.md
+PROBLEM_STATEMENT.md
+ARCHITECTURE.md
+STEPS.md
+DECISIONS.md
+CLAUDE.md
+research/
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Archive working data
+data/aip/
+data/dip/
+data/raw/
+*.onnx
+*.bin
+
+# Editor and OS
+.DS_Store
+*.log
+.cache/
+coverage/
+.vscode/
+.idea/
