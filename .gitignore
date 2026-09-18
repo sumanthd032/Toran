@@ -23,6 +23,12 @@ next-env.d.ts
 .env.local
 .env*.local
 
+# Build artefacts of the search index and the embedding model. Large, and
+# reproducible with: npm run ingest && npm run build:index && npm run vendor:model
+apps/web/public/index/
+apps/web/public/models/
+apps/web/public/ort/
+
 # Archive packages. Large, and fully reproducible from pipeline/sources.json.
 # data/README.md and data/fixity.json are kept.
 data/sip/
