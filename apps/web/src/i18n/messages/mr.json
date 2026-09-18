@@ -1,0 +1,46 @@
+{
+  "app.name": "तोरण",
+  "app.tagline": "डॉ. आंबेडकर आंतरराष्ट्रीय केंद्राचे डिजिटल वारसा संग्रह",
+
+  "nav.back": "मागे",
+  "nav.home": "मुख्य",
+  "nav.forward": "पुढे",
+
+  "action.search": "शोधा",
+  "action.listen": "ऐका",
+  "action.save": "संचिकेत जतन करा",
+  "action.close": "बंद करा",
+  "action.confirm": "निश्चित करा",
+  "action.cancel": "रद्द करा",
+
+  "field.search.label": "संग्रहात शोधा",
+  "field.search.placeholder": "एखादा शब्द, वाक्प्रचार किंवा विचार",
+
+  "citation.corpus.baws": "लेखन आणि भाषणे",
+  "citation.corpus.cad": "संविधान सभेतील चर्चा",
+  "citation.corpus.constitution": "भारताचे संविधान",
+  "citation.corpus.media": "ध्वनी आणि चित्रफीत",
+  "citation.corpus.photograph": "छायाचित्र",
+  "citation.volume": "खंड {volume}",
+  "citation.page": "पृष्ठ {page}",
+  "citation.part": "भाग {part}",
+
+  "provenance.confirmed": "निश्चित",
+  "provenance.unconfirmed": "अद्याप निश्चित नाही",
+
+  "language.choose": "भाषा निवडा",
+
+  "system.title": "रचना प्रणाली",
+  "system.subtitle": "दोन्ही रूपांत प्रत्येक टोकन, टाइप शैली आणि घटक",
+  "system.theme.light": "पृष्ठ",
+  "system.theme.dark": "दालन",
+  "system.section.colour": "रंग",
+  "system.section.type": "टाइप",
+  "system.section.primitives": "घटक",
+  "system.section.ruler": "स्पर्श भूमिती",
+  "system.section.scripts": "लिपी",
+  "system.ruler.intro": "स्पर्श लक्ष्ये 30 मिमी आहेत, 44px ची वेब प्रथा नाही. बँक कार्डाने अंशांकन करा, ज्याची रुंदी आंतरराष्ट्रीय मानकानुसार 85.60 मिमी आहे.",
+  "system.ruler.calibrate": "या पडद्यावरील कार्डाची रुंदी",
+  "system.ruler.reset": "अंशांकन पूर्ववत करा",
+  "system.ruler.target": "या अंशांकनावर 30 मिमीचे लक्ष्य"
+}
