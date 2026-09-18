@@ -1,0 +1,32 @@
+{
+  "name": "toran",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @toran/web",
+    "build": "npm run build --workspace @toran/web",
+    "serve": "npm run serve --workspace @toran/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
+    "verify": "npm run verify:contrast && npm run verify:render && npm run verify:a11y",
+    "verify:contrast": "node tools/contrast-check.mjs",
+    "verify:render": "node tools/verify-system.mjs",
+    "verify:a11y": "node tools/a11y-check.mjs",
+    "preview": "npx --yes serve@14 apps/web/out -l 4173"
+  },
+  "devDependencies": {
+    "axe-core": "^4.13.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

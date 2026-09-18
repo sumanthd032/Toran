@@ -7,12 +7,16 @@ DECISIONS.md
 CLAUDE.md
 research/
 
-# Dependencies and build output
+# Dependencies
 node_modules/
+
+# Build output
 .next/
 out/
 dist/
 build/
+*.tsbuildinfo
+next-env.d.ts
 
 # Environment
 .env
@@ -25,6 +29,9 @@ data/dip/
 data/raw/
 *.onnx
 *.bin
+
+# Verification artefacts
+tools/shots/
 
 # Editor and OS
 .DS_Store
