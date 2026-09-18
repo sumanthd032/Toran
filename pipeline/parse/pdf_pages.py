@@ -39,7 +39,10 @@ NOT_A_HEAD = re.compile(
 # for example "D:\AMBEDKAR\VOL-07\VOL7-01  Mk S.K.-26-09-2013>DK>9-11-2013  32".
 # It is production residue, not part of the work, so it is skipped when looking
 # for the running head and removed from the text the archive serves.
-SLUG = re.compile(r"^[A-Z]:\\|\\VOL-?\d|\bMk\s+[A-Z]\.[A-Z]\.")
+# Volume 17 was set in a later InDesign edition whose slug writes the path in
+# lower case ("z:\ ambedkar\vol-017\vol17-01-02.indd"), so the path parts match either
+# case, and an InDesign file name alone marks a slug.
+SLUG = re.compile(r"(?i:^[a-z]:\\)|(?i:\\vol-?\d)|\.indd\b|\bMk\s+[A-Z]\.[A-Z]\.")
 
 ROMAN_VALUE = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 

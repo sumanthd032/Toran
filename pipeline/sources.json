@@ -36,6 +36,26 @@
       "contains": ["Who were the Shudras?", "The Untouchables"]
     },
     {
+      "id": "baws-v17-1",
+      "corpus": "baws",
+      "title": "Dr. Babasaheb Ambedkar: Writings and Speeches, Volume 17, Part 1: Dr. B. R. Ambedkar and His Egalitarian Revolution, Struggle for Human Rights",
+      "creator": "Narake, Hari; Kasare, M. L.; Kamble, N. G.; Godghate, Ashok (editors)",
+      "publisher": "Dr. Ambedkar Foundation, Ministry of Social Justice and Empowerment, Government of India. First edition by the Education Department, Government of Maharashtra, 2003; reprinted 2014",
+      "volume": 17,
+      "part": "1",
+      "language": "en",
+      "format": "application/pdf",
+      "url": "https://archive.org/download/Dr.BabasahebAmbedkarWritingsAndSpeechespdfsAllVolumes/Volume_17_01.pdf",
+      "rights": "Published by the Government of India. Reproduced for study and research. Rights status recorded as stated by the publishing ministry; no licence is asserted by this project.",
+      "rights_verified": false,
+      "contains": [
+        "Mahad Satyagraha",
+        "Kalaram Temple Entry Satyagraha",
+        "The Round Table Conferences and the Poona Pact"
+      ],
+      "note": "An edited documentary record of events from March 1927 to November 1956. Added in step 6 because the Timeline Wall needs dated events, with pages to cite, that volumes 1 and 7 do not record."
+    },
+    {
       "id": "cad-v7",
       "corpus": "cad",
       "title": "Constituent Assembly of India Debates, Volume 7",

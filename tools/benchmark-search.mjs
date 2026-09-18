@@ -97,8 +97,8 @@ const CASES = [
   },
   {
     q: 'Mahad',
-    why: 'a rare place name. Pure vector search loses these, which is why BM25 is here',
-    expect: (h) => h.slice(0, 5).some((x) => /mahad/i.test(texts[x.id])),
+    why: 'a rare place name, the 1927 satyagraha in volume 17. Pure vector search loses these, which is why BM25 is here. Whole word: "Mahadev" does not count',
+    expect: (h) => h.slice(0, 5).some((x) => /\bMahad\b/.test(texts[x.id])),
   },
   {
     q: 'untouchability is abolished and its practice in any form is forbidden',
