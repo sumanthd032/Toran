@@ -23,6 +23,20 @@ export const PROXEMIC_THRESHOLDS = {
   personal: 0.5,
 } as const;
 
+/**
+ * A reading must move this far past a boundary before the kiosk leaves the
+ * zone it is in. Ultrasonic sensors jitter by several centimetres, and
+ * without a margin a visitor standing near 1.5 m would make the interface
+ * flicker between states.
+ */
+export const PROXEMIC_HYSTERESIS = 0.2;
+
+/**
+ * Presence within this radius counts as activity, the same as a touch. Someone
+ * standing at a kiosk reading, without touching it, is not idle.
+ */
+export const ENGAGEMENT_RADIUS = 1.5;
+
 /** Idle timing in milliseconds. CLAUDE.md section 10. */
 export const IDLE = {
   decayBegins: 45_000,
@@ -93,3 +107,21 @@ export interface SutraSession {
   readonly accessibility: AccessibilityProfile;
   readonly issuedAt: string;
 }
+
+/**
+ * Messages from the kiosk hardware daemon to the browser over a local
+ * WebSocket. The daemon owns the GPIO pins or the serial port and speaks this
+ * protocol; the browser never touches hardware, which on a Raspberry Pi it
+ * cannot. The same socket carries the proximity sensor and the card reader.
+ */
+export type KioskHardwareMessage =
+  | {
+      readonly type: 'hello';
+      readonly daemon: string;
+      readonly sensors: readonly ('proximity' | 'nfc')[];
+    }
+  | { readonly type: 'distance'; readonly metres: number; readonly at: number }
+  | { readonly type: 'card'; readonly token: string; readonly at: number };
+
+/** Where the daemon listens. Loopback only: nothing on the network can drive a kiosk. */
+export const HARDWARE_SOCKET = 'ws://127.0.0.1:8765';
