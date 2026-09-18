@@ -20,6 +20,7 @@ import subprocess
 from collections import Counter
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import NamedTuple
 
 # A running head is a number beside a title set in capitals. Requiring the
 # capitalised title is what separates a real running head from "APPENDIX 4".
@@ -65,6 +66,9 @@ class Page:
     observed: bool          # True if read off the page, False if inferred
     text: str
     chars: int
+    # The section title a recto page prints beside its number, as printed.
+    # A verso prints the book's title, which says nothing about the page.
+    head: str | None = None
 
     def to_json(self) -> dict:
         d = asdict(self)
@@ -92,7 +96,15 @@ def strip_slug_lines(page_text: str) -> str:
     return "\n".join(kept)
 
 
-def _running_head(page_text: str) -> tuple[str | None, str, int | None]:
+class Head(NamedTuple):
+    value: str | None
+    kind: str
+    index: int | None
+    title: str | None
+    side: str | None
+
+
+def _running_head(page_text: str) -> Head:
     """
     The number in this page's running head, its kind, and which line the head
     is on, if the page has one.
@@ -118,22 +130,36 @@ def _running_head(page_text: str) -> tuple[str | None, str, int | None]:
 
         m = VERSO.match(head)
         if m:
-            return m.group(1), "arabic", index
+            return Head(m.group(1), "arabic", index, m.group(2), "verso")
         m = RECTO.match(head)
         if m:
-            return m.group(2), "arabic", index
+            return Head(m.group(2), "arabic", index, m.group(1), "recto")
         m = ROMAN_VERSO.match(head)
         if m and roman_to_int(m.group(1)):
-            return m.group(1), "roman", index
+            return Head(m.group(1), "roman", index, m.group(2), "verso")
         m = ROMAN_RECTO.match(head)
         if m and roman_to_int(m.group(2)):
-            return m.group(2), "roman", index
-    return None, "none", None
+            return Head(m.group(2), "roman", index, m.group(1), "recto")
+    return Head(None, "none", None, None, None)
 
 
 def _candidate(page_text: str) -> tuple[str | None, str]:
-    value, kind, _ = _running_head(page_text)
-    return value, kind
+    head = _running_head(page_text)
+    return head.value, head.kind
+
+
+def section_head(page_text: str) -> str | None:
+    """
+    The section title in a recto running head, as printed.
+
+    A dot leader, as in "ROLE OF .......... INDIAN DEMOCRACY" where the title
+    was too long for the head, is kept as a plain ellipsis.
+    """
+    head = _running_head(page_text)
+    if head.side != "recto" or head.title is None or BOOK_HEAD.fullmatch(head.title):
+        return None
+    title = re.sub(r"\s*\.{3,}\s*", " ... ", head.title)
+    return re.sub(r"\s+", " ", title).strip() or None
 
 
 # The book's own running head, verbatim. On statistical table pages the layout
@@ -152,7 +178,7 @@ def strip_running_head(page_text: str) -> str:
     number is kept in the record as the citation. Left in the text, the head
     was indexed as content and came back as the top line of search results.
     """
-    _, _, index = _running_head(page_text)
+    index = _running_head(page_text).index
     lines = page_text.split("\n")
     if index is not None:
         del lines[index]
@@ -222,6 +248,7 @@ def parse(pdf: Path) -> list[Page]:
                 observed=observed,
                 text=body,
                 chars=len(body.strip()),
+                head=section_head(text),
             )
         )
     return pages

@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from oais.packages import Premis, dublin_core, now, sha256_file, sha256_text, verify_fixity, write_json
 from parse import cad as cad_parser
 from parse import constitution as coi_parser
+from parse.blocks import body_text, page_blocks, vocabulary
 from parse.pdf_pages import parse as parse_pdf
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -108,9 +109,14 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
         objects=[f"{sid}/original.pdf"],
     )
 
+    # Words the typesetter broke across lines are rejoined against the words
+    # this volume prints whole. See parse/blocks.py.
+    known = vocabulary(p.text for p in pages)
+
     aip_dir = AIP / sid
     records = []
     chunks = []
+    reading = []
     observed = 0
     for page in pages:
         if page.printed is None or page.chars == 0:
@@ -125,23 +131,37 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
             "numbering": page.numbering,
             "observed": page.observed,
             "chars": page.chars,
+            "head": page.head,
             "sha256": sha256_text(page.text),
         })
         if page.numbering != "arabic":
             continue  # front matter is kept but not indexed for retrieval
-        for n, body in enumerate(split_text(page.text)):
+        locator = {
+            "kind": "page",
+            "volume": source["volume"],
+            "part": source["part"],
+            "page": int(page.printed),
+            "observed": page.observed,
+        }
+        blocks = page_blocks(page.text, known)
+        reading.append({
+            "pageId": page_id,
+            "workId": sid,
+            "corpus": source["corpus"],
+            "locator": locator,
+            "language": source["language"],
+            "head": page.head,
+            "blocks": [b.to_json() for b in blocks],
+        })
+        # Chunks are cut from the same text the reading view sets, so a search
+        # hit can always be found again on its page.
+        for n, body in enumerate(split_text(body_text(blocks))):
             chunks.append({
                 "chunkId": f"{page_id}-c{n:02d}",
                 "pageId": page_id,
                 "workId": sid,
                 "corpus": source["corpus"],
-                "locator": {
-                    "kind": "page",
-                    "volume": source["volume"],
-                    "part": source["part"],
-                    "page": int(page.printed),
-                    "observed": page.observed,
-                },
+                "locator": locator,
                 "language": source["language"],
                 "speaker": None,
                 "text": body,
@@ -171,7 +191,7 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
                  objects=[sid])
 
     return {"id": sid, "pages": len(records), "observedPages": observed,
-            "chunks": chunks, "sha256": digest}
+            "chunks": chunks, "reading": {"pages": reading}, "sha256": digest}
 
 
 def ingest_cad_source(source: dict, refetch: bool, premis: Premis) -> dict:
@@ -179,6 +199,7 @@ def ingest_cad_source(source: dict, refetch: bool, premis: Premis) -> dict:
     sip_dir = SIP / sid
     all_chunks = []
     records = []
+    sittings: dict[int, dict] = {}
     digests = {}
 
     for date in source["sittings"]:
@@ -216,6 +237,23 @@ def ingest_cad_source(source: dict, refetch: bool, premis: Premis) -> dict:
                 "chars": p.chars,
                 "sha256": sha256_text(p.text),
             })
+            sitting = sittings.setdefault(p.sitting, {
+                "id": f"{sid}-{p.sitting}",
+                "workId": sid,
+                "corpus": source["corpus"],
+                "volume": p.volume,
+                "sitting": p.sitting,
+                "date": date,
+                "language": source["language"],
+                "paragraphs": [],
+            })
+            sitting["paragraphs"].append({
+                "pageId": rec_id,
+                "paragraph": p.paragraph,
+                "procedural": p.procedural,
+                "speaker": p.speaker,
+                "text": p.text,
+            })
             for n, body in enumerate(split_text(p.text)):
                 all_chunks.append({
                     "chunkId": f"{rec_id}-c{n:02d}",
@@ -250,8 +288,9 @@ def ingest_cad_source(source: dict, refetch: bool, premis: Premis) -> dict:
         identifier=sid, source=source["url"], rights=source["rights"],
         coverage=", ".join(source["sittings"]),
     ))
-    return {"id": sid, "pages": len(records),
-            "observedPages": len(records), "chunks": all_chunks, "sha256": digests}
+    return {"id": sid, "pages": len(records), "observedPages": len(records),
+            "chunks": all_chunks, "reading": {"sittings": list(sittings.values())},
+            "sha256": digests}
 
 
 def ingest_constitution_source(source: dict, refetch: bool, premis: Premis) -> dict:
@@ -308,7 +347,13 @@ def ingest_constitution_source(source: dict, refetch: bool, premis: Premis) -> d
             "locator": {"kind": "article", "article": article.article},
             "language": source["language"], "speaker": None, "text": body,
         })
-    return {"id": sid, "pages": 1, "observedPages": 1, "chunks": chunks, "sha256": digest}
+    reading = {
+        "pageId": rec_id, "workId": sid, "corpus": source["corpus"],
+        "article": article.article, "heading": article.heading,
+        "language": source["language"], "text": article.text,
+    }
+    return {"id": sid, "pages": 1, "observedPages": 1, "chunks": chunks,
+            "reading": {"articles": [reading]}, "sha256": digest}
 
 
 def main() -> int:
@@ -322,6 +367,7 @@ def main() -> int:
 
     summaries = []
     all_chunks = []
+    reading: dict[str, list] = {"pages": [], "sittings": [], "articles": []}
     for source in manifest["sources"]:
         print(f"  {source['id']} ...", flush=True)
         if source["format"] == "application/pdf":
@@ -331,6 +377,8 @@ def main() -> int:
         else:
             summary = ingest_cad_source(source, args.refetch, premis)
         all_chunks.extend(summary.pop("chunks"))
+        for kind, items in summary.pop("reading").items():
+            reading[kind].extend(items)
         summaries.append(summary)
         print(f"    {summary['pages']} records, {summary['observedPages']} observed")
 
@@ -340,10 +388,20 @@ def main() -> int:
         for chunk in all_chunks:
             fh.write(json.dumps(chunk, ensure_ascii=False) + "\n")
     write_json(DIP / "works.json", [
-        {k: v for k, v in s.items() if k != "sha256"} | {"title": src["title"], "corpus": src["corpus"]}
+        {k: v for k, v in s.items() if k != "sha256"}
+        | {"title": src["title"], "corpus": src["corpus"],
+           "volume": src.get("volume"), "part": src.get("part")}
         for s, src in zip(summaries, manifest["sources"])
     ])
-    premis.event("dissemination", "success", f"built {len(all_chunks)} retrieval chunks")
+    # The reading copy: pages with their structure, whole sittings, articles.
+    for kind, items in reading.items():
+        with (DIP / f"{kind}.jsonl").open("w", encoding="utf-8") as fh:
+            for item in items:
+                fh.write(json.dumps(item, ensure_ascii=False) + "\n")
+    premis.event("dissemination", "success",
+                 f"built {len(all_chunks)} retrieval chunks and a reading copy of "
+                 f"{len(reading['pages'])} pages, {len(reading['sittings'])} sittings, "
+                 f"{len(reading['articles'])} articles")
 
     # Fixity manifest over the submission packages.
     fixity = {}

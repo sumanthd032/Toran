@@ -34,7 +34,12 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 
 
 def normalise(s: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+    """
+    Letters and figures only. Stored text rejoins words the typesetter broke
+    across lines, so "Untouch-" and "ables" in the PDF are "Untouchables" in
+    the archive; without spacing and punctuation the two compare equal.
+    """
+    return re.sub(r"[^a-z0-9]+", "", s.lower())
 
 
 def pdf_page_text(pdf: Path, index: int, strip_slugs: bool = True) -> str:
@@ -104,6 +109,28 @@ def main() -> int:
     check("sampled chunks resolve to their source page", resolved == len(sample),
           f"{resolved}/{len(sample)}" + ("  " + "; ".join(misses[:3]) if misses else ""))
 
+    # --- every chunk can be found again in the reading copy of its page ---
+    # The reading view highlights a search hit on its page, which needs the
+    # hit's text to be in the page's text exactly, not approximately.
+    pages = {p["pageId"]: p for p in map(json.loads, (DATA / "dip" / "pages.jsonl").read_text(encoding="utf-8").splitlines())}
+    paragraphs = {
+        para["pageId"]: para["text"]
+        for line in (DATA / "dip" / "sittings.jsonl").read_text(encoding="utf-8").splitlines()
+        for para in json.loads(line)["paragraphs"]
+    }
+    articles = {a["pageId"]: a["text"] for a in map(json.loads, (DATA / "dip" / "articles.jsonl").read_text(encoding="utf-8").splitlines())}
+    lost = []
+    for c in chunks:
+        page = pages.get(c["pageId"])
+        if page is not None:
+            body = " ".join(b["text"] for b in page["blocks"])
+        else:
+            body = paragraphs.get(c["pageId"]) or articles.get(c["pageId"])
+        if body is None or re.sub(r"\s+", " ", c["text"]) not in re.sub(r"\s+", " ", body):
+            lost.append(c["chunkId"])
+    check("every chunk is found verbatim in its page's reading copy", not lost,
+          f"{len(chunks) - len(lost)}/{len(chunks)}" + ("  " + "; ".join(lost[:3]) if lost else ""))
+
     # --- printed page number agrees with the running head on that page ---
     checked = 0
     agreed = 0
@@ -168,6 +195,8 @@ def main() -> int:
         pct = w["observedPages"] / w["pages"] * 100 if w["pages"] else 0
         print(f"    {w['id']:10} {w['pages']:5} records  {w['observedPages']:5} observed ({pct:.0f}%)  {w['title'][:46]}")
     print(f"    {'total':10} {total_pages:5} records  {len(chunks):5} chunks")
+    broken = sum(len(re.findall(r"\b[A-Za-z]{2,}- [a-z]{2,}\b", c["text"])) for c in chunks)
+    print(f"    broken words left in chunk text: {broken}, from columns the layout interleaves")
 
     print(f"\n{'All checks passed.' if failures == 0 else f'{failures} check(s) FAILED.'}")
     return 0 if failures == 0 else 1
