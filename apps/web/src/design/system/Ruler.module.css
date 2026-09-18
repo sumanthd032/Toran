@@ -1,0 +1,66 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.card {
+  height: 54mm;
+  border: 2px dashed var(--accent);
+  border-radius: 3mm;
+  background: var(--patina-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+  text-align: center;
+  padding: var(--s-2);
+  /* Width is driven inline from the calibration factor. */
+}
+
+.slider {
+  width: 100%;
+  min-height: var(--touch-min);
+  accent-color: var(--accent);
+}
+
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.target {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--patina-2);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent-text);
+}
+
+.scale {
+  display: flex;
+  align-items: flex-end;
+  height: var(--s-4);
+  border-bottom: var(--hairline) solid var(--border-strong);
+}
+
+.tick {
+  border-left: var(--hairline) solid var(--border-strong);
+  height: 40%;
+  flex: 0 0 auto;
+}
+
+.tickMajor {
+  height: 100%;
+}

@@ -1,0 +1,144 @@
+.page {
+  max-width: 108ch;
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-4) var(--s-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.controls {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.sectionTitle {
+  font-family: var(--font-ui);
+  font-size: var(--t-heading);
+  color: var(--section-text);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--s-3);
+}
+
+/* Baseline grid proof. Both columns sit on the same repeating rhythm. */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.baseline {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--patina-2) 0,
+    var(--patina-2) 1px,
+    transparent 1px,
+    transparent var(--baseline)
+  );
+  background-position: 0 calc(var(--baseline) - 1px);
+}
+
+.specimenRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-bottom: var(--s-3);
+}
+
+.specimenLabel {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-soft);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-meta);
+}
+
+.table th,
+.table td {
+  text-align: start;
+  padding: var(--s-2);
+  border-bottom: var(--hairline) solid var(--border);
+  font-family: var(--font-ui);
+}
+
+.table th {
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.native {
+  font-family: var(--font-indic);
+  font-size: var(--t-body);
+}
+
+.no {
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+}
+
+.yes {
+  color: var(--confirmed);
+  font-family: var(--font-mono);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  align-items: center;
+}
+
+.stage {
+  position: relative;
+  height: 320px;
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.stageNote {
+  padding: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.zoneGuide {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--reach-zone);
+  border-top: 2px dashed var(--accent);
+  background: var(--patina-1);
+  pointer-events: none;
+}

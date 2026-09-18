@@ -1,0 +1,31 @@
+.swatch {
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.chip {
+  /* A swatch chip is pure colour. Text on an arbitrary colour cannot promise
+     contrast, so the hex lives in the metadata below instead. */
+  height: var(--s-8);
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.meta {
+  padding: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  background: var(--surface-raised);
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  color: var(--text);
+}
+
+.hex {
+  color: var(--text);
+}
