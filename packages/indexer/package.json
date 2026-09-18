@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build:index": "node src/build.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:abstracts": "node src/abstracts.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.3.1"

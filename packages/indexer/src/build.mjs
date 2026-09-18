@@ -16,21 +16,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pipeline, env } from '@huggingface/transformers';
 import { buildLexical } from './bm25.mjs';
+import { DIMS, DTYPE, MODEL, PASSAGE_PREFIX, QUERY_PREFIX } from './model.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const CHUNKS = path.join(ROOT, 'data/dip/chunks.jsonl');
 const OUT = path.join(ROOT, 'apps/web/public/index');
 
-export const MODEL = 'Xenova/multilingual-e5-small';
-export const DTYPE = 'q8';
-export const DIMS = 384;
-/**
- * e5 models are trained with asymmetric prefixes. Documents are embedded as
- * "passage: ", queries as "query: ". Omitting them, or using the same prefix
- * for both, measurably degrades retrieval and is a silent failure.
- */
-export const PASSAGE_PREFIX = 'passage: ';
-export const QUERY_PREFIX = 'query: ';
+export { MODEL, DTYPE, DIMS, PASSAGE_PREFIX, QUERY_PREFIX } from './model.mjs';
 
 const BATCH = 32;
 
