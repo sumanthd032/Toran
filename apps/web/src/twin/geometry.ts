@@ -67,7 +67,7 @@ export function mergeParts(
   metresPerRepeat?: number,
 ): THREE.BufferGeometry {
   const placed = parts.map((p) => {
-    let g = p.geometry.index ? p.geometry.toNonIndexed() : p.geometry.clone();
+    const g = p.geometry.index ? p.geometry.toNonIndexed() : p.geometry.clone();
     // Keep only the attributes every primitive shares, or the merge refuses.
     for (const name of Object.keys(g.attributes)) {
       if (name !== 'position' && name !== 'normal' && name !== 'uv')

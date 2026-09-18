@@ -8,7 +8,7 @@
     "build": "next build",
     "serve": "npx --yes serve@14 out -l 4173",
     "typecheck": "tsc --noEmit",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@toran/contracts": "*",
