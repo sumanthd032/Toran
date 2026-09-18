@@ -23,10 +23,11 @@ next-env.d.ts
 .env.local
 .env*.local
 
-# Archive working data
+# Archive packages. Large, and fully reproducible from pipeline/sources.json.
+# data/README.md and data/fixity.json are kept.
+data/sip/
 data/aip/
 data/dip/
-data/raw/
 *.onnx
 *.bin
 

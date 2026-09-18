@@ -1,0 +1,78 @@
+{
+  "note": "The ingest manifest. Every object entering the archive is listed here with where it came from, who published it, and under what terms. Nothing is ingested that is not on this list.",
+  "sources": [
+    {
+      "id": "baws-v1",
+      "corpus": "baws",
+      "title": "Dr. Babasaheb Ambedkar: Writings and Speeches, Volume 1",
+      "creator": "Ambedkar, B. R. (Bhimrao Ramji), 1891-1956",
+      "publisher": "Dr. Ambedkar Foundation, Ministry of Social Justice and Empowerment, Government of India",
+      "volume": 1,
+      "part": null,
+      "language": "en",
+      "format": "application/pdf",
+      "url": "https://archive.org/download/Dr.BabasahebAmbedkarWritingsAndSpeechespdfsAllVolumes/Volume_01.pdf",
+      "rights": "Published by the Government of India. Reproduced for study and research. Rights status recorded as stated by the publishing ministry; no licence is asserted by this project.",
+      "rights_verified": false,
+      "contains": [
+        "Castes in India",
+        "Annihilation of Caste",
+        "Federation versus Freedom"
+      ]
+    },
+    {
+      "id": "baws-v7",
+      "corpus": "baws",
+      "title": "Dr. Babasaheb Ambedkar: Writings and Speeches, Volume 7",
+      "creator": "Ambedkar, B. R. (Bhimrao Ramji), 1891-1956",
+      "publisher": "Dr. Ambedkar Foundation, Ministry of Social Justice and Empowerment, Government of India",
+      "volume": 7,
+      "part": null,
+      "language": "en",
+      "format": "application/pdf",
+      "url": "https://archive.org/download/Dr.BabasahebAmbedkarWritingsAndSpeechespdfsAllVolumes/Volume_07.pdf",
+      "rights": "Published by the Government of India. Reproduced for study and research. Rights status recorded as stated by the publishing ministry; no licence is asserted by this project.",
+      "rights_verified": false,
+      "contains": [
+        "Who were the Shudras?",
+        "The Untouchables"
+      ]
+    },
+    {
+      "id": "cad-v7",
+      "corpus": "cad",
+      "title": "Constituent Assembly of India Debates, Volume 7",
+      "creator": "Constituent Assembly of India",
+      "publisher": "Lok Sabha Secretariat",
+      "volume": 7,
+      "part": null,
+      "language": "en",
+      "format": "text/html",
+      "url": "https://www.constitutionofindia.net/constituent-assembly-debate/volume-7/",
+      "sittings": [
+        "1948-11-29"
+      ],
+      "rights": "Proceedings of the Constituent Assembly of India, a public record. Transcription and paragraph numbering by the Centre for Law and Policy Research.",
+      "rights_verified": false,
+      "note": "Volume 7 sitting of 29 November 1948 contains the debate on draft Article 11, which was adopted as Article 17 of the Constitution."
+    },
+    {
+      "id": "coi-art17",
+      "corpus": "constitution",
+      "title": "Constitution of India, Article 17: Abolition of Untouchability",
+      "creator": "Constituent Assembly of India",
+      "publisher": "Government of India",
+      "volume": null,
+      "part": "III",
+      "language": "en",
+      "format": "text/html",
+      "url": "https://www.constitutionofindia.net/articles/article-17-abolition-of-untouchability/",
+      "articles": [
+        "17"
+      ],
+      "rights": "Text of the Constitution of India, a public document. Annotation and drafting history by the Centre for Law and Policy Research.",
+      "rights_verified": false,
+      "note": "Carries the drafting history: Article 17 (1950) was Draft Article 11 (1948), debated 29 November 1948. That link is the seed of the provenance graph in step 7. Slugs for the other articles Ambedkar shaped are not discoverable from an index page and are deferred to step 7."
+    }
+  ]
+}
