@@ -1,0 +1,188 @@
+/*
+  Toran design tokens.
+
+  Every colour is a material from the building or from the documents.
+  Red sandstone from the Chaitya Arch, brass from the fittings, rag paper
+  and iron gall ink from the manuscripts. Nothing here was chosen because
+  it looked modern. See PROJECT.md section 8.
+*/
+
+:root {
+  /* ---- materials, raw. Never used directly in components. ---- */
+  --m-paper: #f4efe6;
+  --m-vellum: #ede5d6;
+  --m-rule: #c8bfae;
+  --m-ink: #1a1714;
+  --m-ink-soft: #56503f;
+  --m-brass: #91642c;
+  --m-brass-deep: #6b4921;
+  --m-sandstone: #9c4b32;
+  --m-sandstone-deep: #803d29;
+  --m-correction: #7c2d2d;
+  --m-verdigris: #39564b;
+
+  --m-hall: #141210;
+  --m-slab: #1f1b17;
+  --m-rule-dk: #3a332b;
+  --m-light: #e8e1d3;
+  --m-brass-lit: #c89b52;
+
+  /* ---- semantic. Light is the page, the reading surface. ---- */
+  --surface: var(--m-paper);
+  --surface-raised: var(--m-vellum);
+  --surface-sunken: #e6dfd2;
+  --border: var(--m-rule);
+  --border-strong: #ab9f89;
+  --text: var(--m-ink);
+  --text-soft: var(--m-ink-soft);
+  --text-inverse: var(--m-light);
+  --accent: var(--m-brass);
+  --accent-hover: #7f5624;
+  /* Brass at 7:1 stops reading as brass, so text gets a deeper variant. */
+  --accent-text: var(--m-brass-deep);
+  --section: var(--m-sandstone);
+  --section-text: var(--m-sandstone-deep);
+  --danger: var(--m-correction);
+  --confirmed: var(--m-verdigris);
+  --focus: var(--m-brass);
+
+  /* Patina. Visitor attention accumulates as wear. Aggregate only. */
+  --patina-1: color-mix(in srgb, var(--m-brass) 8%, transparent);
+  --patina-2: color-mix(in srgb, var(--m-brass) 16%, transparent);
+  --patina-3: color-mix(in srgb, var(--m-brass) 25%, transparent);
+  --patina-4: color-mix(in srgb, var(--m-brass) 34%, transparent);
+
+  /* An unconfirmed provenance edge can never look confirmed. */
+  --unconfirmed: color-mix(in srgb, var(--m-correction) 40%, transparent);
+
+  /* ---- type ---- */
+  --font-read: 'Spectral', 'Noto Serif Devanagari', Georgia, serif;
+  --font-ui: 'Archivo', system-ui, sans-serif;
+  --font-indic: 'Noto Serif Devanagari', 'Spectral', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /*
+    Kiosk type scale. Set for a standing visitor at 600 to 900mm from a
+    1080p panel, and for the over-65 eye. --type-scale is driven by the
+    accessibility profile on the Sutra card and reaches 2 at 200%.
+  */
+  --type-scale: 1;
+  --t-ambient: calc(96px * var(--type-scale));
+  --t-display: calc(64px * var(--type-scale));
+  --t-title: calc(48px * var(--type-scale));
+  --t-heading: calc(32px * var(--type-scale));
+  --t-body: calc(24px * var(--type-scale));
+  --t-meta: calc(18px * var(--type-scale));
+
+  /*
+    One line height for every script. Devanagari needs more vertical room
+    than Latin, so it is set first and Latin is checked against it. This
+    is what keeps mixed text on a shared baseline grid.
+  */
+  --leading-read: 1.7;
+  --leading-tight: 1.25;
+  --baseline: calc(var(--t-body) * var(--leading-read));
+
+  /* ---- space, on the baseline ---- */
+  --s-1: calc(var(--baseline) * 0.25);
+  --s-2: calc(var(--baseline) * 0.5);
+  --s-3: calc(var(--baseline) * 0.75);
+  --s-4: var(--baseline);
+  --s-6: calc(var(--baseline) * 1.5);
+  --s-8: calc(var(--baseline) * 2);
+  --s-12: calc(var(--baseline) * 3);
+
+  /*
+    Touch geometry. 30mm, not the 44px web convention: non-disabled
+    performance plateaus at 20mm but disabled performance keeps improving
+    to 30mm (Chourasia et al.). CSS mm assumes 96px per inch, which is
+    wrong on most real panels, so --device-scale calibrates it. See the
+    ruler on /system.
+  */
+  --device-scale: 1;
+  --touch-min: calc(30mm * var(--device-scale));
+  --touch-comfortable: calc(36mm * var(--device-scale));
+
+  /* The bottom third belongs to the hand. See ReachZone. */
+  --reach-zone: 33.333vh;
+
+  /* ---- line and radius. This is paper, so almost no shadow. ---- */
+  --hairline: 1px;
+  --radius: 2px;
+  --radius-lg: 3px;
+
+  /* ---- motion. Architectural pacing, no spring, no bounce. ---- */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur: 280ms;
+  --dur-slow: 620ms;
+  --dur-camera: 1400ms;
+}
+
+/* Dark is the hall. A dim memorial interior with brass catching light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --surface: var(--m-hall);
+    --surface-raised: var(--m-slab);
+    --surface-sunken: #0d0b0a;
+    --border: var(--m-rule-dk);
+    --border-strong: #574d41;
+    --text: var(--m-light);
+    --text-soft: #a99e8c;
+    --text-inverse: var(--m-ink);
+    --accent: var(--m-brass-lit);
+    --accent-hover: #ddb36a;
+    --accent-text: var(--m-brass-lit);
+    --section: #c2634a;
+    --section-text: #e0907a;
+    --danger: #d4736b;
+    --confirmed: #74a891;
+    --focus: var(--m-brass-lit);
+    --patina-1: color-mix(in srgb, var(--m-brass-lit) 8%, transparent);
+    --patina-2: color-mix(in srgb, var(--m-brass-lit) 16%, transparent);
+    --patina-3: color-mix(in srgb, var(--m-brass-lit) 25%, transparent);
+    --patina-4: color-mix(in srgb, var(--m-brass-lit) 34%, transparent);
+    --unconfirmed: color-mix(in srgb, #d4736b 40%, transparent);
+  }
+}
+
+:root[data-theme='dark'] {
+  --surface: var(--m-hall);
+  --surface-raised: var(--m-slab);
+  --surface-sunken: #0d0b0a;
+  --border: var(--m-rule-dk);
+  --border-strong: #574d41;
+  --text: var(--m-light);
+  --text-soft: #a99e8c;
+  --text-inverse: var(--m-ink);
+  --accent: var(--m-brass-lit);
+  --accent-hover: #ddb36a;
+  --accent-text: var(--m-brass-lit);
+  --section: #c2634a;
+  --section-text: #e0907a;
+  --danger: #d4736b;
+  --confirmed: #74a891;
+  --focus: var(--m-brass-lit);
+  --patina-1: color-mix(in srgb, var(--m-brass-lit) 8%, transparent);
+  --patina-2: color-mix(in srgb, var(--m-brass-lit) 16%, transparent);
+  --patina-3: color-mix(in srgb, var(--m-brass-lit) 25%, transparent);
+  --patina-4: color-mix(in srgb, var(--m-brass-lit) 34%, transparent);
+  --unconfirmed: color-mix(in srgb, #d4736b 40%, transparent);
+}
+
+/* Accessibility profile, set by the Sutra card. */
+:root[data-type-scale='large'] {
+  --type-scale: 1.5;
+}
+:root[data-type-scale='largest'] {
+  --type-scale: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+    --dur-camera: 1ms;
+  }
+}

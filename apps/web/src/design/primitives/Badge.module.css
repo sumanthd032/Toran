@@ -1,0 +1,35 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 2px var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius);
+  border: var(--hairline) solid;
+}
+
+.neutral {
+  color: var(--text-soft);
+  border-color: var(--border-strong);
+  background: transparent;
+}
+
+.confirmed {
+  color: var(--confirmed);
+  border-color: var(--confirmed);
+  background: transparent;
+}
+
+/*
+  An unconfirmed provenance edge can never be made to look confirmed.
+  The dashed border has no off switch. DECISIONS.md D-006.
+*/
+.unconfirmed {
+  color: var(--danger);
+  border-color: var(--unconfirmed);
+  border-style: dashed;
+  background: transparent;
+}

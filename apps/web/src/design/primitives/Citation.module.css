@@ -1,0 +1,37 @@
+/*
+  Archival records are data, so they are set as data.
+  CLAUDE.md section 12: there is no UI state where a claim appears without
+  its source, so this component has no "hidden" variant and never will.
+*/
+.citation {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  line-height: 1.4;
+  color: var(--text-soft);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  white-space: nowrap;
+}
+
+.corpus {
+  color: var(--accent-text);
+  font-weight: 500;
+}
+
+.locator {
+  font-variant-numeric: tabular-nums;
+}
+
+.block {
+  display: flex;
+  padding-top: var(--s-2);
+  border-top: var(--hairline) solid var(--border);
+  margin-top: var(--s-2);
+  white-space: normal;
+}
+
+/* A translation declares itself. The source language is never implied. */
+.translated {
+  font-style: italic;
+}

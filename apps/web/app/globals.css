@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+@import '../src/design/fonts.css';
+@import '../src/design/tokens.css';
+
+/* Expose the semantic tokens to Tailwind utilities. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-soft: var(--text-soft);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-section: var(--section);
+  --color-danger: var(--danger);
+  --color-confirmed: var(--confirmed);
+
+  --font-read: var(--font-read);
+  --font-ui: var(--font-ui);
+  --font-mono: var(--font-mono);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Kiosk panels are fixed. Never zoom the document out from under a visitor. */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+/*
+  A kiosk is a shared surface. Text selection, long-press callouts, drag
+  and double-tap zoom are all accidents waiting to happen. Reading surfaces
+  opt back in explicitly with .selectable.
+*/
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/*
+  Focus must be visible on a touchscreen too, because a Sutra card profile
+  can drive keyboard navigation for assistive hardware.
+*/
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+::selection {
+  background: var(--patina-3);
+  color: var(--text);
+}
+
+/* Devanagari and the other Indic scripts need the serif Indic face. */
+:lang(hi),
+:lang(mr),
+:lang(sa),
+:lang(ne),
+:lang(kok),
+:lang(mai),
+:lang(doi),
+:lang(brx) {
+  font-family: var(--font-indic);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,26 @@
+/*
+  Depth in Toran comes from rules and insets, never from drop shadows.
+  This is paper.
+*/
+.rule {
+  border: 0;
+  background: var(--border);
+  margin: 0;
+}
+
+.horizontal {
+  height: var(--hairline);
+  width: 100%;
+}
+
+.vertical {
+  width: var(--hairline);
+  align-self: stretch;
+  min-height: var(--s-4);
+}
+
+/* A section mark, in sandstone, for structural divisions. */
+.section {
+  background: var(--section);
+  height: 2px;
+}

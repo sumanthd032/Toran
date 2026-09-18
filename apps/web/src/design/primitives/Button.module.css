@@ -1,0 +1,64 @@
+.button {
+  /* 30mm, not 44px. Chourasia et al. See CLAUDE.md section 10. */
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 500;
+  line-height: 1.2;
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Visual half of the feedback contract. The sound is the other half. */
+.button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+.primary:not(:disabled):hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.secondary {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.secondary:not(:disabled):hover {
+  background: var(--surface-sunken);
+}
+
+.quiet {
+  background: transparent;
+  color: var(--accent-text);
+  border-color: transparent;
+}
+.quiet:not(:disabled):hover {
+  background: var(--patina-1);
+}
+
+.full {
+  width: 100%;
+}

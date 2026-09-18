@@ -1,0 +1,28 @@
+.card {
+  background: var(--surface-raised);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4);
+}
+
+/* Patina: accumulated visitor attention. Aggregate only, never per visitor. */
+.patina1 {
+  background: color-mix(in srgb, var(--patina-1), var(--surface-raised));
+}
+.patina2 {
+  background: color-mix(in srgb, var(--patina-2), var(--surface-raised));
+}
+.patina3 {
+  background: color-mix(in srgb, var(--patina-3), var(--surface-raised));
+}
+.patina4 {
+  background: color-mix(in srgb, var(--patina-4), var(--surface-raised));
+}
+
+.interactive {
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.interactive:hover {
+  border-color: var(--accent);
+}

@@ -1,0 +1,44 @@
+/*
+  The bottom third belongs to the hand, the top two thirds to the eye.
+
+  Kang and Shin found that placing controls in the lower area of a touch
+  display measurably reduces arm strain, which is the gorilla arm mitigation
+  for a vertically mounted kiosk. Every primary control belongs inside one of
+  these. A control outside one is a bug, per CLAUDE.md section 10.
+*/
+.zone {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--reach-zone);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  pointer-events: none;
+}
+
+.zone > * {
+  pointer-events: auto;
+}
+
+.start {
+  justify-content: flex-start;
+}
+.center {
+  justify-content: center;
+}
+.end {
+  justify-content: flex-end;
+}
+.between {
+  justify-content: space-between;
+}
+
+/* Static flow variant, for pages that are not full-screen kiosk surfaces. */
+.inline {
+  position: static;
+  height: auto;
+  align-items: center;
+  padding: 0;
+}
