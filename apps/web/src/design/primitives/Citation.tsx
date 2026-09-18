@@ -21,8 +21,11 @@ export interface CitationProps {
 }
 
 /**
- * The only way a citation is rendered. Takes the contract object, never
- * loose strings, so a citation cannot be fabricated at the view layer.
+ * The only way a citation is rendered. Takes the contract object, never loose
+ * strings, so a citation cannot be fabricated at the view layer.
+ *
+ * An inferred page number says so. The alternative is presenting a guess with
+ * the same authority as a reading, which is how an archive loses its value.
  */
 export function Citation({
   citation,
@@ -30,15 +33,31 @@ export function Citation({
   translatedFrom = null,
 }: CitationProps) {
   const t = useT();
+  const l = citation.locator;
 
   const parts: string[] = [];
-  if (citation.volume !== null) {
-    parts.push(t('citation.volume', { volume: citation.volume }));
+  let inferred = false;
+
+  switch (l.kind) {
+    case 'page': {
+      if (l.volume !== null) parts.push(t('citation.volume', { volume: l.volume }));
+      if (l.part !== null) parts.push(t('citation.part', { part: l.part }));
+      parts.push(t('citation.page', { page: l.page }));
+      inferred = !l.observed;
+      break;
+    }
+    case 'paragraph': {
+      parts.push(t('citation.volume', { volume: l.volume }));
+      parts.push(t('citation.sitting', { sitting: l.sitting }));
+      parts.push(t('citation.paragraph', { paragraph: l.paragraph }));
+      parts.push(l.date);
+      break;
+    }
+    case 'article': {
+      parts.push(t('citation.article', { article: l.article }));
+      break;
+    }
   }
-  if (citation.part !== null) {
-    parts.push(t('citation.part', { part: citation.part }));
-  }
-  parts.push(t('citation.page', { page: citation.page }));
 
   return (
     <cite
@@ -52,6 +71,11 @@ export function Citation({
     >
       <span className={styles.corpus}>{t(CORPUS_KEY[citation.corpus])}</span>
       <span className={styles.locator}>{parts.join(', ')}</span>
+      {inferred && (
+        <span className={styles.inferred} title={t('citation.inferred.explain')}>
+          {t('citation.inferred')}
+        </span>
+      )}
     </cite>
   );
 }

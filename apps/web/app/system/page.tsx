@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { citation, LANGUAGES } from '@toran/contracts';
+import {
+  articleLocator,
+  citation,
+  LANGUAGES,
+  pageLocator,
+  paragraphLocator,
+} from '@toran/contracts';
 import {
   Badge,
   Button,
@@ -68,8 +74,33 @@ const SAMPLE_CITATION = citation({
   corpus: 'baws',
   workId: 'baws-v1',
   pageId: 'baws-v1-p0047',
-  volume: 1,
-  page: 47,
+  locator: pageLocator({ volume: 1, page: 47, observed: true }),
+});
+
+const INFERRED_CITATION = citation({
+  corpus: 'baws',
+  workId: 'baws-v1',
+  pageId: 'baws-v1-p0203',
+  locator: pageLocator({ volume: 1, page: 203, observed: false }),
+});
+
+const DEBATE_CITATION = citation({
+  corpus: 'cad',
+  workId: 'cad-v7',
+  pageId: 'cad-7-62-186',
+  locator: paragraphLocator({
+    volume: 7,
+    sitting: 62,
+    paragraph: 186,
+    date: '1948-11-29',
+  }),
+});
+
+const ARTICLE_CITATION = citation({
+  corpus: 'constitution',
+  workId: 'coi',
+  pageId: 'coi-art-17',
+  locator: articleLocator('17'),
 });
 
 export default function SystemPage() {
@@ -204,9 +235,21 @@ export default function SystemPage() {
           />
         </div>
 
-        <span className={styles.specimenLabel}>Citation, inline and block</span>
+        <span className={styles.specimenLabel}>
+          Citation. Three locator shapes, because the corpora do not share a citable unit.
+          An inferred page number says so.
+        </span>
         <div className={styles.row}>
           <Citation citation={SAMPLE_CITATION} />
+        </div>
+        <div className={styles.row}>
+          <Citation citation={DEBATE_CITATION} />
+        </div>
+        <div className={styles.row}>
+          <Citation citation={ARTICLE_CITATION} />
+        </div>
+        <div className={styles.row}>
+          <Citation citation={INFERRED_CITATION} />
         </div>
         <Card>
           <p className="selectable">{READING_LATIN}</p>

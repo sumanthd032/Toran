@@ -1,21 +1,17 @@
 {
   "app.name": "Toran",
   "app.tagline": "Digital heritage archive for the Dr. Ambedkar International Centre",
-
   "nav.back": "Back",
   "nav.home": "Home",
   "nav.forward": "Forward",
-
   "action.search": "Search",
   "action.listen": "Listen",
   "action.save": "Save to dossier",
   "action.close": "Close",
   "action.confirm": "Confirm",
   "action.cancel": "Cancel",
-
   "field.search.label": "Search the archive",
   "field.search.placeholder": "A word, a phrase, an idea",
-
   "citation.corpus.baws": "Writings and Speeches",
   "citation.corpus.cad": "Constituent Assembly Debates",
   "citation.corpus.constitution": "Constitution of India",
@@ -24,12 +20,9 @@
   "citation.volume": "Volume {volume}",
   "citation.page": "page {page}",
   "citation.part": "Part {part}",
-
   "provenance.confirmed": "Confirmed",
   "provenance.unconfirmed": "Not yet confirmed",
-
   "language.choose": "Choose a language",
-
   "system.title": "Design system",
   "system.subtitle": "Every token, type style and primitive in both themes",
   "system.theme.light": "Page",
@@ -42,5 +35,10 @@
   "system.ruler.intro": "Touch targets are 30mm, not the 44px web convention. Calibrate against a bank card, which is 85.60mm wide by international standard.",
   "system.ruler.calibrate": "Card width on this screen",
   "system.ruler.reset": "Reset calibration",
-  "system.ruler.target": "A 30mm target at this calibration"
+  "system.ruler.target": "A 30mm target at this calibration",
+  "citation.sitting": "sitting {sitting}",
+  "citation.paragraph": "para {paragraph}",
+  "citation.article": "Article {article}",
+  "citation.inferred": "page inferred",
+  "citation.inferred.explain": "This page number was inferred from the surrounding sequence, not read off the page."
 }

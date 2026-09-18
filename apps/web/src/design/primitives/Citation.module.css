@@ -35,3 +35,13 @@
 .translated {
   font-style: italic;
 }
+
+/*
+  An inferred page number is marked. Presenting a guess with the same
+  authority as a reading is how an archive loses its value.
+*/
+.inferred {
+  color: var(--danger);
+  border-bottom: 1px dashed var(--unconfirmed);
+  font-style: italic;
+}

@@ -1,21 +1,17 @@
 {
   "app.name": "तोरण",
   "app.tagline": "डॉ. अम्बेडकर अंतरराष्ट्रीय केंद्र का डिजिटल विरासत संग्रह",
-
   "nav.back": "पीछे",
   "nav.home": "मुख्य",
   "nav.forward": "आगे",
-
   "action.search": "खोजें",
   "action.listen": "सुनें",
   "action.save": "संचिका में सहेजें",
   "action.close": "बंद करें",
   "action.confirm": "पुष्टि करें",
   "action.cancel": "रद्द करें",
-
   "field.search.label": "संग्रह में खोजें",
   "field.search.placeholder": "कोई शब्द, वाक्यांश या विचार",
-
   "citation.corpus.baws": "लेखन और भाषण",
   "citation.corpus.cad": "संविधान सभा की बहसें",
   "citation.corpus.constitution": "भारत का संविधान",
@@ -24,12 +20,9 @@
   "citation.volume": "खंड {volume}",
   "citation.page": "पृष्ठ {page}",
   "citation.part": "भाग {part}",
-
   "provenance.confirmed": "पुष्ट",
   "provenance.unconfirmed": "अभी पुष्ट नहीं",
-
   "language.choose": "भाषा चुनें",
-
   "system.title": "डिज़ाइन प्रणाली",
   "system.subtitle": "दोनों रूपों में हर टोकन, टाइप शैली और घटक",
   "system.theme.light": "पृष्ठ",
@@ -42,5 +35,10 @@
   "system.ruler.intro": "स्पर्श लक्ष्य 30 मिमी हैं, 44px की वेब परंपरा नहीं। बैंक कार्ड से अंशांकन करें, जिसकी चौड़ाई अंतरराष्ट्रीय मानक से 85.60 मिमी है।",
   "system.ruler.calibrate": "इस स्क्रीन पर कार्ड की चौड़ाई",
   "system.ruler.reset": "अंशांकन रीसेट करें",
-  "system.ruler.target": "इस अंशांकन पर 30 मिमी का लक्ष्य"
+  "system.ruler.target": "इस अंशांकन पर 30 मिमी का लक्ष्य",
+  "citation.sitting": "बैठक {sitting}",
+  "citation.paragraph": "अनुच्छेद {paragraph}",
+  "citation.article": "अनुच्छेद {article}",
+  "citation.inferred": "अनुमानित पृष्ठ",
+  "citation.inferred.explain": "यह पृष्ठ संख्या पृष्ठ पर पढ़ी नहीं गई, आसपास के क्रम से अनुमानित की गई है।"
 }
