@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:quiet": "TORAN_BUILD_DIR=.next-build next build && rm -rf out && mv .next-build out",
     "serve": "npx --yes serve@14 out -l 4173",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."

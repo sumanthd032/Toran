@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "npm run dev --workspace @toran/web",
     "build": "npm run build --workspace @toran/web",
+    "build:quiet": "npm run build:quiet --workspace @toran/web",
     "serve": "npm run serve --workspace @toran/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
