@@ -21,6 +21,15 @@ export interface HallDevice extends DeviceConfig {
 
 const Q = Math.PI / 4;
 
+/**
+ * The Timeline Wall panels hang with their centre at 1.6 m, so the 1.75 m
+ * screen runs from 0.71 m to 2.49 m off the floor. Its bottom third, where the
+ * time axis is dragged, then sits between 0.71 m and 1.30 m: waist height for
+ * a standing adult and inside the 15 to 48 inch reach range for a visitor in
+ * a wheelchair. They were at 3.1 m, where nobody could touch them.
+ */
+const WALL_CENTRE_Y = 1.6;
+
 export const DEVICES: readonly HallDevice[] = [
   {
     deviceId: 'dev-13',
@@ -72,7 +81,7 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'timeline',
     form: 'wall',
     defaultLanguage: 'en',
-    position: [-11.55, 3.1, -7],
+    position: [-11.55, WALL_CENTRE_Y, -7],
     rotationY: Math.PI / 2,
     version: 1,
   },
@@ -81,7 +90,7 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'timeline',
     form: 'wall',
     defaultLanguage: 'hi',
-    position: [-11.55, 3.1, -13],
+    position: [-11.55, WALL_CENTRE_Y, -13],
     rotationY: Math.PI / 2,
     version: 1,
   },
@@ -90,7 +99,7 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'timeline',
     form: 'wall',
     defaultLanguage: 'mr',
-    position: [-11.55, 3.1, -19],
+    position: [-11.55, WALL_CENTRE_Y, -19],
     rotationY: Math.PI / 2,
     version: 1,
   },
