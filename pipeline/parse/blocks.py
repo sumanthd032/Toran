@@ -138,17 +138,31 @@ def _table_rows(lines: list[str]) -> set[int]:
     return rows
 
 
-def _is_heading(line: str, width: int) -> bool:
+ROMAN_NUMERAL = re.compile(r"^[IVXLC]{1,7}\.?$")
+
+
+def _is_heading(line: str, width: int, alone: bool) -> bool:
+    """
+    A heading, by the signs the printed page gives.
+
+    Centring alone is not enough: pdftotext compresses spacing, and the title
+    "ANNIHILATION OF CASTE" on its opening page sits 13 characters in, not the
+    26 its centring would give. So a short line in capitals is a heading when it
+    is set in from the margin or stands alone between blank lines, which a
+    capitalised line inside a paragraph never does.
+    """
     stripped = line.strip()
     indent = _indent(line)
     if not stripped or len(stripped) > 70:
         return False
-    centred = indent >= max(10, width // 5) and len(stripped) <= width * 0.6
-    if not centred:
-        return False
     letters = [c for c in stripped if c.isalpha()]
-    upper = bool(letters) and sum(c.isupper() for c in letters) >= len(letters) * 0.8
-    return upper or len(stripped) <= 40
+    upper = len(letters) >= 3 and sum(c.isupper() for c in letters) >= len(letters) * 0.8
+    if ROMAN_NUMERAL.match(stripped) and indent >= 2:
+        return True
+    if upper and len(stripped) <= width * 0.7 and (indent >= 2 or alone):
+        return True
+    centred = indent >= max(10, width // 5) and len(stripped) <= width * 0.6
+    return centred and len(stripped) <= 40
 
 
 def page_blocks(text: str, known: set[str]) -> list[Block]:
@@ -220,7 +234,8 @@ def page_blocks(text: str, known: set[str]) -> list[Block]:
             while table and not table[-1].strip():
                 table.pop()
             flush_table()
-        if _is_heading(line, width):
+        alone = not prev.strip() and (number + 1 >= len(lines) or not lines[number + 1].strip())
+        if _is_heading(line, width, alone):
             # A section numeral often follows its paragraph with no blank line.
             flush_para()
             heading.append(line)
@@ -249,6 +264,10 @@ def page_blocks(text: str, known: set[str]) -> list[Block]:
     while table and not table[-1].strip():
         table.pop()
     flush_table()
+
+    # A block with no letter or figure in it is layout residue: a stray quote
+    # mark from a plate's image, an ornament. It carries nothing to read.
+    blocks = [b for b in blocks if re.search(r"[^\W_]", b.text)]
 
     first = next((l for l in lines if l.strip()), "")
     if blocks and blocks[0].kind == "paragraph" and _indent(first) < 2:
