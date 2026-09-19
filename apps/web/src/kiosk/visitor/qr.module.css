@@ -1,0 +1,14 @@
+.qr {
+  /* 40 mm: a phone at arm's length reads it without the visitor bending. */
+  width: calc(40mm * var(--device-scale));
+  height: calc(40mm * var(--device-scale));
+  flex: none;
+}
+
+.paper {
+  fill: var(--surface-raised);
+}
+
+.ink {
+  fill: var(--text);
+}

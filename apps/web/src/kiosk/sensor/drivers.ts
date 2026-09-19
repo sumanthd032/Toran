@@ -14,7 +14,8 @@
  * would sit in its attract loop ignoring the person in front of it.
  */
 
-import { HARDWARE_SOCKET, type KioskHardwareMessage } from '@toran/contracts';
+import { HARDWARE_SOCKET } from '@toran/contracts';
+import { connectDaemon } from '../daemon';
 import { NOBODY_M } from './smooth';
 
 export type DriverKind = 'hardware' | 'simulator' | 'null';
@@ -76,56 +77,21 @@ export function simulatorDriver(start = NOBODY_M): SensorDriver {
   };
 }
 
-function isMessage(value: unknown): value is KioskHardwareMessage {
-  if (typeof value !== 'object' || value === null) return false;
-  const t = (value as { type?: unknown }).type;
-  return t === 'hello' || t === 'distance' || t === 'card';
-}
-
 export function hardwareDriver(url: string = HARDWARE_SOCKET): SensorDriver {
   return {
     kind: 'hardware',
-    start: (sink) => {
-      let socket: WebSocket | null = null;
-      let closed = false;
-      let retry = 500;
-      let timer = 0;
-
-      const connect = () => {
-        sink.status('connecting');
-        socket = new WebSocket(url);
-        socket.addEventListener('open', () => {
-          retry = 500;
-          sink.status('live');
-        });
-        socket.addEventListener('message', (event: MessageEvent<string>) => {
-          let parsed: unknown;
-          try {
-            parsed = JSON.parse(event.data);
-          } catch {
-            return; // A malformed frame from the daemon is dropped, never fatal.
-          }
-          if (!isMessage(parsed)) return;
-          const now = performance.now();
-          if (parsed.type === 'distance') sink.distance(parsed.metres, now);
-          else if (parsed.type === 'card') sink.card(parsed.token, now);
-        });
-        socket.addEventListener('close', () => {
-          if (closed) return;
-          sink.status('down');
-          // The daemon restarts; the kiosk keeps trying, backing off to 8 s.
-          timer = window.setTimeout(connect, retry);
-          retry = Math.min(8000, retry * 2);
-        });
-      };
-
-      connect();
-      return () => {
-        closed = true;
-        window.clearTimeout(timer);
-        socket?.close();
-      };
-    },
+    start: (sink) =>
+      connectDaemon(
+        {
+          message: (m) => {
+            const now = performance.now();
+            if (m.type === 'distance') sink.distance(m.metres, now);
+            else if (m.type === 'card') sink.card(m.token, now);
+          },
+          status: sink.status,
+        },
+        url,
+      ),
   };
 }
 
