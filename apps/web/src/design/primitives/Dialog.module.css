@@ -1,11 +1,20 @@
 .dialog {
   padding: 0;
+  /*
+    The browser centres a modal dialog with margin: auto, and Tailwind's reset
+    sets every margin to 0, which had pinned dialogs to the top left corner.
+  */
+  margin: auto;
   border: var(--hairline) solid var(--border-strong);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   color: var(--text);
   max-width: min(72ch, 90vw);
   width: 100%;
+  /* Taller than the screen at 200% type, it scrolls rather than hiding Close. */
+  max-height: calc(100dvh - 2 * var(--s-3));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .dialog::backdrop {

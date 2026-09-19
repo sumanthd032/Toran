@@ -121,3 +121,14 @@ p {
     scroll-behavior: auto !important;
   }
 }
+
+/* The same, when the visitor's card asks for it rather than their device. */
+[data-motion='reduced'],
+[data-motion='reduced'] *,
+[data-motion='reduced'] *::before,
+[data-motion='reduced'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}

@@ -12,6 +12,12 @@
 
 let ctx: AudioContext | null = null;
 let enabled = true;
+/**
+ * An audio-first visitor, from their card's profile, hears feedback louder.
+ * Step 9 builds the rest of audio-first: narration, and a kiosk that can be
+ * used without reading at all.
+ */
+let level = 1;
 
 function context(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -39,6 +45,10 @@ export function isSoundEnabled(): boolean {
   return enabled;
 }
 
+export function setFeedbackLevel(raised: boolean): void {
+  level = raised ? 1.8 : 1;
+}
+
 type Weight = 'light' | 'firm';
 
 /**
@@ -52,7 +62,7 @@ export function playTouch(weight: Weight = 'light'): void {
   if (c.state === 'suspended') void c.resume();
 
   const now = c.currentTime;
-  const gain = weight === 'firm' ? 0.16 : 0.09;
+  const gain = (weight === 'firm' ? 0.16 : 0.09) * level;
   const bodyHz = weight === 'firm' ? 168 : 232;
   const tail = weight === 'firm' ? 0.085 : 0.055;
 

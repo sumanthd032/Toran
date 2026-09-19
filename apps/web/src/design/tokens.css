@@ -10,6 +10,8 @@
 :root {
   /* ---- materials, raw. Never used directly in components. ---- */
   --m-paper: #f4efe6;
+  /* The same paper before the years tint it, as in a new reprint. High contrast only. */
+  --m-paper-new: #fffdf8;
   --m-vellum: #ede5d6;
   --m-rule: #c8bfae;
   --m-ink: #1a1714;
@@ -188,12 +190,58 @@
   --unconfirmed: color-mix(in srgb, #d4736b 40%, transparent);
 }
 
-/* Accessibility profile, set by the Sutra card. */
-:root[data-type-scale='large'] {
+/*
+  Accessibility profile, set by the Sutra card on the kiosk's root element.
+  The type tokens are declared again wherever a scale is set, because a custom
+  property's var() is resolved where the property is declared: setting
+  --type-scale on the kiosk alone would leave every size computed at 1 on
+  :root. Spacing is not scaled. At 200% the screen is short of room, and
+  doubling every gap would spend it on white space.
+*/
+[data-type-scale] {
+  --t-display: calc(64px * var(--type-scale));
+  --t-title: calc(48px * var(--type-scale));
+  --t-heading: calc(32px * var(--type-scale));
+  --t-body: calc(24px * var(--type-scale));
+  --t-meta: calc(18px * var(--type-scale));
+  --baseline: calc(var(--t-body) * var(--leading-read));
+}
+[data-type-scale='large'] {
   --type-scale: 1.5;
 }
-:root[data-type-scale='largest'] {
+[data-type-scale='largest'] {
   --type-scale: 2;
+}
+
+/*
+  High contrast, from the card profile. Body text is already over 15:1, so
+  this is about everything else: secondary text, rules and accents drop their
+  tints and go to ink, surfaces go to unaged paper, and patina steps aside so
+  nothing sits under the text.
+*/
+[data-contrast='high'] {
+  --surface: var(--m-paper-new);
+  --surface-raised: var(--m-paper-new);
+  --surface-sunken: var(--m-paper);
+  --text: var(--m-ink);
+  --text-soft: var(--m-ink);
+  --border: var(--m-ink);
+  --border-strong: var(--m-ink);
+  --accent-text: var(--m-ink);
+  --section-text: var(--m-ink);
+  --hairline: 2px;
+  --patina-1: transparent;
+  --patina-2: transparent;
+  --patina-3: transparent;
+  --patina-4: transparent;
+}
+
+/* Reduced motion from the card, for a visitor whose device setting says nothing. */
+[data-motion='reduced'] {
+  --dur-fast: 1ms;
+  --dur: 1ms;
+  --dur-slow: 1ms;
+  --dur-camera: 1ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
