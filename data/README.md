@@ -10,20 +10,30 @@ and checked by `python3 pipeline/verify.py`.
 ```
 data/
 ├─ sip/                     SUBMISSION. What arrived.
-│  └─ <source-id>/
-│     ├─ original.pdf       the bytes as retrieved, never modified
-│     ├─ <date>.html        for sources fetched per sitting
-│     └─ submission.json    url, retrieval time, sha256, rights
+│  ├─ <source-id>/
+│  │  ├─ original.pdf       the bytes as retrieved, never modified
+│  │  ├─ <date>.html        for sources fetched per sitting
+│  │  └─ submission.json    url, retrieval time, sha256, rights
+│  └─ photos/<id>/
+│     ├─ original.<ext>     a Commons file, kept only if its SHA-1 matches Commons
+│     └─ submission.json    file page, licence and what Commons records about it
 ├─ aip/                     ARCHIVAL. What is kept. The authority.
 │  ├─ premis.jsonl          append-only preservation event log
-│  └─ <source-id>/
-│     ├─ dublin-core.json   descriptive metadata, 15 elements only
-│     ├─ pages.json         per page: printed number, observed or inferred
-│     ├─ records.json       per paragraph, for debate sources
-│     └─ pages/*.txt        normalised page text
+│  ├─ <source-id>/
+│  │  ├─ dublin-core.json   descriptive metadata, 15 elements only
+│  │  ├─ pages.json         per page: printed number, observed or inferred
+│  │  ├─ records.json       per paragraph, for debate sources
+│  │  └─ pages/*.txt        normalised page text
+│  └─ photos/<id>/
+│     └─ dublin-core.json   a photograph's record, as Commons gives it
 ├─ dip/                     DISSEMINATION. What is served. Rebuildable.
 │  ├─ works.json            catalogue
-│  └─ chunks.jsonl          retrieval units, one JSON object per line
+│  ├─ chunks.jsonl          retrieval units, one JSON object per line
+│  ├─ pages.jsonl           the reading copy: pages with their printed structure
+│  ├─ sittings.jsonl        the reading copy: whole debate sittings
+│  ├─ articles.jsonl        the reading copy: Articles of the Constitution
+│  ├─ photos.json           photographs with their provenance
+│  └─ photos/<id>.jpg       web copies, at most 1600 px
 └─ fixity.json              sha256 of every submitted object
 ```
 
@@ -73,3 +83,9 @@ by its publisher, and `rights_verified` is `false` on all of them. That flag
 means nobody on this project has confirmed the position with the rights holder.
 It is recorded honestly rather than assumed, and it should be resolved before
 any public deployment.
+
+Photographs are listed in `pipeline/photos.json` and fetched by
+`python3 pipeline/photos.py`. Only files Wikimedia Commons records as public
+domain are fetched, and the date, author and source shown with each are what
+Commons records, labelled as such on screen. Several give their source only as
+"Via Internet"; none has been confirmed beyond Commons.

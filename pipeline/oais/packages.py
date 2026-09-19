@@ -112,6 +112,16 @@ def dublin_core(**fields: Any) -> dict[str, Any]:
     return {k: fields[k] for k in DC_ELEMENTS if fields.get(k) is not None}
 
 
+def write_fixity(sip: Path, out: Path) -> dict[str, str]:
+    """Digest every submitted object. The submission records are not objects."""
+    fixity = {}
+    for path in sorted(sip.rglob("*")):
+        if path.is_file() and path.name != "submission.json":
+            fixity[str(path.relative_to(sip))] = sha256_file(path)
+    write_json(out, fixity)
+    return fixity
+
+
 def verify_fixity(root: Path, manifest: dict[str, str]) -> list[str]:
     """Re-hash everything in the manifest. Returns the paths that changed."""
     failures = []

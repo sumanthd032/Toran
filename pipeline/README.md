@@ -5,11 +5,12 @@ Corpus acquisition, parsing and OAIS packaging. Python, standard library only.
 ## Requirements
 
 - Python 3.11 or newer, no packages to install
-- `pdftotext` from poppler-utils, which does the PDF text extraction
+- `pdftotext` and `pdfimages` from poppler-utils, for PDF text and plate images
+- ImageMagick (`magick`), for the web copies of photographs
 
 ```
-sudo dnf install poppler-utils      # Fedora
-sudo apt install poppler-utils      # Debian, Ubuntu
+sudo dnf install poppler-utils ImageMagick      # Fedora
+sudo apt install poppler-utils imagemagick      # Debian, Ubuntu
 ```
 
 There is no `requirements.txt` because there are no dependencies. Step 8 adds
@@ -20,6 +21,7 @@ Surya for OCR and will bring one.
 ```
 python3 pipeline/ingest.py            # fetch, parse, package
 python3 pipeline/ingest.py --refetch  # re-download even if present
+python3 pipeline/photos.py            # photographs for the Timeline Wall
 python3 pipeline/verify.py            # check the result against the originals
 ```
 
@@ -36,6 +38,7 @@ and re-running it produces the same digests.
 | `parse/cad.py` | debate paragraphs, speakers and procedural records |
 | `oais/packages.py` | SIP/AIP/DIP, fixity, PREMIS events, Dublin Core |
 | `ingest.py` | orchestrates the three stages |
+| `photos.json`, `photos.py` | photographs: Commons files checked against Commons' SHA-1, and plates taken from a volume |
 | `verify.py` | checks citations resolve against the original files |
 
 ## Two things the parsers handle that are easy to miss

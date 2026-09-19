@@ -1,0 +1,47 @@
+{
+  "note": "Photographs for the Timeline Wall. Each is a file on Wikimedia Commons that Commons records as public domain; photos.py refuses anything else. The date, author and source shown with a photograph are what Commons records, and the wall says so: several say only 'Via Internet', and none of them is confirmed here. Plates come from a volume already in the archive and are cited to it.",
+  "commons": [
+    {
+      "id": "columbia",
+      "title": "A photo of Dr. Ambedkar during his years at Columbia, 1913-16.gif"
+    },
+    {
+      "id": "lse",
+      "title": "Dr. B. R. Ambedkar with his professors and friends from the London School of Economics and Political Science, 1916-17.jpg"
+    },
+    {
+      "id": "mahad-flyer",
+      "title": "Flyer published before Mahad Satyagraha in 1927.jpg"
+    },
+    { "id": "round-table", "title": "Ambedkar at the Round Table Conference.jpg" },
+    {
+      "id": "yerwada",
+      "title": "M.R. Jayakar, Tej Bahadur Sapru and Dr. Babasaheb Ambedkar at Yerwada jail, in Poona, on 24 September 1932, the day the Poona Pact was signed.jpg"
+    },
+    {
+      "id": "yeola",
+      "title": "Dr. Babasaheb Ambedkar delivering speech about renouncing Hinduism at Yeola, Nashik on 13 Oct, 1935.jpg 01.jpg"
+    },
+    {
+      "id": "rajgriha-1934",
+      "title": "Rajagriha, Bombay, February 1934. (L to R) Yashwant, BR Ambedkar, Ramabai, Laxmibai, Mukundrao, and Tobby.jpg"
+    },
+    {
+      "id": "rajgriha-1946",
+      "title": "Dr. Babasaheb Ambedkar at home Rajgriha - 1946.jpg"
+    },
+    {
+      "id": "drafting-committee",
+      "title": "Dr. Babasaheb Ambedkar Chairman, Drafting Committee of the Indian Constitution with other members on Aug. 29, 1947.jpg"
+    },
+    {
+      "id": "deekshabhoomi",
+      "title": "Dr. B. R. Ambedkar giving 22 vows after renouncing Hinduism at Deekshabhoomi, Nagpur.jpg"
+    },
+    {
+      "id": "kathmandu",
+      "title": "Dr. Ambedkar delivering his historic speech “Buddha and Karl Marx” on Nov 20, 1956 before delegates of the 4th World Buddhist Conference held at Katmandu, Nepal. His Highness the King of Nepal, Maisaheb and Bhante Chandramani are al.jpg"
+    }
+  ],
+  "plates": [{ "id": "frontispiece-v17-1", "source": "baws-v17-1", "pdf_index": 1 }]
+}

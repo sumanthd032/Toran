@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from oais.packages import Premis, dublin_core, now, sha256_file, sha256_text, verify_fixity, write_json
+from oais.packages import Premis, dublin_core, now, sha256_file, sha256_text, verify_fixity, write_fixity, write_json
 from parse import cad as cad_parser
 from parse import constitution as coi_parser
 from parse.blocks import body_text, page_blocks, vocabulary
@@ -415,11 +415,7 @@ def main() -> int:
                  f"{len(reading['articles'])} articles")
 
     # Fixity manifest over the submission packages.
-    fixity = {}
-    for path in sorted(SIP.rglob("*")):
-        if path.is_file() and path.name != "submission.json":
-            fixity[str(path.relative_to(SIP))] = sha256_file(path)
-    write_json(DATA / "fixity.json", fixity)
+    fixity = write_fixity(SIP, DATA / "fixity.json")
     premis.event("fixity check", "success", f"{len(fixity)} objects digested")
 
     print(f"\nchunks: {len(all_chunks)}")
