@@ -9,6 +9,8 @@
   inset: 0;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  /* One column that never grows past the screen, however full the reach zone. */
+  grid-template-columns: minmax(0, 1fr);
   background: var(--surface);
   color: var(--text);
   font-family: var(--font-read);
@@ -209,7 +211,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
-  padding: var(--s-2) var(--s-6) var(--s-4);
+  padding: var(--s-2) var(--s-4) var(--s-3);
   border-top: var(--hairline) solid var(--border);
   transition:
     opacity var(--dur-slow) var(--ease),
@@ -217,9 +219,135 @@
 }
 
 .nav,
-.languages {
+.visitor {
   display: flex;
+  align-items: center;
   gap: var(--s-2);
+}
+
+/*
+  Controls here keep their 30 mm height and width, but not the primitive's
+  generous side padding: ten controls have to share one row on a 1280 pixel
+  screen without pushing any of them out of the bottom third.
+*/
+.reach button {
+  padding-inline: var(--s-2);
+}
+
+/* The channel's own controls, set here through the reach slot. */
+.tools {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.tools:empty {
+  display: none;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+/* At 200% the labels step aside and the icons carry the controls (CLAUDE.md 10). */
+[data-type-scale='largest'] .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+  The card reader's mark. Waiting, it glows gently so a visitor with a card
+  knows where to tap; holding a card, it is solid brass; on each read it
+  swells once.
+*/
+.cardMark {
+  display: grid;
+  place-items: center;
+  width: calc(var(--touch-min) * 0.62);
+  height: calc(var(--touch-min) * 0.62);
+  border-radius: 50%;
+  color: var(--accent-text);
+  border: 2px solid var(--accent);
+  animation: reader-wait 2.4s var(--ease) infinite alternate;
+}
+
+.cardMark[data-held='true'] {
+  color: var(--text-inverse);
+  background: var(--accent);
+  animation: reader-read 520ms var(--ease) 1;
+}
+
+.cardMark .icon {
+  width: 55%;
+  height: 55%;
+}
+
+@keyframes reader-wait {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+}
+
+@keyframes reader-read {
+  from {
+    transform: scale(1.25);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---- the visitor's settings panel ---- */
+
+.settingsGroup {
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.settingsGroup legend {
+  margin-bottom: var(--s-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.settingsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.sizeSample {
+  font-family: var(--font-read);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sizeSample[data-scale='default'] {
+  font-size: 1em;
+}
+.sizeSample[data-scale='large'] {
+  font-size: 1.35em;
+}
+.sizeSample[data-scale='largest'] {
+  font-size: 1.7em;
 }
 
 .icon {
@@ -296,73 +424,4 @@
   font-family: var(--font-mono);
   font-size: var(--t-meta);
   color: var(--text-soft);
-}
-
-.quiet {
-  color: var(--text-soft);
-  font-family: var(--font-ui);
-  font-size: var(--t-meta);
-}
-
-.reading {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-
-.results {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30ch), 1fr));
-  align-content: start;
-  gap: var(--s-2);
-  overscroll-behavior: contain;
-}
-
-.hit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-
-.hitText {
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.speaker {
-  font-family: var(--font-ui);
-  font-size: var(--t-meta);
-  font-weight: 500;
-  color: var(--section-text);
-}
-
-.suggest {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-
-.suggestRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-}
-
-.searchBar {
-  display: flex;
-  gap: var(--s-2);
-  align-items: flex-end;
-}
-
-.searchField {
-  flex: 1;
 }

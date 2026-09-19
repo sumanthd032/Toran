@@ -1,0 +1,76 @@
+/*
+  Read on a phone, or printed. One column of passages, each with its source,
+  on the archive's paper. Sizes are set for a phone at reading distance, not
+  taken from the kiosk scale, which is set for a standing visitor at a 1080p
+  panel and would be enormous here.
+*/
+
+.page {
+  min-height: 100dvh;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--s-4) var(--s-3) var(--s-6);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-read);
+}
+
+.head {
+  border-bottom: 2px solid var(--section);
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+.place {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 32px;
+  line-height: 1.15;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.item {
+  break-inside: avoid;
+}
+
+.speaker {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+.quote {
+  margin: 4px 0 0;
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+.note,
+.foot {
+  margin: var(--s-4) 0 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--text-soft);
+}
+
+@media print {
+  .page {
+    padding: 0;
+  }
+}

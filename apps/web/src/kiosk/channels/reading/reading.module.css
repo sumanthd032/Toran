@@ -1,0 +1,486 @@
+/*
+  The Reading Room. A page is set like the printed page it is: the running
+  head letter-spaced in small capitals, paragraphs opening on an indent, a
+  paragraph carried over from the page before set flush, headings centred as
+  printed. Reading happens in the upper two thirds; every control is in the
+  reach zone below.
+*/
+
+.room {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.quiet {
+  margin: 0;
+  color: var(--text-soft);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+}
+
+/* ---- search ---- */
+
+.suggest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-2);
+}
+
+.suggestRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30ch), 1fr));
+  /*
+    Rows the height of their cards. A card's 30 mm minimum replaces the grid's
+    content-based minimum, and without this the rows shrink to share the
+    pane's height while the text spills out of them.
+  */
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--s-2);
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-height: var(--touch-min);
+}
+
+.hitText {
+  margin: 0;
+  /*
+    Four lines, cut on a line boundary. A max-height of exactly four line
+    heights sizes reliably inside a grid, where -webkit-line-clamp did not.
+  */
+  line-height: 1.5;
+  max-height: calc(4 * 1.5em);
+  overflow: hidden;
+  flex: none;
+}
+
+.speaker {
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+.searchBar {
+  flex: 1;
+  display: flex;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 8ch;
+  min-height: var(--touch-min);
+  padding: 0 var(--s-3);
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.searchInput:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- a document ---- */
+
+.document {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--s-2);
+}
+
+.docHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.runningHead {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-4);
+  padding-bottom: var(--s-1);
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.head {
+  font-family: var(--font-read);
+  font-size: var(--t-meta);
+  letter-spacing: 0.14em;
+  font-variant-caps: all-small-caps;
+  color: var(--text-soft);
+}
+
+.editors {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.docBody {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-6);
+}
+
+.docBody[data-abstract] {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr);
+}
+
+.docBody[data-dual] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.docBody[data-abstract][data-dual] {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.pane {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--s-2);
+  /* Keeps a marked passage clear of the pane's edge when scrolled to. */
+  scroll-padding: var(--s-6) 0;
+}
+
+/* The page edge wears with use: patina, aggregate and anonymous (D-024). */
+.document[data-patina='1'] .pane:first-of-type {
+  box-shadow: inset 6px 0 0 var(--patina-1);
+}
+.document[data-patina='2'] .pane:first-of-type {
+  box-shadow: inset 6px 0 0 var(--patina-2);
+}
+.document[data-patina='3'] .pane:first-of-type {
+  box-shadow: inset 6px 0 0 var(--patina-3);
+}
+.document[data-patina='4'] .pane:first-of-type {
+  box-shadow: inset 6px 0 0 var(--patina-4);
+}
+
+.para {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  text-indent: 1.6em;
+  text-wrap: pretty;
+  hyphens: manual;
+  border-radius: var(--radius);
+  padding: 2px var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.para[data-continued] {
+  text-indent: 0;
+}
+
+/* A speech in the Assembly: speaker above, no indent. */
+.speech {
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius);
+}
+
+.speech .para {
+  text-indent: 0;
+  margin: 2px 0 var(--s-1);
+}
+
+.speech[data-procedural] .para {
+  font-style: italic;
+}
+
+.speech[data-focus] {
+  border-left-color: var(--section);
+}
+
+.printedHeading {
+  margin: var(--s-3) 0 var(--s-2);
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  text-align: center;
+}
+
+.printedHeading[data-align='right'] {
+  text-align: right;
+  font-size: var(--t-body);
+  font-weight: 500;
+}
+
+.table {
+  margin: var(--s-2) 0;
+  padding: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
+}
+
+.articleHead {
+  margin: var(--s-2) 0;
+  font-size: var(--t-title);
+  line-height: var(--leading-tight);
+}
+
+.articleText {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-heading);
+  line-height: 1.5;
+  padding: var(--s-2);
+  border-radius: var(--radius);
+}
+
+.translationSource {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+}
+
+/* The paragraphs a search hit runs through: quiet, so the marked words carry it. */
+.pane [data-hit] {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+/* The chosen passage, and those already kept. */
+.pane [aria-current='true'] {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  box-shadow: inset 6px 0 0 var(--accent);
+}
+
+.pane [data-kept] {
+  box-shadow: inset -4px 0 0 var(--section);
+}
+
+.pane [aria-current='true'][data-kept] {
+  box-shadow:
+    inset 6px 0 0 var(--accent),
+    inset -4px 0 0 var(--section);
+}
+
+.pane [data-choose]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pane mark {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* ---- the abstract, beside the page ---- */
+
+.abstract {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-right: var(--s-2);
+  border-right: var(--hairline) solid var(--border);
+}
+
+.abstractTitle {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--section-text);
+}
+
+.abstractList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.abstractSentence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--s-2);
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.abstractSentence[aria-current='page'] {
+  border-color: var(--accent);
+}
+
+.abstractSentence:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.abstractText {
+  font-size: calc(var(--t-body) * 0.9);
+  line-height: 1.5;
+}
+
+.abstractNote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+/*
+  At 200% there is no room for two columns. The abstract sits above the page
+  and the two scroll as one, rather than two cramped panes.
+*/
+[data-type-scale='largest'] .docBody {
+  display: block;
+  overflow-y: auto;
+}
+
+[data-type-scale='largest'] .docBody .pane,
+[data-type-scale='largest'] .docBody .abstract {
+  overflow: visible;
+  border-right: 0;
+  padding-bottom: var(--s-3);
+}
+
+/* ---- the dossier ---- */
+
+.empty {
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--t-heading);
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.dossier {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-6);
+  align-items: start;
+}
+
+.keptList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 28ch), 1fr));
+  grid-auto-rows: max-content;
+  gap: var(--s-2);
+}
+
+.kept {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.keptActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+
+.takeHome {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 34ch;
+  text-align: center;
+}
+
+.takeHome figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+}
+
+.takeHome strong {
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+[data-type-scale='largest'] .dossier {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-y: auto;
+}
+
+/* One scrolling column: the list gives up its own scroll, or it collapses to nothing. */
+[data-type-scale='largest'] .keptList {
+  max-height: none;
+  overflow: visible;
+}
+
+/* ---- labels in the reach zone step aside at 200%; the icons carry it ---- */
+
+.label {
+  white-space: nowrap;
+}
+
+[data-type-scale='largest'] .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

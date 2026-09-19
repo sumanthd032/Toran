@@ -7,16 +7,28 @@
  * twin and the kiosk run the same build" a literal statement. D-015.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEVICES } from '@/fleet/devices';
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { setFeedbackLevel } from '@/design/feedback/sound';
+import { DEVICES, type HallDevice } from '@/fleet/devices';
 import { I18nProvider, useI18n } from '@/i18n';
 import { KioskShell } from './KioskShell';
+import { Entrance } from './channels/entrance/Entrance';
 import { PendingChannel } from './channels/PendingChannel';
-import { ReadingChannel, type ReadingControls } from './channels/ReadingChannel';
-import { nullDriver, selectDriver } from './sensor/drivers';
+import { ReadingRoom } from './channels/reading/ReadingRoom';
+import { NavProvider, useNavSlot } from './nav';
+import { ReachSlot } from './reach';
+import {
+  nullDriver,
+  selectDriver,
+  type DriverKind,
+  type DriverStatus,
+} from './sensor/drivers';
+import type { Proximity } from './machine';
 import { useAmbient } from './useAmbient';
 import { useProximity } from './useProximity';
 import { useQuery } from './useQuery';
+import { selectReader } from './visitor/card';
+import { useVisitor, VisitorProvider } from './visitor/VisitorProvider';
 import styles from './kiosk.module.css';
 
 export type KioskContext = 'standalone' | 'twin';
@@ -33,8 +45,19 @@ export interface KioskAppProps {
   live?: boolean;
 }
 
+function channelFor(device: HallDevice, live: boolean): ReactNode {
+  switch (device.channel) {
+    case 'reading':
+      return <ReadingRoom live={live} />;
+    case 'entrance':
+      return <Entrance />;
+    default:
+      return <PendingChannel channel={device.channel} />;
+  }
+}
+
 function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
-  const { lang, dir, t } = useI18n();
+  const { t } = useI18n();
   const device = DEVICES.find((d) => d.deviceId === deviceId);
   const query = useQuery();
   // A visitor in the Twin has no sensor in front of them, and opening a device
@@ -46,18 +69,13 @@ function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
         : selectDriver(`?${query.toString()}`),
     [context, query],
   );
+  const reader = useMemo(
+    () => selectReader(query === null ? '' : `?${query.toString()}`, context),
+    [context, query],
+  );
   const { proximity, driverStatus, touch } = useProximity(driver, {
     startEngaged: context === 'twin',
   });
-  const passages = useAmbient();
-  const [bootedAt, setBootedAt] = useState(0);
-  useEffect(() => setBootedAt(performance.now()), []);
-  const reading = useRef<ReadingControls | null>(null);
-  const onReady = useCallback((c: ReadingControls) => {
-    reading.current = c;
-  }, []);
-
-  const showStatus = context === 'twin' || (query?.has('status') ?? false);
 
   // Physical calibration. The ambient headline is sized in real millimetres,
   // which only holds if CSS millimetres are real on this panel. A kiosk is
@@ -88,13 +106,65 @@ function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
     );
   }
 
-  const home = () => reading.current?.home();
+  return (
+    <VisitorProvider
+      reader={reader}
+      session={proximity.session}
+      touch={touch}
+      defaultLanguage={device.defaultLanguage}
+    >
+      <KioskRoot
+        device={device}
+        proximity={proximity}
+        touch={touch}
+        driverKind={driver.kind}
+        driverStatus={driverStatus}
+        showStatus={context === 'twin' || (query?.has('status') ?? false)}
+        onExit={onExit}
+      >
+        {channelFor(device, live)}
+      </KioskRoot>
+    </VisitorProvider>
+  );
+}
+
+function KioskRoot({
+  device,
+  proximity,
+  touch,
+  driverKind,
+  driverStatus,
+  showStatus,
+  onExit,
+  children,
+}: {
+  device: HallDevice;
+  proximity: Proximity;
+  touch: () => void;
+  driverKind: DriverKind;
+  driverStatus: DriverStatus;
+  showStatus: boolean;
+  onExit: (() => void) | undefined;
+  children: ReactNode;
+}) {
+  const { lang, dir } = useI18n();
+  const { profile, visit } = useVisitor();
+  const passages = useAmbient();
+  const nav = useNavSlot();
+  const [tools, setTools] = useState<HTMLDivElement | null>(null);
+  const [bootedAt, setBootedAt] = useState(0);
+  useEffect(() => setBootedAt(performance.now()), []);
+  useEffect(() => setFeedbackLevel(profile.audioFirst), [profile.audioFirst]);
 
   return (
     <div
       className={styles.root}
       data-theme="light"
       data-state={proximity.state}
+      data-type-scale={profile.typeScale}
+      data-contrast={profile.highContrast ? 'high' : undefined}
+      data-motion={profile.reducedMotion ? 'reduced' : undefined}
+      data-audio={profile.audioFirst ? 'first' : undefined}
       data-testid="kiosk"
       data-device={device.deviceId}
       tabIndex={-1}
@@ -107,23 +177,33 @@ function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
         if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ') touch();
       }}
     >
-      <KioskShell
-        device={device}
-        proximity={proximity}
-        driverKind={driver.kind}
-        driverStatus={driverStatus}
-        passages={passages}
-        showStatus={showStatus}
-        bootedAt={bootedAt}
-        onBack={onExit ?? home}
-        onHome={home}
-      >
-        {device.channel === 'reading' ? (
-          <ReadingChannel onReady={onReady} live={live} />
-        ) : (
-          <PendingChannel channel={device.channel} />
-        )}
-      </KioskShell>
+      <NavProvider registry={nav.provider}>
+        <ReachSlot value={tools}>
+          <KioskShell
+            device={device}
+            proximity={proximity}
+            driverKind={driverKind}
+            driverStatus={driverStatus}
+            passages={passages}
+            showStatus={showStatus}
+            bootedAt={bootedAt}
+            onBack={() => {
+              // Back within the room first; from the room's own start, Back
+              // leaves it, which in the Twin flies out to the hall.
+              if (!nav.back()) {
+                if (onExit !== undefined) onExit();
+                else nav.home();
+              }
+            }}
+            onHome={nav.home}
+            onForward={nav.canForward ? nav.forward : undefined}
+            toolsRef={setTools}
+          >
+            {/* A new visitor finds the room at its start, not where the last one left it. */}
+            <Fragment key={visit}>{children}</Fragment>
+          </KioskShell>
+        </ReachSlot>
+      </NavProvider>
     </div>
   );
 }

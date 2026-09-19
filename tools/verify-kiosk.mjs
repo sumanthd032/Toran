@@ -160,7 +160,11 @@ console.log('\nToran step 5 kiosk verification\n');
     d.remove();
     return h;
   });
-  const heights = await page.$$eval('nav button', (b) => b.map((n) => n.getBoundingClientRect().height));
+  // Only what is on screen: the settings dialog's buttons live in the reach
+  // zone too, and measure nothing while it is closed.
+  const heights = await page.$$eval('nav button', (b) =>
+    b.map((n) => n.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => r.height),
+  );
   check('every control in the reach zone is at least 30 mm', Math.min(...heights) >= mm30 - 0.5, `smallest ${Math.min(...heights).toFixed(0)} px, 30 mm is ${mm30.toFixed(0)} px`);
   const reachTop = await page.$eval('nav', (n) => n.getBoundingClientRect().top);
   check('controls sit in the bottom third', reachTop >= 800 * (2 / 3) - 1, `nav begins at ${reachTop.toFixed(0)} px of 800`);
@@ -200,7 +204,9 @@ console.log('\nToran step 5 kiosk verification\n');
       () => [...document.querySelectorAll('[data-testid="kiosk"] button')].some((b) => /Mahad/.test(b.textContent ?? '')),
       { timeout: 60000 },
     );
-  const a = await open('/kiosk/dev-01/');
+  // The Twin runs the card simulator, so the standalone kiosk is opened with it
+  // too: the comparison is of builds, not of reader settings.
+  const a = await open('/kiosk/dev-01/?card=sim');
   await a.page.mouse.click(640, 300);
   await ready(a.page);
   const standalone = await fingerprint(a.page);

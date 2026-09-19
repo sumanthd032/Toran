@@ -11,37 +11,18 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { LANGUAGES, type CitedPassage } from '@toran/contracts';
+import type { CitedPassage } from '@toran/contracts';
 import { Button, Citation } from '@/design/primitives';
 import type { HallDevice } from '@/fleet/devices';
-import { loadedLanguages, useI18n, type MessageKey } from '@/i18n';
+import { useI18n, type MessageKey } from '@/i18n';
+import { ICON, Icon } from './icons';
 import type { Proximity } from './machine';
 import { ScriptCarousel } from './ScriptCarousel';
 import type { DriverKind, DriverStatus } from './sensor/drivers';
+import { CardMark, VisitorButton } from './VisitorControls';
 import styles from './kiosk.module.css';
 
 const PASSAGE_HOLD_MS = 9000;
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg
-      className={styles.icon}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={d} />
-    </svg>
-  );
-}
-
-const BACK = 'M15 5l-7 7 7 7';
-const FORWARD = 'M9 5l7 7-7 7';
-const HOME = 'M4 11l8-7 8 7M6 10v10h12V10';
 
 function formatUptime(ms: number): string {
   // The clock and the boot time are both set after mount; for the first tick
@@ -63,7 +44,9 @@ export interface KioskShellProps {
   bootedAt: number;
   onBack: () => void;
   onHome: () => void;
-  onForward?: () => void;
+  onForward?: (() => void) | undefined;
+  /** Where a channel's own controls are set, in the reach zone. */
+  toolsRef: (element: HTMLDivElement | null) => void;
   children: ReactNode;
 }
 
@@ -78,9 +61,10 @@ export function KioskShell({
   onBack,
   onHome,
   onForward,
+  toolsRef,
   children,
 }: KioskShellProps) {
-  const { t, lang, setLang } = useI18n();
+  const { t, lang } = useI18n();
   const state = proximity.state;
   const attracting = state === 'ambient' || state === 'implicit';
 
@@ -136,7 +120,7 @@ export function KioskShell({
       )}
 
       <div className={styles.stage}>
-        <div className={`${styles.layer} ${styles.app}`} aria-hidden={attracting}>
+        <div className={`${styles.layer} ${styles.app}`} inert={attracting}>
           <div className={styles.appHead}>
             <h2 className={styles.appTitle}>{title}</h2>
           </div>
@@ -172,47 +156,38 @@ export function KioskShell({
         </figure>
       </div>
 
-      <nav className={styles.reach} aria-hidden={attracting} aria-label={title}>
+      <nav className={styles.reach} inert={attracting} aria-label={title}>
         <div className={styles.nav}>
           <Button
             variant="secondary"
             onClick={onBack}
-            icon={<Icon d={BACK} />}
+            icon={<Icon d={ICON.back} />}
             aria-label={t('nav.back')}
           >
-            {t('nav.back')}
+            <span className={styles.label}>{t('nav.back')}</span>
           </Button>
           <Button
             variant="secondary"
             onClick={onHome}
-            icon={<Icon d={HOME} />}
+            icon={<Icon d={ICON.home} />}
             aria-label={t('nav.home')}
           >
-            {t('nav.home')}
+            <span className={styles.label}>{t('nav.home')}</span>
           </Button>
           <Button
             variant="secondary"
             onClick={onForward}
             disabled={onForward === undefined}
-            icon={<Icon d={FORWARD} />}
+            icon={<Icon d={ICON.forward} />}
             aria-label={t('nav.forward')}
           >
-            {t('nav.forward')}
+            <span className={styles.label}>{t('nav.forward')}</span>
           </Button>
         </div>
-        <div className={styles.languages} role="group" aria-label={t('language.choose')}>
-          {loadedLanguages().map((code) => (
-            <Button
-              key={code}
-              variant={lang === code ? 'primary' : 'secondary'}
-              aria-pressed={lang === code}
-              onClick={() => setLang(code)}
-            >
-              <span lang={code}>
-                {LANGUAGES.find((l) => l.code === code)?.native ?? code}
-              </span>
-            </Button>
-          ))}
+        <div className={styles.tools} ref={toolsRef} data-testid="kiosk-tools" />
+        <div className={styles.visitor}>
+          <CardMark />
+          <VisitorButton />
         </div>
       </nav>
     </>
