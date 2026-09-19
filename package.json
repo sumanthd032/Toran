@@ -16,7 +16,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
-    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition",
+    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor",
     "verify:contrast": "node tools/contrast-check.mjs",
     "verify:render": "node tools/verify-system.mjs",
     "verify:a11y": "node tools/a11y-check.mjs",
@@ -36,7 +36,8 @@
     "build:ambient": "node tools/build-ambient.mjs",
     "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts",
     "photos": "python3 pipeline/photos.py",
-    "build:timeline": "node tools/build-timeline.mjs"
+    "build:timeline": "node tools/build-timeline.mjs",
+    "verify:visitor": "node tools/verify-visitor.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
