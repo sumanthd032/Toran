@@ -78,6 +78,9 @@ def main() -> int:
         elif kind == "article":
             if not re.fullmatch(r"\d{1,3}[A-Z]?", str(loc.get("article", ""))):
                 bad.append(c["chunkId"])
+        elif kind == "plate":
+            if loc.get("plate") not in ("frontispiece",):
+                bad.append(c["chunkId"])
         else:
             bad.append(c["chunkId"])
     check("every chunk has a resolvable locator", not bad, f"{len(bad)} bad")

@@ -53,7 +53,13 @@
         "Kalaram Temple Entry Satyagraha",
         "The Round Table Conferences and the Poona Pact"
       ],
-      "note": "An edited documentary record of events from March 1927 to November 1956. Added in step 6 because the Timeline Wall needs dated events, with pages to cite, that volumes 1 and 7 do not record."
+      "note": "An edited documentary record of events from March 1927 to November 1956. Added in step 6 because the Timeline Wall needs dated events, with pages to cite, that volumes 1 and 7 do not record. Its frontispiece is kept as a plate: its caption gives the dates of birth and death, which no numbered page does.",
+      "plates": [
+        {
+          "pdf_index": 1,
+          "plate": "frontispiece"
+        }
+      ]
     },
     {
       "id": "cad-v7",

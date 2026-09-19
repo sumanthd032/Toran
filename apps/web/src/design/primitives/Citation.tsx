@@ -57,6 +57,12 @@ export function Citation({
       parts.push(t('citation.article', { article: l.article }));
       break;
     }
+    case 'plate': {
+      if (l.volume !== null) parts.push(t('citation.volume', { volume: l.volume }));
+      if (l.part !== null) parts.push(t('citation.part', { part: l.part }));
+      parts.push(t(`citation.plate.${l.plate}`));
+      break;
+    }
   }
 
   return (

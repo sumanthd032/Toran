@@ -67,7 +67,22 @@ export interface ArticleLocator {
   readonly article: string;
 }
 
-export type Locator = PageLocator | ParagraphLocator | ArticleLocator;
+/**
+ * Cites a plate: a printed page without a number, such as a frontispiece.
+ * A plate is cited by what it is, never by an invented page number.
+ */
+export interface PlateLocator {
+  readonly kind: 'plate';
+  readonly volume: number | null;
+  readonly part: string | null;
+  /** What the plate is, as a bibliographer names it. */
+  readonly plate: PlateName;
+}
+
+export const PLATES = ['frontispiece'] as const;
+export type PlateName = (typeof PLATES)[number];
+
+export type Locator = PageLocator | ParagraphLocator | ArticleLocator | PlateLocator;
 
 export interface Citation {
   readonly corpus: Corpus;
@@ -163,6 +178,24 @@ export function articleLocator(article: string): ArticleLocator {
   return { kind: 'article', article };
 }
 
+export function plateLocator(input: {
+  plate: string;
+  volume?: number | null;
+  part?: string | null;
+}): PlateLocator {
+  const volume = input.volume ?? null;
+  if (volume !== null) positiveInt(volume, 'volume');
+  if (!(PLATES as readonly string[]).includes(input.plate)) {
+    throw new CitationError(`unknown plate: ${input.plate}`);
+  }
+  return {
+    kind: 'plate',
+    volume,
+    part: input.part ?? null,
+    plate: input.plate as PlateName,
+  };
+}
+
 /** The only way to make a Citation. */
 export function citation(input: {
   corpus: Corpus;
@@ -224,5 +257,10 @@ export function citationKey(c: Citation): string {
         : `${c.corpus} ${l.volume}.${l.sitting}.${l.paragraph}`;
     case 'article':
       return `art. ${l.article}`;
+    case 'plate': {
+      const vol =
+        l.volume === null ? '' : `${l.volume}${l.part === null ? '' : `.${l.part}`}`;
+      return `${c.corpus} ${vol}:${l.plate}`;
+    }
   }
 }

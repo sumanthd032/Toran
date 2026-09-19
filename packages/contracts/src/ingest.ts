@@ -15,9 +15,10 @@ import {
   isCorpus,
   pageLocator,
   paragraphLocator,
+  plateLocator,
   type CitedPassage,
   type Locator,
-} from './citation';
+} from './citation.ts';
 
 /** The shape the pipeline writes to data/dip/chunks.jsonl. */
 export interface RawChunk {
@@ -45,7 +46,7 @@ function int(value: unknown, field: string): number {
   return value;
 }
 
-function readLocator(raw: unknown): Locator {
+export function readLocator(raw: unknown): Locator {
   if (typeof raw !== 'object' || raw === null) {
     throw new CitationError('locator missing');
   }
@@ -68,6 +69,12 @@ function readLocator(raw: unknown): Locator {
       });
     case 'article':
       return articleLocator(str(l['article'], 'article'));
+    case 'plate':
+      return plateLocator({
+        plate: str(l['plate'], 'plate'),
+        volume: l['volume'] === null ? null : int(l['volume'], 'volume'),
+        part: typeof l['part'] === 'string' ? l['part'] : null,
+      });
     default:
       throw new CitationError(`unknown locator kind: ${String(l['kind'])}`);
   }

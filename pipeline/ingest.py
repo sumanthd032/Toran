@@ -113,13 +113,19 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
     # this volume prints whole. See parse/blocks.py.
     known = vocabulary(p.text for p in pages)
 
+    # A plate is a printed page without a number, a frontispiece for example.
+    # The manifest names the ones worth keeping; they are cited by what they
+    # are, never by an invented page number.
+    plates = {p["pdf_index"]: p["plate"] for p in source.get("plates", [])}
+
     aip_dir = AIP / sid
     records = []
     chunks = []
     reading = []
     observed = 0
     for page in pages:
-        if page.printed is None or page.chars == 0:
+        plate = plates.get(page.pdf_index)
+        if (page.printed is None and plate is None) or page.chars == 0:
             continue
         if page.observed:
             observed += 1
@@ -128,21 +134,26 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
             "pageId": page_id,
             "pdfIndex": page.pdf_index,
             "printed": page.printed,
-            "numbering": page.numbering,
+            "numbering": "plate" if plate is not None else page.numbering,
+            "plate": plate,
             "observed": page.observed,
             "chars": page.chars,
             "head": page.head,
             "sha256": sha256_text(page.text),
         })
-        if page.numbering != "arabic":
+        if plate is None and page.numbering != "arabic":
             continue  # front matter is kept but not indexed for retrieval
-        locator = {
-            "kind": "page",
-            "volume": source["volume"],
-            "part": source["part"],
-            "page": int(page.printed),
-            "observed": page.observed,
-        }
+        if plate is not None:
+            locator = {"kind": "plate", "volume": source["volume"],
+                       "part": source["part"], "plate": plate}
+        else:
+            locator = {
+                "kind": "page",
+                "volume": source["volume"],
+                "part": source["part"],
+                "page": int(page.printed),
+                "observed": page.observed,
+            }
         blocks = page_blocks(page.text, known)
         reading.append({
             "pageId": page_id,
@@ -182,7 +193,7 @@ def ingest_pdf_source(source: dict, refetch: bool, premis: Premis) -> dict:
     ))
     (aip_dir / "pages").mkdir(parents=True, exist_ok=True)
     for page in pages:
-        if page.printed is None or page.chars == 0:
+        if (page.printed is None and page.pdf_index not in plates) or page.chars == 0:
             continue
         (aip_dir / "pages" / f"{sid}-p{page.pdf_index:04d}.txt").write_text(page.text, encoding="utf-8")
 
@@ -389,7 +400,7 @@ def main() -> int:
             fh.write(json.dumps(chunk, ensure_ascii=False) + "\n")
     write_json(DIP / "works.json", [
         {k: v for k, v in s.items() if k != "sha256"}
-        | {"title": src["title"], "corpus": src["corpus"],
+        | {"title": src["title"], "creator": src["creator"], "corpus": src["corpus"],
            "volume": src.get("volume"), "part": src.get("part")}
         for s, src in zip(summaries, manifest["sources"])
     ])

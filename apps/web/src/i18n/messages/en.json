@@ -83,5 +83,6 @@
   "channel.audio.about": "Any passage, read aloud, in the language you choose.",
   "channel.av.about": "Lectures, documentaries and interviews, searchable to the second a phrase is spoken.",
   "channel.assistant.about": "Ask about the works and the Constitution. Every answer cites its page.",
-  "channel.curator.about": "Ingest, correction and the state of every device in the hall."
+  "channel.curator.about": "Ingest, correction and the state of every device in the hall.",
+  "citation.plate.frontispiece": "frontispiece"
 }

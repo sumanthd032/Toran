@@ -86,13 +86,16 @@ fs.rmSync(OUT, { recursive: true, force: true });
 for (const dir of ['pages', 'sittings', 'articles']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
-const manifest = { works: [], sittings: [], sittingOf: {}, articles: [] };
+const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], translations: {} };
 
 for (const work of works) {
   const workPages = pages.filter((p) => p.workId === work.id);
   const entry = {
     id: work.id,
     title: work.title,
+    // Named on screen: volume 17 is an edited compilation, and a reader
+    // should not take every page of it for Ambedkar's own words.
+    creator: work.creator,
     corpus: work.corpus,
     volume: work.volume ?? null,
     part: work.part ?? null,
@@ -100,7 +103,10 @@ for (const work of works) {
     sections: [],
   };
   if (workPages.length > 0) {
-    sectionsOf(workPages).forEach((section, i) => {
+    // A plate is not part of the text around it. The frontispiece stands
+    // before the first chapter and has no section, and so no abstract.
+    for (const page of workPages) page.section = null;
+    sectionsOf(workPages.filter((p) => p.locator.kind !== 'plate')).forEach((section, i) => {
       const id = `${work.id}-s${String(i + 1).padStart(2, '0')}`;
       entry.sections.push({
         id,
@@ -146,13 +152,28 @@ for (const article of articles) {
   });
 }
 
+// Translations, where any exist: data/dip/translations/<language>/<pageId>.json.
+// The manifest lists them, so a kiosk never asks for one that is not there.
+const TRANSLATIONS = path.join(DIP, 'translations');
+if (fs.existsSync(TRANSLATIONS)) {
+  for (const language of fs.readdirSync(TRANSLATIONS)) {
+    fs.mkdirSync(path.join(OUT, 'translations', language), { recursive: true });
+    manifest.translations[language] = [];
+    for (const file of fs.readdirSync(path.join(TRANSLATIONS, language))) {
+      fs.copyFileSync(path.join(TRANSLATIONS, language, file), path.join(OUT, 'translations', language, file));
+      manifest.translations[language].push(file.replace(/\.json$/, ''));
+    }
+  }
+}
+
 write('manifest.json', manifest);
 
 const sections = manifest.works.reduce((n, w) => n + w.sections.length, 0);
 const titled = manifest.works.reduce((n, w) => n + w.sections.filter((s) => s.head !== null).length, 0);
 console.log(
   `archive: ${pages.length} pages in ${sections} sections (${titled} titled), ` +
-    `${sittings.length} sittings, ${articles.length} articles`,
+    `${sittings.length} sittings, ${articles.length} articles, ` +
+    `${Object.values(manifest.translations).flat().length} translated pages`,
 );
 for (const w of manifest.works) {
   if (w.sections.length === 0) continue;
