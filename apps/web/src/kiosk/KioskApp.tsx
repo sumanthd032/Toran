@@ -11,10 +11,12 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setFeedbackLevel } from '@/design/feedback/sound';
 import { DEVICES, type HallDevice } from '@/fleet/devices';
 import { I18nProvider, useI18n } from '@/i18n';
+import { AmbientSlot } from './ambient';
 import { KioskShell } from './KioskShell';
 import { Entrance } from './channels/entrance/Entrance';
 import { PendingChannel } from './channels/PendingChannel';
 import { ReadingRoom } from './channels/reading/ReadingRoom';
+import { TimelineWall } from './channels/timeline/TimelineWall';
 import { NavProvider, useNavSlot } from './nav';
 import { ReachSlot } from './reach';
 import {
@@ -51,6 +53,8 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
       return <ReadingRoom live={live} />;
     case 'entrance':
       return <Entrance />;
+    case 'timeline':
+      return <TimelineWall />;
     default:
       return <PendingChannel channel={device.channel} />;
   }
@@ -93,7 +97,9 @@ function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
         scale = Number.NaN;
       }
     }
-    if (Number.isFinite(scale) && scale > 0.2 && scale < 5) {
+    // The 2.8 m Timeline Wall at 1920 pixels is 0.18: a wall's pixels are
+    // large, so its calibration is small.
+    if (Number.isFinite(scale) && scale > 0.05 && scale < 5) {
       document.documentElement.style.setProperty('--device-scale', String(scale));
     }
   }, [context, query]);
@@ -152,6 +158,7 @@ function KioskRoot({
   const passages = useAmbient();
   const nav = useNavSlot();
   const [tools, setTools] = useState<HTMLDivElement | null>(null);
+  const [ambient, setAmbient] = useState<HTMLDivElement | null>(null);
   const [bootedAt, setBootedAt] = useState(0);
   useEffect(() => setBootedAt(performance.now()), []);
   useEffect(() => setFeedbackLevel(profile.audioFirst), [profile.audioFirst]);
@@ -179,29 +186,32 @@ function KioskRoot({
     >
       <NavProvider registry={nav.provider}>
         <ReachSlot value={tools}>
-          <KioskShell
-            device={device}
-            proximity={proximity}
-            driverKind={driverKind}
-            driverStatus={driverStatus}
-            passages={passages}
-            showStatus={showStatus}
-            bootedAt={bootedAt}
-            onBack={() => {
-              // Back within the room first; from the room's own start, Back
-              // leaves it, which in the Twin flies out to the hall.
-              if (!nav.back()) {
-                if (onExit !== undefined) onExit();
-                else nav.home();
-              }
-            }}
-            onHome={nav.home}
-            onForward={nav.canForward ? nav.forward : undefined}
-            toolsRef={setTools}
-          >
-            {/* A new visitor finds the room at its start, not where the last one left it. */}
-            <Fragment key={visit}>{children}</Fragment>
-          </KioskShell>
+          <AmbientSlot value={ambient}>
+            <KioskShell
+              device={device}
+              proximity={proximity}
+              driverKind={driverKind}
+              driverStatus={driverStatus}
+              passages={passages}
+              showStatus={showStatus}
+              bootedAt={bootedAt}
+              onBack={() => {
+                // Back within the room first; from the room's own start, Back
+                // leaves it, which in the Twin flies out to the hall.
+                if (!nav.back()) {
+                  if (onExit !== undefined) onExit();
+                  else nav.home();
+                }
+              }}
+              onHome={nav.home}
+              onForward={nav.canForward ? nav.forward : undefined}
+              toolsRef={setTools}
+              ambientRef={setAmbient}
+            >
+              {/* A new visitor finds the room at its start, not where the last one left it. */}
+              <Fragment key={visit}>{children}</Fragment>
+            </KioskShell>
+          </AmbientSlot>
         </ReachSlot>
       </NavProvider>
     </div>

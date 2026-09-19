@@ -1,0 +1,628 @@
+/*
+  The Timeline Wall. The upper two thirds hold the event being told, or the
+  ones visitors opened, side by side; the bottom third holds the axis, a brass
+  rail of years the hand drags sideways. Paper, ink and brass, like the rest
+  of the hall.
+*/
+
+.wall {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--s-2);
+}
+
+.status {
+  margin: 0;
+  padding-top: var(--s-4);
+  font-size: var(--t-body);
+  color: var(--text-soft);
+}
+
+/* ---- the stage ---- */
+
+.stage {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--s-3);
+}
+
+/* The smallest a shared card may be and still read well: about 17 words of
+   body text a line, and room under the photograph for a date, a title, two
+   lines and their citation above 30 mm controls. It grows with the visitor's
+   text size, so at 200% fewer cards share the wall. */
+.cardProbe {
+  position: absolute;
+  width: calc(var(--t-body) * 17.5);
+  height: calc(var(--t-body) * 17.5);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  /* Sized by the stage, and laid out by the shape it is given. */
+  container-type: size;
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  overflow: hidden;
+  animation: arrive var(--dur-slow) var(--ease);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Tall, as the wall's four cards are: the photograph over the words. */
+.inner {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'photo'
+    'text'
+    'actions';
+}
+
+.card[data-photo='none'] .inner {
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'text'
+    'actions';
+}
+
+/* Wide, as one card or a tablet's two are: the photograph beside the words,
+   and the controls under the photograph, so the words have the full height. */
+@container (orientation: landscape) {
+  .inner {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'photo text'
+      'actions text';
+  }
+
+  .card[data-photo='none'] .inner {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'text'
+      'actions';
+  }
+}
+
+.photo {
+  grid-area: photo;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-3) 0;
+  height: 32cqh;
+}
+
+@container (orientation: landscape) {
+  .photo {
+    height: auto;
+    padding: var(--s-3) 0 var(--s-3) var(--s-3);
+  }
+}
+
+/* A short, narrow card, as a tablet's two are, gives all its room to the
+   words; the photograph is there when the card is opened on its own. */
+@container (orientation: landscape) and (max-width: 719px) {
+  .photo {
+    display: none;
+  }
+
+  .inner,
+  .card[data-photo='none'] .inner {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'text'
+      'actions';
+  }
+}
+
+.photo img {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  /* Never cropped: a flyer or a group cut to fit would say something else. */
+  object-fit: contain;
+  object-position: 50% 100%;
+  -webkit-user-drag: none;
+}
+
+.credit {
+  flex: none;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: 1.35;
+  color: var(--text-soft);
+}
+
+/* A citation in a caption wraps with the caption rather than running out of it. */
+.credit cite {
+  white-space: normal;
+  flex-wrap: wrap;
+}
+
+.text {
+  grid-area: text;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3);
+}
+
+.date {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+/* A short card gives the words the room, not the heading or the margins. */
+@container (max-height: 640px) {
+  .title {
+    font-size: calc(var(--t-body) * 1.15);
+  }
+
+  .text {
+    padding-block: var(--s-2) var(--s-1);
+  }
+
+  .passages {
+    margin-top: var(--s-1);
+  }
+
+  .actions {
+    padding-bottom: var(--s-2);
+  }
+}
+
+.passages {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The words give way first: they scroll, down to a single line showing,
+   so the citation under them stays in view. */
+.excerpt {
+  flex: 0 1 auto;
+  /* At the least, one line of the passage and a two line citation. */
+  min-height: calc(
+    var(--t-body) * var(--leading-read) + var(--t-meta) * 2.8 + var(--s-1)
+  );
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding-left: var(--s-3);
+  border-left: 3px solid var(--section);
+}
+
+.excerpt p {
+  flex: 0 1 auto;
+  min-height: calc(var(--t-body) * var(--leading-read));
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  text-wrap: pretty;
+}
+
+/* The citation, set close under its passage: the passage's own rule already
+   joins them, so the citation's rule and padding would only cost height. */
+.excerpt > cite {
+  flex: none;
+  margin-top: var(--s-1);
+  padding-top: 0;
+  border-top: 0;
+}
+
+.speaker {
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+/* ---- a card's own controls, at its foot or its side, nearest the hand ---- */
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: var(--s-2);
+  padding: 0 var(--s-3) var(--s-3);
+}
+
+/* Thirty millimetres tall and wide, as every control, but without the
+   primitive's generous sides: two threads and Close share one row. */
+.actions button {
+  padding-inline: var(--s-2);
+}
+
+.step {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: flex-start;
+  text-align: start;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.stepThread {
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.stepTo {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Two threads and Close in a narrow card: the thread's name and its year
+   carry the step, and the name wraps rather than the year being cut. */
+@container (max-width: 520px) {
+  .actions:has(.step + .step) .step {
+    flex: 1 1 auto;
+    min-width: min-content;
+    padding-inline: var(--s-1);
+  }
+
+  .actions:has(.step + .step) .step svg {
+    display: none;
+  }
+
+  .actions:has(.step + .step) .stepText {
+    min-width: min-content;
+  }
+}
+
+.stepTitle {
+  display: none;
+}
+
+/* The next event's name, where one thread has the row to itself. */
+@container (min-width: 560px) {
+  .actions:not(:has(.step + .step)) .stepTitle {
+    display: inline;
+  }
+}
+
+.close {
+  flex: none;
+  margin-inline-start: auto;
+}
+
+/* ---- the story, told when nobody has a card open ---- */
+
+.card[data-mode='story'] {
+  border-color: transparent;
+  background: none;
+}
+
+.card[data-mode='story'] .title {
+  font-size: var(--t-title);
+}
+
+.card[data-mode='story'] .date {
+  font-size: var(--t-body);
+}
+
+@container (max-height: 420px) {
+  .card[data-mode='story'] .title {
+    font-size: var(--t-heading);
+  }
+}
+
+/* Told, not browsed: on a big panel the words are set larger. */
+@container (min-height: 560px) {
+  .card[data-mode='story'] .excerpt p {
+    font-size: calc(var(--t-body) * 1.2);
+  }
+}
+
+.card[data-mode='story'] .excerpt p {
+  overflow: hidden;
+}
+
+/* The whole story is one target: touching it opens the event as a card. */
+.cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+}
+
+.cover:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+/* ---- the attract loop, in the shell's ambient layer ---- */
+
+.card[data-mode='ambient'] {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.card[data-mode='ambient'] .inner {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'photo text';
+  gap: var(--s-4);
+}
+
+.card[data-mode='ambient'][data-photo='none'] .inner {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'text';
+}
+
+.card[data-mode='ambient'] .photo {
+  height: auto;
+  padding: 0;
+}
+
+.card[data-mode='ambient'] .text {
+  padding: 0;
+  justify-content: flex-end;
+}
+
+.card[data-mode='ambient'] .date {
+  font-size: var(--t-heading);
+}
+
+.card[data-mode='ambient'] .title {
+  font-size: var(--t-display);
+  line-height: 1.05;
+}
+
+.card[data-mode='ambient'] .passages,
+.card[data-mode='ambient'] .excerpt p {
+  overflow: hidden;
+}
+
+.card[data-mode='ambient'] .excerpt p {
+  font-size: clamp(20px, min(2.1vw, 3.2vh), 40px);
+  line-height: 1.4;
+}
+
+/* ---- the axis, in the bottom third ---- */
+
+.axis {
+  position: relative;
+  overflow: hidden;
+  /* The rail is dragged by hand, not scrolled or zoomed by the browser. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  border-top: var(--hairline) solid var(--border);
+  padding-block: 4px;
+}
+
+.axis[data-dragging] {
+  cursor: grabbing;
+}
+
+/* A marker drawn out of sight, measured for the width of a year. Written to
+   outrank .marker, which would otherwise put it back in the layout. */
+.axis > .probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.track {
+  position: relative;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: transform var(--dur-slow) var(--ease);
+  will-change: transform;
+}
+
+.axis[data-dragging] .track {
+  transition: none;
+}
+
+/* The rail itself, a brass line through the markers. */
+.track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: var(--accent);
+}
+
+.year {
+  position: relative;
+  flex: 0 0 var(--year);
+  /* A marker's height, or on a calibrated wall, where 30 mm is only about 20
+     pixels, the year's text and the decade label under the rail. */
+  height: max(
+    calc(var(--touch-min) + 8px),
+    calc(var(--t-body) * 1.6 + var(--t-meta) * 3)
+  );
+  display: grid;
+  place-items: center;
+}
+
+/* Wear: the rail rubbed bright where visitors keep opening the same year. */
+.year[data-patina]::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: calc(50% - 13px);
+  height: 26px;
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+.year[data-patina='1']::after {
+  background: var(--patina-1);
+}
+.year[data-patina='2']::after {
+  background: var(--patina-2);
+}
+.year[data-patina='3']::after {
+  background: var(--patina-3);
+}
+.year[data-patina='4']::after {
+  background: var(--patina-4);
+}
+
+.tick {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 7px);
+  width: 1px;
+  height: 14px;
+  background: var(--border-strong);
+}
+
+.year[data-decade] .tick {
+  top: calc(50% - 15px);
+  width: 2px;
+  height: 30px;
+  background: var(--accent);
+}
+
+.yearLabel {
+  position: absolute;
+  left: calc(50% + 8px);
+  top: calc(50% + 6px);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  line-height: 1.2;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.marker {
+  position: relative;
+  z-index: 1;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  padding: 0 var(--s-2);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-text);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.marker:active {
+  transform: scale(0.96);
+  background: var(--patina-2);
+}
+
+.marker[data-open] {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+.marker[data-featured] {
+  outline: 3px solid var(--accent);
+  outline-offset: 5px;
+}
+
+.marker:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+
+.markerCount {
+  display: flex;
+  gap: 5px;
+}
+
+.markerCount span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---- in the reach zone ---- */
+
+.hint {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: 1.35;
+  color: var(--text-soft);
+  text-align: center;
+  text-wrap: balance;
+}
+
+[data-type-scale='largest'] .hint {
+  display: none;
+}

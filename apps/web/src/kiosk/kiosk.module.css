@@ -98,6 +98,22 @@
   transform-origin: 100% 100%;
 }
 
+/* A channel with its own attract loop sets it here, and the passages step aside. */
+.ambientSlot {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+  display: grid;
+}
+
+.ambientSlot:empty {
+  display: none;
+}
+
+.ambient:has(.ambientSlot:not(:empty)) .passage {
+  display: none;
+}
+
 .passageText {
   grid-area: 1 / 1;
   align-self: end;
@@ -193,6 +209,22 @@
   font-size: var(--t-title);
   font-weight: 600;
   line-height: 1.1;
+}
+
+/* A tablet held landscape is 800 pixels tall, and 30 mm controls take a
+   third of that. The room's name gives back the height it can spare. */
+@media (max-height: 860px) {
+  .app {
+    padding-top: var(--s-2);
+  }
+
+  .appTitle {
+    font-size: var(--t-heading);
+  }
+
+  .appHead {
+    padding-bottom: var(--s-1);
+  }
 }
 
 .appBody {

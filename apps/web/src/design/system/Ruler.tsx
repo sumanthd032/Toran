@@ -32,7 +32,7 @@ export function Ruler() {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw !== null) {
         const parsed = Number.parseFloat(raw);
-        if (Number.isFinite(parsed) && parsed > 0.2 && parsed < 5) stored = parsed;
+        if (Number.isFinite(parsed) && parsed > 0.05 && parsed < 5) stored = parsed;
       }
     } catch {
       // Private browsing or blocked storage. Calibration falls back to 1.
@@ -83,7 +83,7 @@ export function Ruler() {
         id="calibration"
         className={styles.slider}
         type="range"
-        min={0.4}
+        min={0.1}
         max={2.5}
         step={0.005}
         value={scale}

@@ -47,6 +47,8 @@ export interface KioskShellProps {
   onForward?: (() => void) | undefined;
   /** Where a channel's own controls are set, in the reach zone. */
   toolsRef: (element: HTMLDivElement | null) => void;
+  /** Where a channel's own attract loop is set, in the ambient layer. */
+  ambientRef: (element: HTMLDivElement | null) => void;
   children: ReactNode;
 }
 
@@ -62,6 +64,7 @@ export function KioskShell({
   onHome,
   onForward,
   toolsRef,
+  ambientRef,
   children,
 }: KioskShellProps) {
   const { t, lang } = useI18n();
@@ -138,6 +141,7 @@ export function KioskShell({
           <span className={styles.invite}>{t('kiosk.invite')}</span>
           <ScriptCarousel running={attracting} />
         </div>
+        <div className={styles.ambientSlot} ref={ambientRef} />
         <figure className={styles.passage}>
           {passages.map((p, i) => (
             <blockquote
