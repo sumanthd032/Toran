@@ -7,7 +7,7 @@
  * tsc fails on the unused directive, which fails the build.
  */
 
-import { citation, citedPassage, pageLocator, type CitedPassage } from './citation';
+import { citation, citedPassage, pageLocator, type CitedPassage } from './citation.ts';
 
 const good = citedPassage({
   text: 'I measure the progress of a community by the degree of progress which women have achieved.',

@@ -238,6 +238,8 @@ async function main() {
     if (edited !== undefined) {
       abstracts[section.id] = {
         workId: work.id,
+        corpus: work.corpus,
+        language: 'en',
         head: section.head,
         chosenBy: 'editor',
         sentences: edited
@@ -264,6 +266,8 @@ async function main() {
     const key = keyness(pool.map((c) => c.text), terms, frequency, sections.length);
     abstracts[section.id] = {
       workId: work.id,
+      corpus: work.corpus,
+      language: 'en',
       head: section.head,
       chosenBy: 'machine',
       sentences: choose(vectors, sizeFor(section.pages), title, key).map((i) => pool[i]),
