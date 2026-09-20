@@ -43,4 +43,6 @@ export const ICON = {
   walk: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5M12 8v4l3 2',
   spread: 'M4 12h16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3',
   gather: 'M3 12h7M21 12h-7M10 12l-3-3M10 12l-3 3M14 12l3-3M14 12l3 3',
+  scan: 'M4 4h6v6H4zM4 4v16h16V4zM7 14h10M7 17h7',
+  text: 'M5 6h14M5 10h14M5 14h10M5 18h12',
 } as const;

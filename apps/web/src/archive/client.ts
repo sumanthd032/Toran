@@ -16,15 +16,21 @@ import {
   readAbstract,
   readArticle,
   readPage,
+  readCorrection,
   readProvenance,
+  readScans,
   readSection,
+  readTranscription,
   readSitting,
   readTimeline,
   readTranslation,
   type Abstract,
   type Citation,
+  type Correction,
   type ReadingDocument,
   type ProvenanceGraph,
+  type Scan,
+  type Transcription,
   type ReadingPage,
   type Timeline,
   type Translation,
@@ -136,6 +142,12 @@ export async function openCitation(target: {
         document: readSection(await load(`acts/${pageId}.json`)),
         focus: pageId,
       };
+    case 'folio':
+      // A manuscript leaf is a scan, not a reading copy. The Manuscript
+      // Station opens it; the Reading Room has nothing to show for it.
+      throw new Error(
+        `archive: ${pageId} is a manuscript leaf, opened in the Manuscript Station`,
+      );
   }
 }
 
@@ -193,6 +205,31 @@ export async function timeline(): Promise<Timeline> {
 /** The Provenance Graph, read through the provenance contract. */
 export async function provenance(): Promise<ProvenanceGraph> {
   return readProvenance(await load('graph.json'));
+}
+
+/** Every scanned page the Manuscript Station can open. */
+export async function scans(): Promise<readonly Scan[]> {
+  return readScans(await load('scans.json'));
+}
+
+/**
+ * What the machines read from one page. A reading is checked against the
+ * scan it claims to be of, so a transcription can never be shown beside a
+ * different page or without that page's citation.
+ */
+export async function transcriptions(scan: Scan): Promise<readonly Transcription[]> {
+  const settled = await Promise.allSettled(
+    (['surya', 'vlm'] as const).map(async (pipeline) =>
+      readTranscription(await load(`ocr/${scan.id}.${pipeline}.json`), scan),
+    ),
+  );
+  return settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+}
+
+/** Every curator correction the archive holds. */
+export async function corrections(): Promise<readonly Correction[]> {
+  const raw = await load('corrections.json');
+  return Array.isArray(raw) ? raw.map(readCorrection) : [];
 }
 
 /** Where an archive file, such as a timeline photograph, is served from. */

@@ -9,6 +9,7 @@ const CORPUS_KEY = {
   cad: 'citation.corpus.cad',
   constitution: 'citation.corpus.constitution',
   statute: 'citation.corpus.statute',
+  manuscript: 'citation.corpus.manuscript',
   media: 'citation.corpus.media',
   photograph: 'citation.corpus.photograph',
 } as const satisfies Record<CitationData['corpus'], MessageKey>;
@@ -75,6 +76,17 @@ export function Citation({
           ? t('citation.section.title')
           : t('citation.section', { section: l.section }),
       );
+      break;
+    }
+    case 'folio': {
+      parts.push(
+        l.folio === null
+          ? t('citation.folio.unnumbered', { manuscript: l.manuscript })
+          : t('citation.folio', { manuscript: l.manuscript, folio: l.folio }),
+      );
+      // Where the same words are in print, so a reader can go and check.
+      if (l.printed !== null)
+        parts.push(t('citation.folio.printed', { printed: l.printed }));
       break;
     }
     case 'plate': {

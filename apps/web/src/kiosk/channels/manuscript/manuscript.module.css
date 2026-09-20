@@ -1,0 +1,304 @@
+/*
+  The Manuscript Station. A scanned page on one side, what a machine read
+  from it on the other.
+
+  The heat on the transcription comes from the --heat-* tokens and from
+  nowhere else in this file, so a doubtful reading cannot be styled to look
+  like a confident one. At high contrast the wash is dropped and the mark
+  moves to the underline, which is the same information without putting a
+  tint under the words.
+*/
+
+.room {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, clamp(20em, 40%, 38em));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--s-2) var(--s-3);
+}
+
+.room[data-view='scan'],
+.room[data-view='text'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.head {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* On a short screen the page and the words stack, page first. */
+@media (max-height: 860px) and (max-width: 1100px) {
+  .room[data-view='both'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.status {
+  margin: 0;
+  padding-top: var(--s-4);
+  font-size: var(--t-body);
+  color: var(--text-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  line-height: var(--leading-tight);
+  color: var(--text);
+}
+
+.where {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.provenance {
+  margin: var(--s-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+/* ---- the page ---- */
+
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  /* The page is pinched and dragged, not scrolled by the browser. */
+  touch-action: none;
+}
+
+.boxes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.box {
+  fill: var(--heat-high);
+  stroke: transparent;
+  stroke-width: 3;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    fill var(--dur-fast) var(--ease),
+    stroke var(--dur-fast) var(--ease);
+}
+
+.box[data-heat='middling'] {
+  fill: var(--heat-middling);
+}
+
+.box[data-heat='low'] {
+  fill: var(--heat-low);
+}
+
+.box[data-heat='certain'] {
+  fill: var(--heat-certain);
+}
+
+.box[data-selected] {
+  stroke: var(--accent);
+}
+
+/* ---- the transcription ---- */
+
+.side {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-left: var(--s-3);
+  border-left: var(--hairline) solid var(--border);
+}
+
+.room[data-view='text'] .side {
+  padding-left: 0;
+  border-left: none;
+}
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.readBy {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.model,
+.means,
+.counts {
+  margin: 0;
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.model {
+  font-family: var(--font-mono);
+}
+
+.lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.line {
+  width: 100%;
+  min-height: var(--touch-min);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2);
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.line[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+
+.line:active {
+  transform: translateY(1px);
+}
+
+.line:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.lineText {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  color: var(--text);
+}
+
+/* The heat itself. Nothing else in this file sets these. */
+.lineText [data-heat='middling'],
+.word[data-heat='middling'] {
+  background: var(--heat-middling);
+  box-shadow: inset 0 -2px 0 0 var(--accent-text);
+}
+
+.lineText [data-heat='low'],
+.word[data-heat='low'] {
+  background: var(--heat-low);
+  box-shadow: inset 0 -2px 0 0 var(--danger);
+}
+
+.lineText [data-heat='certain'],
+.word[data-heat='certain'] {
+  background: var(--heat-certain);
+  box-shadow: inset 0 -2px 0 0 var(--confirmed);
+}
+
+.word {
+  border-radius: var(--radius);
+}
+
+.wasRead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+  font-family: var(--font-read);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.answer {
+  margin: 0;
+  padding: var(--s-2);
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.key {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  border-top: var(--hairline) solid var(--border);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.key li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.swatch {
+  width: 1.6em;
+  height: 0.9em;
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--heat-high);
+}
+
+.swatch[data-heat='middling'] {
+  background: var(--heat-middling);
+  border-color: var(--accent-text);
+}
+
+.swatch[data-heat='low'] {
+  background: var(--heat-low);
+  border-color: var(--danger);
+}
+
+.swatch[data-heat='certain'] {
+  background: var(--heat-certain);
+  border-color: var(--confirmed);
+}
+
+.label {
+  font-family: var(--font-ui);
+}

@@ -137,6 +137,19 @@
 
   /* An unconfirmed provenance edge can never look confirmed. */
   --unconfirmed: color-mix(in srgb, var(--m-correction) 40%, transparent);
+
+  /*
+    OCR confidence, as heat on a transcription. The materials already say
+    this: ink is what the machine was sure of, so a confident reading is
+    unmarked; brass is the fitting that catches the eye, so it marks a word
+    to look at again; the correction red of a proof-reader's pen marks a word
+    the machine doubted; verdigris, which the graph already uses for a link a
+    named person confirmed, marks a line a curator has read. D-116.
+  */
+  --heat-high: transparent;
+  --heat-middling: color-mix(in srgb, var(--m-brass) 18%, transparent);
+  --heat-low: color-mix(in srgb, var(--m-correction) 20%, transparent);
+  --heat-certain: color-mix(in srgb, var(--m-verdigris) 16%, transparent);
 }
 
 /* Dark is the hall. A dim memorial interior with brass catching light. */
@@ -163,6 +176,9 @@
     --patina-3: color-mix(in srgb, var(--m-brass-lit) 25%, transparent);
     --patina-4: color-mix(in srgb, var(--m-brass-lit) 34%, transparent);
     --unconfirmed: color-mix(in srgb, #d4736b 40%, transparent);
+    --heat-middling: color-mix(in srgb, var(--m-brass-lit) 20%, transparent);
+    --heat-low: color-mix(in srgb, #d4736b 22%, transparent);
+    --heat-certain: color-mix(in srgb, #74a891 18%, transparent);
   }
 }
 
@@ -188,6 +204,9 @@
   --patina-3: color-mix(in srgb, var(--m-brass-lit) 25%, transparent);
   --patina-4: color-mix(in srgb, var(--m-brass-lit) 34%, transparent);
   --unconfirmed: color-mix(in srgb, #d4736b 40%, transparent);
+  --heat-middling: color-mix(in srgb, var(--m-brass-lit) 20%, transparent);
+  --heat-low: color-mix(in srgb, #d4736b 22%, transparent);
+  --heat-certain: color-mix(in srgb, #74a891 18%, transparent);
 }
 
 /*
@@ -234,6 +253,14 @@
   --patina-2: transparent;
   --patina-3: transparent;
   --patina-4: transparent;
+  /*
+    A wash under text fights it, so at high contrast the heat moves to the
+    underline instead and the paper stays clean. The words still say which
+    is which, and so does the key.
+  */
+  --heat-middling: transparent;
+  --heat-low: transparent;
+  --heat-certain: transparent;
 }
 
 /* Reduced motion from the card, for a visitor whose device setting says nothing. */
