@@ -16,7 +16,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
-    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor",
+    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor && npm run verify:graph",
     "verify:contrast": "node tools/contrast-check.mjs",
     "verify:render": "node tools/verify-system.mjs",
     "verify:a11y": "node tools/a11y-check.mjs",
@@ -40,7 +40,8 @@
     "verify:visitor": "node tools/verify-visitor.mjs",
     "build:candidates": "npm run build:candidates --workspace @toran/indexer",
     "build:graph": "node tools/build-graph.mjs",
-    "confirm:edges": "node tools/confirm-edges.mjs"
+    "confirm:edges": "node tools/confirm-edges.mjs",
+    "verify:graph": "node tools/verify-graph.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
