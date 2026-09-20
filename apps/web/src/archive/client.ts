@@ -218,12 +218,11 @@ export async function scans(): Promise<readonly Scan[]> {
  * different page or without that page's citation.
  */
 export async function transcriptions(scan: Scan): Promise<readonly Transcription[]> {
-  const settled = await Promise.allSettled(
-    (['surya', 'vlm'] as const).map(async (pipeline) =>
+  return Promise.all(
+    scan.readBy.map(async (pipeline) =>
       readTranscription(await load(`ocr/${scan.id}.${pipeline}.json`), scan),
     ),
   );
-  return settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
 }
 
 /** Every curator correction the archive holds. */

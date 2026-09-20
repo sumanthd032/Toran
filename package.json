@@ -16,7 +16,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
-    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor && npm run verify:graph",
+    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor && npm run verify:graph && npm run verify:manuscript",
     "verify:contrast": "node tools/contrast-check.mjs",
     "verify:render": "node tools/verify-system.mjs",
     "verify:a11y": "node tools/a11y-check.mjs",
@@ -48,7 +48,8 @@
     "ocr:handwriting": "python3 pipeline/ocr/handwriting.py",
     "build:scans": "node tools/build-scans.mjs",
     "ocr:accuracy": "python3 pipeline/ocr/accuracy.py",
-    "correct:ocr": "node tools/correct-ocr.mjs"
+    "correct:ocr": "node tools/correct-ocr.mjs",
+    "verify:manuscript": "node tools/verify-manuscript.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",

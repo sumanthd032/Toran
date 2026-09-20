@@ -94,8 +94,6 @@
   fill: var(--heat-high);
   stroke: transparent;
   stroke-width: 3;
-  pointer-events: auto;
-  cursor: pointer;
   transition:
     fill var(--dur-fast) var(--ease),
     stroke var(--dur-fast) var(--ease);

@@ -88,7 +88,30 @@ const cite = (s) => {
   return s.title;
 };
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+/**
+ * Asking a question. A curator answers at a terminal; a script pipes its
+ * answers in, and a closed pipe never resolves a readline question, so the
+ * piped case reads everything first and answers from the queue.
+ */
+const interactive = process.stdin.isTTY === true;
+const queued = interactive
+  ? []
+  : (await new Promise((resolve) => {
+      let input = '';
+      process.stdin.setEncoding('utf8');
+      process.stdin.on('data', (chunk) => (input += chunk));
+      process.stdin.on('end', () => resolve(input));
+    })).split('\n');
+const rl = interactive
+  ? readline.createInterface({ input: process.stdin, output: process.stdout })
+  : null;
+const ask = async (prompt) => {
+  if (rl !== null) return rl.question(prompt);
+  const answer = queued.shift() ?? 'q';
+  process.stdout.write(`${prompt}${answer}\n`);
+  return answer;
+};
+
 fs.mkdirSync('data/curation', { recursive: true });
 let made = 0;
 
@@ -111,16 +134,16 @@ for (const reading of readings) {
   for (const [i, region] of queue.entries()) {
     console.log(`[${i + 1}/${queue.length}] ${region.id}  confidence ${region.confidence.toFixed(3)}`);
     console.log(`   ${region.text}`);
-    const answer = (await rl.question('\n  [Enter] it is right  [e] correct it  [q] stop: '))
+    const answer = (await ask('\n  [Enter] it is right  [e] correct it  [q] stop: '))
       .trim().toLowerCase();
     if (answer === 'q') break;
     if (answer !== 'e') continue;
-    const text = (await rl.question('  What it actually says: ')).trim();
+    const text = (await ask('  What it actually says: ')).trim();
     if (text === '') {
       console.log('  nothing entered, left as it was.');
       continue;
     }
-    const note = (await rl.question('  A note, if any: ')).trim();
+    const note = (await ask('  A note, if any: ')).trim();
     const record = {
       pageId,
       regionId: region.id,
@@ -148,7 +171,7 @@ for (const reading of readings) {
     console.log('  recorded.\n');
   }
 }
-rl.close();
+rl?.close();
 
 if (made > 0) {
   console.log(`\n${made} correction(s) in ${LOG}, ${made} event(s) in ${PREMIS}. Republishing.`);

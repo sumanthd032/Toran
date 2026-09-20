@@ -184,7 +184,6 @@ export function ManuscriptStation() {
           selected={selected}
           dim={false}
           onAsk={askAt}
-          onSelect={setSelected}
           onReady={(ok) => !ok && setFailed(true)}
         />
       )}

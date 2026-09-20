@@ -277,6 +277,18 @@ for (const scan of scans) {
   fs.mkdirSync(`${dir}/full/max/0`, { recursive: true });
   magick([master, '-quality', String(QUALITY), '-strip', `${dir}/full/max/0/default.jpg`]);
   tiles += 1;
+  // And the whole page at each size info.json advertises. A client that
+  // reads `sizes` rather than `tiles`, which OpenSeadragon does before it
+  // has a viewport, asks for these by name, and level 0 has to answer every
+  // size it lists or it is lying about what it holds.
+  for (const level of pyramid) {
+    if (level.width === scan.width && level.height === scan.height) continue;
+    const at = `${dir}/full/${level.width},${level.height}/0`;
+    fs.mkdirSync(at, { recursive: true });
+    magick([master, '-resize', `${level.width}x${level.height}!`,
+            '-quality', String(QUALITY), '-strip', `${at}/default.jpg`]);
+    tiles += 1;
+  }
   writeJson(`${dir}/info.json`, infoJson(scan, pyramid));
   writeJson(`${dir}/manifest.json`, manifest(scan, pyramid));
   built.push(scan);

@@ -32,7 +32,6 @@ export interface DeepZoomProps {
   readonly dim: boolean;
   /** A long press on the page asks what is written there. */
   readonly onAsk: (x: number, y: number) => void;
-  readonly onSelect: (id: string) => void;
   readonly onReady: (ok: boolean) => void;
 }
 
@@ -46,7 +45,6 @@ export function DeepZoom({
   selected,
   dim,
   onAsk,
-  onSelect,
   onReady,
 }: DeepZoomProps) {
   const { t } = useI18n();
@@ -79,8 +77,26 @@ export function DeepZoom({
         // Every control is in the reach zone, drawn by the station.
         showNavigationControl: false,
         showNavigator: false,
-        gestureSettingsTouch: { pinchRotate: false, flickEnabled: true },
-        gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: true },
+        // Every flag stated. A partial gesture object loses the defaults it
+        // leaves out, and the one that matters here is pinch to zoom.
+        gestureSettingsTouch: {
+          dragToPan: true,
+          pinchToZoom: true,
+          pinchRotate: false,
+          flickEnabled: true,
+          dblClickToZoom: true,
+          clickToZoom: false,
+          scrollToZoom: false,
+        },
+        gestureSettingsMouse: {
+          dragToPan: true,
+          scrollToZoom: true,
+          clickToZoom: false,
+          dblClickToZoom: true,
+          pinchToZoom: false,
+          flickEnabled: false,
+          pinchRotate: false,
+        },
         animationTime: 0.6,
         springStiffness: 5,
         visibilityRatio: 0.9,
@@ -178,8 +194,10 @@ export function DeepZoom({
     >
       <div ref={host} className={styles.canvas} data-testid="manuscript-canvas" />
       {/* The boxes the machine drew, over the page, in the page's own
-          proportions. They scale with the stage and never with the zoom,
-          which is why they are a separate overlay and not tiles. */}
+          proportions. Nothing here takes a touch: a box that did would
+          swallow the pinch that was meant for the page under it. A region is
+          chosen from the transcription, and a long press asks the page
+          itself. */}
       <svg
         className={styles.boxes}
         viewBox={`0 0 ${scan.width} ${scan.height}`}
@@ -196,7 +214,6 @@ export function DeepZoom({
             y={region.box.y * scan.width}
             width={region.box.width * scan.width}
             height={region.box.height * scan.width}
-            onClick={() => onSelect(region.id)}
           />
         ))}
       </svg>

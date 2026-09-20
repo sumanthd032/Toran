@@ -25,7 +25,6 @@ if (!fs.existsSync(`${DIP}/scans.json`)) {
 
 const scans = JSON.parse(fs.readFileSync(`${DIP}/scans.json`, 'utf8'));
 fs.mkdirSync(`${OUT}/ocr`, { recursive: true });
-fs.writeFileSync(`${OUT}/scans.json`, JSON.stringify(scans));
 
 // Every reading of every page, named by the pipeline that produced it, so a
 // station can show two machines' readings of one page side by side.
@@ -42,6 +41,12 @@ if (fs.existsSync(`${DIP}/ocr`)) {
     regions += payload.regions.length;
   }
 }
+
+// The index says which pipelines have read each page, so a kiosk asks for a
+// reading that exists instead of probing for one that does not and taking a
+// 404 for an answer.
+for (const scan of scans) scan.readBy = (readings[scan.id] ?? []).sort();
+fs.writeFileSync(`${OUT}/scans.json`, JSON.stringify(scans));
 
 /** A curator's corrections. Kept in the repository, because nobody can rebuild them. */
 const corrections = fs.existsSync(`${CURATION}/corrections.jsonl`)

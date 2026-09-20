@@ -64,6 +64,8 @@ export interface Scan {
   readonly credit: string | null;
   readonly note: string | null;
   readonly provenance: ScanProvenance;
+  /** Which pipelines have read this page. A kiosk asks only for these. */
+  readonly readBy: readonly Pipeline[];
 }
 
 export interface Word {
@@ -226,6 +228,9 @@ export function readScan(raw: unknown): Scan {
     rights: text(s['rights'], `${id} rights`),
     credit: typeof s['credit'] === 'string' ? s['credit'] : null,
     note: typeof s['note'] === 'string' ? s['note'] : null,
+    readBy: (Array.isArray(s['readBy']) ? s['readBy'] : []).map((p, i) =>
+      oneOf(p, PIPELINES, `${id} readBy ${i}`),
+    ),
     provenance: (() => {
       const p = record(s['master'], `${id} master`);
       return {
