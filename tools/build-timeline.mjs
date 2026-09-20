@@ -23,25 +23,14 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pages, problems, resolve } from './lib/excerpt.mjs';
 
 const DIP = 'data/dip';
 const OUT = 'apps/web/public/archive';
 
-const jsonl = (file) =>
-  fs
-    .readFileSync(path.join(DIP, file), 'utf8')
-    .split('\n')
-    .filter(Boolean)
-    .map((l) => JSON.parse(l));
-
-const pages = jsonl('pages.jsonl');
-const sittings = jsonl('sittings.jsonl');
-const articles = jsonl('articles.jsonl');
 const photos = new Map(
   JSON.parse(fs.readFileSync(path.join(DIP, 'photos.json'), 'utf8')).map((p) => [p.id, p]),
 );
-
-const flat = (s) => s.replace(/\s+/g, ' ').trim();
 
 export const THREADS = ['learning', 'rights', 'constitution', 'dhamma'];
 
@@ -152,113 +141,6 @@ const EVENTS = [
   },
 ];
 
-const OPEN = /[“‘]/g;
-const CLOSE = /[”’]/g;
-
-/** The excerpt between two phrases, across the blocks of one record. */
-function lift(texts, from, to) {
-  for (let i = 0; i < texts.length; i++) {
-    const start = texts[i].indexOf(from);
-    if (start === -1) continue;
-    let joined = texts[i].slice(start);
-    for (let j = i; j < texts.length; j++) {
-      if (j > i) joined += ` ${texts[j]}`;
-      const end = joined.indexOf(to);
-      if (end !== -1) {
-        const before = texts[i].slice(0, start);
-        const after = joined.slice(end + to.length);
-        return { text: joined.slice(0, end + to.length), before, after };
-      }
-    }
-  }
-  return null;
-}
-
-function problems(found, lines) {
-  const out = [];
-  if (lines) return out;
-  if (found.before !== '' && !/[.!?:;”"’)]\s*$/.test(found.before) && !/[“"‘(]\s*$/.test(found.before)) {
-    out.push('does not start a sentence');
-  }
-  if (!/[.!?]["”’)]?$/.test(found.text)) out.push('does not end a sentence');
-  if (found.after !== '' && !/^["”’)]?\s|^["”’)]?\d|^$/.test(found.after)) out.push('stops mid word');
-  return out;
-}
-
-function resolve(spec) {
-  if (spec.paragraph !== undefined) {
-    for (const s of sittings) {
-      const p = s.paragraphs.find((x) => x.pageId === spec.paragraph);
-      if (p === undefined) continue;
-      const found = lift([flat(p.text)], spec.from, spec.to);
-      return found && {
-        found,
-        record: {
-          corpus: s.corpus,
-          workId: s.workId,
-          pageId: p.pageId,
-          locator: { kind: 'paragraph', volume: s.volume, sitting: s.sitting, paragraph: p.paragraph, date: s.date, procedural: p.procedural },
-          language: s.language,
-          speaker: p.speaker ?? null,
-        },
-        // A debate paragraph is dated by its sitting.
-        context: s.date,
-        where: `${s.volume}.${s.sitting}.${p.paragraph}${p.procedural ? '+' : ''}`,
-      };
-    }
-    return null;
-  }
-  if (spec.article !== undefined) {
-    const a = articles.find((x) => x.pageId === spec.article);
-    if (a === undefined) return null;
-    const found = lift([flat(a.text)], spec.from, spec.to);
-    return found && {
-      found,
-      record: {
-        corpus: a.corpus,
-        workId: a.workId,
-        pageId: a.pageId,
-        locator: { kind: 'article', article: a.article },
-        language: a.language,
-        speaker: null,
-      },
-      context: '',
-      where: `art ${a.article}`,
-    };
-  }
-  // A printed number can repeat: volume 17 numbers an inserted blank leaf 25
-  // as well as the page after it. The excerpt has to settle which one.
-  const matches = pages.filter(
-    (p) =>
-      p.workId === spec.work &&
-      (spec.plate !== undefined
-        ? p.locator.kind === 'plate' && p.locator.plate === spec.plate
-        : p.locator.kind === 'page' && p.locator.page === spec.page) &&
-      p.blocks.some((b) => flat(b.text).includes(spec.from)),
-  );
-  if (matches.length > 1) {
-    throw new Error(`${spec.work} ${spec.plate ?? `p${spec.page}`}: ${matches.length} pages hold "${spec.from}", need exactly one`);
-  }
-  if (matches.length === 0) return null;
-  const page = matches[0];
-  const texts = page.blocks.map((b) => flat(b.text));
-  const found = lift(texts, spec.from, spec.to);
-  const l = page.locator;
-  return found && {
-    found,
-    record: {
-      corpus: page.corpus,
-      workId: page.workId,
-      pageId: page.pageId,
-      locator: l,
-      language: page.language,
-      speaker: null,
-    },
-    context: texts.join(' '),
-    where: l.kind === 'plate' ? `vol ${l.volume} ${l.plate}` : `vol ${l.volume}${l.part ? `.${l.part}` : ''} p${l.page}`,
-  };
-}
-
 const failures = [];
 const events = [];
 console.log('timeline events, curated and checked against the reading copy');
@@ -272,9 +154,6 @@ for (const event of EVENTS) {
       continue;
     }
     const bad = problems(hit.found, spec.lines === true);
-    const opened = (hit.found.text.match(OPEN) ?? []).length;
-    const closed = (hit.found.text.match(CLOSE) ?? []).length;
-    if (opened !== closed) bad.push(`leaves ${opened > closed ? 'a quotation open' : 'a quotation closed that it never opened'}`);
     if (bad.length > 0) failures.push(`${event.id}: ${hit.where} ${bad.join(', ')}`);
     // Only the first passage has to date the event; the second is its sequel.
     if (passages.length === 0) {
