@@ -43,9 +43,13 @@ data/dip/
 # Verification artefacts
 tools/shots/
 
-# Python bytecode
+# Python bytecode, and the OCR environment. Step 8 needs Surya, which needs
+# PyTorch, which needs a Python this machine does not ship. Rebuild with:
+# uv venv --python 3.13 pipeline/.venv && uv pip install --python pipeline/.venv \
+#   --torch-backend=cpu surya-ocr
 __pycache__/
 *.pyc
+pipeline/.venv/
 
 # Editor and OS
 .DS_Store
