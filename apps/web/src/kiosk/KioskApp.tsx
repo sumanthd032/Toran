@@ -15,6 +15,7 @@ import { AmbientSlot } from './ambient';
 import { KioskShell } from './KioskShell';
 import { Entrance } from './channels/entrance/Entrance';
 import { PendingChannel } from './channels/PendingChannel';
+import { ProvenanceRoom } from './channels/provenance/ProvenanceRoom';
 import { ReadingRoom } from './channels/reading/ReadingRoom';
 import { TimelineWall } from './channels/timeline/TimelineWall';
 import { NavProvider, useNavSlot } from './nav';
@@ -55,6 +56,8 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
       return <Entrance />;
     case 'timeline':
       return <TimelineWall />;
+    case 'provenance':
+      return <ProvenanceRoom />;
     default:
       return <PendingChannel channel={device.channel} />;
   }

@@ -1,0 +1,410 @@
+/*
+  The Provenance Graph. The graph fills the stage and the panel beside it
+  says what is selected, with its sources. A link's colour follows whether a
+  curator has confirmed it; its dash is set only by edgeLook, as an SVG
+  attribute, and nothing in this file touches stroke-dasharray.
+*/
+
+/* With nothing selected the graph has the whole width, under a legend; a
+   selection opens the panel beside it. */
+.room {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, clamp(18em, 34%, 34em));
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--s-2) var(--s-3);
+}
+
+.room[data-view='overview'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.room[data-view='overview'] .canvas {
+  grid-row: 2;
+}
+
+@media (max-width: 900px) {
+  .room:not([data-view='overview']) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.status {
+  margin: 0;
+  padding-top: var(--s-4);
+  font-size: var(--t-body);
+  color: var(--text-soft);
+}
+
+/* ---- the graph ---- */
+
+.canvas {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  /* The graph is dragged by hand, not scrolled or zoomed by the browser. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.canvas[data-dragging] {
+  cursor: grabbing;
+}
+
+.links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.link {
+  fill: none;
+  stroke-width: 2.5;
+  transition:
+    opacity var(--dur) var(--ease),
+    stroke-width var(--dur) var(--ease);
+}
+
+.link[data-status='confirmed'] {
+  stroke: var(--confirmed);
+}
+
+.link[data-status='candidate'] {
+  stroke: var(--text-soft);
+}
+
+.link[data-dim] {
+  opacity: 0.18;
+}
+
+.link[data-active],
+.link[data-walked] {
+  stroke-width: 3.5;
+}
+
+.link[data-current] {
+  stroke-width: 5;
+}
+
+.arrow[data-status='confirmed'] {
+  fill: var(--confirmed);
+}
+
+.arrow[data-status='candidate'] {
+  fill: var(--text-soft);
+}
+
+.year {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 0 var(--s-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  line-height: 1.4;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  /* The axis is pinned, so documents pass under it as the graph is dragged. */
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.node {
+  --kind: var(--border-strong);
+  position: absolute;
+  width: calc(var(--touch-min) * 1.55);
+  min-height: var(--touch-min);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s-1) var(--s-2) var(--s-2);
+  border: var(--hairline) solid var(--border-strong);
+  border-top: 5px solid var(--kind);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-family: var(--font-ui);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.node[data-kind='writing'] {
+  --kind: var(--section);
+}
+.node[data-kind='draft'] {
+  --kind: var(--accent);
+}
+.node[data-kind='article'] {
+  --kind: var(--text);
+}
+.node[data-kind='act'] {
+  --kind: var(--section-text);
+}
+
+.node:active {
+  transform: translateY(1px);
+}
+
+.node[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--text-inverse);
+}
+
+.node[data-walked] {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.node:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* A node drawn out of sight and measured, for the spacing of the graph. */
+.canvas > .probe {
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.nodeKind {
+  font-size: calc(var(--t-meta) * 0.85);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.nodeTitle {
+  font-size: var(--t-meta);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.nodeYear {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- the panel ---- */
+
+.panel {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  border-left: var(--hairline) solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .panel {
+    border-left: 0;
+    border-top: var(--hairline) solid var(--border);
+  }
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* The legend over the graph, one wrapping line. */
+.bar {
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-4);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: 1.4;
+}
+
+.legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+}
+
+.swatch {
+  display: inline-block;
+  width: 1.1em;
+  height: 5px;
+  background: var(--kind);
+}
+
+.swatch[data-kind='writing'] {
+  --kind: var(--section);
+}
+.swatch[data-kind='draft'] {
+  --kind: var(--accent);
+}
+.swatch[data-kind='article'] {
+  --kind: var(--text);
+}
+.swatch[data-kind='act'] {
+  --kind: var(--section-text);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.sample {
+  flex: none;
+  width: 3em;
+  height: 0.6em;
+}
+
+.count,
+.step,
+.method {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.step {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.source {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.kind {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.date {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.sentence {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.heading {
+  margin: var(--s-3) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.passage {
+  margin: 0;
+  padding-left: var(--s-3);
+  border-left: 3px solid var(--section);
+}
+
+.passage p {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  white-space: pre-line;
+}
+
+.speaker {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--section-text);
+}
+
+.links_ {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.linkButton {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  text-align: start;
+  padding-block: var(--s-2);
+}
+
+.linkText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--t-meta);
+  line-height: 1.35;
+}
+
+/* ---- in the reach zone ---- */
+
+.label {
+  white-space: nowrap;
+}
+
+[data-type-scale='largest'] .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

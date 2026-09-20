@@ -34,7 +34,7 @@
     "verify:transition": "node tools/verify-transition.mjs",
     "shoot:twin": "node tools/shoot-twin.mjs",
     "build:ambient": "node tools/build-ambient.mjs",
-    "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts",
+    "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts apps/web/src/kiosk/channels/provenance/provenance.test.ts",
     "photos": "python3 pipeline/photos.py",
     "build:timeline": "node tools/build-timeline.mjs",
     "verify:visitor": "node tools/verify-visitor.mjs",

@@ -40,4 +40,7 @@ export const ICON = {
   search: 'M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13M15.5 15.5L20 20',
   close: 'M6 6l12 12M18 6L6 18',
   plan: 'M4 5l5-2 6 2 5-2v16l-5 2-6-2-5 2zM9 3v16M15 5v16',
+  walk: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5M12 8v4l3 2',
+  spread: 'M4 12h16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3',
+  gather: 'M3 12h7M21 12h-7M10 12l-3-3M10 12l-3 3M14 12l3-3M14 12l3 3',
 } as const;

@@ -16,6 +16,7 @@ import {
   readAbstract,
   readArticle,
   readPage,
+  readProvenance,
   readSection,
   readSitting,
   readTimeline,
@@ -23,6 +24,7 @@ import {
   type Abstract,
   type Citation,
   type ReadingDocument,
+  type ProvenanceGraph,
   type ReadingPage,
   type Timeline,
   type Translation,
@@ -186,6 +188,11 @@ export async function kindOf(pageId: string): Promise<Citation['locator']['kind'
 /** The Timeline Wall's events, read through the timeline contract. */
 export async function timeline(): Promise<Timeline> {
   return readTimeline(await load('timeline.json'));
+}
+
+/** The Provenance Graph, read through the provenance contract. */
+export async function provenance(): Promise<ProvenanceGraph> {
+  return readProvenance(await load('graph.json'));
 }
 
 /** Where an archive file, such as a timeline photograph, is served from. */
