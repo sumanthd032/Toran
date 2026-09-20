@@ -320,7 +320,11 @@ const hall = await browser.createBrowserContext();
   const badges = await page.$$eval('[data-testid="provenance-panel"] [data-testid="provenance-link"]', (links) =>
     links.map((l) => ({ edge: l.getAttribute('data-edge'), text: l.textContent })),
   );
-  const saidWrong = badges.filter((b) => /Confirmed by|^.*\bConfirmed$/.test(b.text) !== confirmed.has(b.edge));
+  // What the badge says, in the words a visitor reads, against what the
+  // graph holds. Matching on the concatenated text is what a visitor does.
+  const saidWrong = badges.filter(
+    (b) => !b.text.includes('Not yet confirmed') !== confirmed.has(b.edge),
+  );
   check('what the panel says about a link matches what the line shows', saidWrong.length === 0 && badges.length > 0, `${badges.length} links listed`);
   await page.close();
 }
