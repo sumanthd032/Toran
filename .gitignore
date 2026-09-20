@@ -31,6 +31,7 @@ apps/web/public/models/
 apps/web/public/ort/
 apps/web/public/kiosk/
 apps/web/public/archive/
+apps/web/public/iiif/
 
 # Archive packages. Large, and fully reproducible from pipeline/sources.json.
 # data/README.md and data/fixity.json are kept.

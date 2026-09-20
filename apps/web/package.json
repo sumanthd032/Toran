@@ -19,6 +19,7 @@
     "@toran/contracts": "*",
     "@toran/indexer": "*",
     "next": "^15.5.25",
+    "openseadragon": "^6.1.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "three": "^0.186.0",

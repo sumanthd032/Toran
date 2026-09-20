@@ -26,7 +26,7 @@
     "build:index": "npm run build:index --workspace @toran/indexer",
     "build:archive": "node tools/build-archive.mjs",
     "build:abstracts": "npm run build:abstracts --workspace @toran/indexer",
-    "build:data": "npm run ingest && npm run photos && npm run build:index && npm run build:archive && npm run build:abstracts && npm run build:candidates && npm run build:ambient && npm run build:timeline && npm run build:graph",
+    "build:data": "npm run ingest && npm run photos && npm run build:index && npm run build:archive && npm run build:abstracts && npm run build:candidates && npm run build:ambient && npm run build:timeline && npm run build:graph && npm run scans && npm run build:iiif",
     "vendor:model": "node packages/indexer/src/vendor-model.mjs",
     "verify:search": "node tools/benchmark-search.mjs",
     "verify:twin": "node tools/verify-twin.mjs",
@@ -41,7 +41,11 @@
     "build:candidates": "npm run build:candidates --workspace @toran/indexer",
     "build:graph": "node tools/build-graph.mjs",
     "confirm:edges": "node tools/confirm-edges.mjs",
-    "verify:graph": "node tools/verify-graph.mjs"
+    "verify:graph": "node tools/verify-graph.mjs",
+    "scans": "python3 pipeline/scans.py",
+    "build:iiif": "node tools/build-iiif.mjs",
+    "ocr:printed": "pipeline/.venv/bin/python pipeline/ocr/printed.py",
+    "ocr:handwriting": "python3 pipeline/ocr/handwriting.py"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
