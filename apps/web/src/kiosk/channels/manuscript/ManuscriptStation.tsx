@@ -76,6 +76,19 @@ export function ManuscriptStation() {
   const pipeline = scan === null ? null : preferred(readings, scan);
   const reading = readings.find((r) => r.transcription.pipeline === pipeline) ?? null;
 
+  // The boxes the viewer places over the page. Memoised because handing the
+  // viewer a new array on every render makes it tear down and rebuild every
+  // overlay, which costs a frame and leaves the compositor behind.
+  const boxes = useMemo(() => {
+    if (reading === null || scan === null) return [];
+    return reading.regions.flatMap((region) => {
+      const box = boxOf(region, scan);
+      return box === null
+        ? []
+        : [{ id: region.id, box, heat: heatOf(region, reading.transcription.pipeline) }];
+    });
+  }, [reading, scan]);
+
   useChannelNav({
     back: () => {
       if (asked !== null) {
@@ -121,22 +134,6 @@ export function ManuscriptStation() {
     );
   }
 
-  const boxes =
-    reading === null
-      ? []
-      : reading.regions.flatMap((region) => {
-          const box = boxOf(region, scan);
-          return box === null
-            ? []
-            : [
-                {
-                  id: region.id,
-                  box,
-                  heat: heatOf(region, reading.transcription.pipeline),
-                },
-              ];
-        });
-
   /**
    * A press and hold on the page. The point arrives in stage pixels; the
    * page is drawn to fit the stage, so it converts by the same ratio the
@@ -169,12 +166,6 @@ export function ManuscriptStation() {
             ? t('manuscript.leaf', { title: scan.title })
             : t('manuscript.page', { title: scan.title, page: scan.printedPage })}
         </p>
-        <p className={styles.provenance}>
-          {t('manuscript.provenance', {
-            rendered: scan.provenance.rendered,
-            credit: scan.credit ?? '',
-          })}
-        </p>
       </header>
 
       {view !== 'text' && (
@@ -190,6 +181,14 @@ export function ManuscriptStation() {
 
       {view !== 'scan' && (
         <div className={styles.side}>
+          {/* Where the image came from, beside the words read off it. The
+              header carries the page's name; this carries its provenance. */}
+          <p className={styles.provenance}>
+            {t('manuscript.provenance', {
+              rendered: scan.provenance.rendered,
+              credit: scan.credit ?? '',
+            })}
+          </p>
           {reading === null ? (
             <p className={styles.status} data-testid="manuscript-unread">
               {t('manuscript.unread')}

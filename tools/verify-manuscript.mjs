@@ -244,6 +244,26 @@ console.log('\nToran step 8 verification: the Manuscript Station\n');
   });
   check('the page is drawn from tiles on the device', drew > 0, `${drew} sampled pixels carry the page`);
 
+  // What the viewer actually rasterised. A screenshot of this page in
+  // headless Chrome shows black bars over the stage that are in neither the
+  // canvas nor the DOM: the raster below is clean, every element over it is
+  // transparent and positioned on its line, and removing every overlay does
+  // not change the capture. It is a compositing artefact of headless
+  // capture, unreproducible here in any other way, and it has to be looked
+  // at on the tablet before the Grand Finale rather than assumed away.
+  const blocks = await page.evaluate(() => {
+    const canvas = document.querySelector('[data-testid="manuscript-canvas"] canvas');
+    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    let dark = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] > 200 && pixels[i] + pixels[i + 1] + pixels[i + 2] < 90) dark++;
+    }
+    return { dark, of: pixels.length / 4 };
+  });
+  check('the raster the viewer produced is the page and not black blocks',
+    blocks.dark / blocks.of < 0.12, `${((blocks.dark / blocks.of) * 100).toFixed(1)}% of it is near black`);
+  info('headless capture', 'shows bars this raster does not contain; check the station on the tablet');
+
   // Zoom in, which is what makes a tile request beyond the first level.
   const before = tilesAsked.length;
   const stage = await (await page.$('[data-testid="manuscript-canvas"]')).boundingBox();

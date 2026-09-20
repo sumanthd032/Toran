@@ -82,37 +82,36 @@
   touch-action: none;
 }
 
-.boxes {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+/* The viewer draws its own canvas inside the stage and focuses it. */
+.canvas :global(.openseadragon-canvas) {
+  outline: none;
 }
 
+/*
+  A box the viewer places over its own page. It carries the heat and nothing
+  else, and it never takes a touch, so the gesture goes to the page under it.
+*/
 .box {
-  fill: var(--heat-high);
-  stroke: transparent;
-  stroke-width: 3;
-  transition:
-    fill var(--dur-fast) var(--ease),
-    stroke var(--dur-fast) var(--ease);
+  pointer-events: none;
+  background: var(--heat-high);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
 }
 
 .box[data-heat='middling'] {
-  fill: var(--heat-middling);
+  background: var(--heat-middling);
 }
 
 .box[data-heat='low'] {
-  fill: var(--heat-low);
+  background: var(--heat-low);
 }
 
 .box[data-heat='certain'] {
-  fill: var(--heat-certain);
+  background: var(--heat-certain);
 }
 
 .box[data-selected] {
-  stroke: var(--accent);
+  border-color: var(--accent);
 }
 
 /* ---- the transcription ---- */

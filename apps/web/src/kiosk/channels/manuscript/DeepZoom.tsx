@@ -9,6 +9,11 @@
  * specification requires. A kiosk may be serving those same bytes from any
  * origin, and offline, so the identifier is rewritten to this origin as the
  * viewer loads it. The tiles are unchanged; only the address is local.
+ *
+ * The boxes the machine drew are registered with the viewer rather than
+ * painted over it, so they stay on their words through a pan and a pinch. An
+ * overlay drawn in the stage's own coordinates lines up only until the first
+ * gesture, which is worse than none.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -35,6 +40,15 @@ export interface DeepZoomProps {
   readonly onReady: (ok: boolean) => void;
 }
 
+/** The part of OpenSeadragon this file uses. Its own types do not cover it. */
+interface OsdViewer {
+  destroy: () => void;
+  addHandler: (event: string, handler: () => void) => void;
+  isOpen: () => boolean;
+  clearOverlays: () => void;
+  addOverlay: (options: { element: HTMLElement; location: unknown }) => void;
+}
+
 const LONG_PRESS_MS = 550;
 /** A press that travels this far is a drag, not a question. */
 const SLOP = 12;
@@ -49,8 +63,12 @@ export function DeepZoom({
 }: DeepZoomProps) {
   const { t } = useI18n();
   const host = useRef<HTMLDivElement>(null);
-  const viewer = useRef<{ destroy: () => void; viewport: unknown } | null>(null);
+  const viewer = useRef<OsdViewer | null>(null);
+  const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const makeRect = useRef<
+    ((x: number, y: number, w: number, h: number) => unknown) | null
+  >(null);
   const ask = useRef(onAsk);
   ask.current = onAsk;
 
@@ -108,13 +126,19 @@ export function DeepZoom({
         tileSources: [
           { ...info, id: `${window.location.origin}/iiif/${scan.id}` },
         ] as never,
-      }) as unknown as {
-        destroy: () => void;
-        addHandler: (e: string, f: () => void) => void;
-      };
+      }) as unknown as OsdViewer;
       instance = created;
-      viewer.current = created as never;
-      created.addHandler('open', () => live && onReady(true));
+      viewer.current = created;
+      makeRect.current = (x, y, w, h) => new OpenSeadragon.Rect(x, y, w, h);
+      const opened = () => {
+        if (!live) return;
+        setReady(true);
+        onReady(true);
+      };
+      created.addHandler('open', opened);
+      // The tile source is an object, not a URL, so there is nothing to
+      // fetch and the viewer can already be open by the time this runs.
+      if (created.isOpen()) opened();
       created.addHandler('open-failed', () => {
         if (live) {
           setFailed(true);
@@ -125,6 +149,7 @@ export function DeepZoom({
 
     return () => {
       live = false;
+      setReady(false);
       instance?.destroy();
       viewer.current = null;
     };
@@ -177,6 +202,30 @@ export function DeepZoom({
       element.removeEventListener('pointercancel', up);
     };
   }, []);
+
+  // The boxes, registered with the viewer so a pan or a pinch carries them.
+  // Nothing here takes a touch: a box that did would swallow the gesture
+  // meant for the page under it.
+  useEffect(() => {
+    const created = viewer.current;
+    const rectOf = makeRect.current;
+    if (created === null || rectOf === null || !ready) return;
+    created.clearOverlays();
+    for (const region of regions) {
+      const element = document.createElement('div');
+      element.className = styles.box ?? '';
+      element.dataset['heat'] = region.heat;
+      if (region.id === selected) element.dataset['selected'] = 'true';
+      element.setAttribute('aria-hidden', 'true');
+      created.addOverlay({
+        element,
+        location: rectOf(region.box.x, region.box.y, region.box.width, region.box.height),
+      });
+    }
+    return () => created.clearOverlays();
+    // The boxes are rebuilt only when the page's regions or the selection
+    // change, never on an unrelated render.
+  }, [regions, selected, ready]);
 
   if (failed) {
     return (
