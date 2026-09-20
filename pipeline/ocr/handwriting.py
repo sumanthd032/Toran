@@ -43,11 +43,20 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 AIP = ROOT / "data" / "aip"
 PIPELINE = "vlm"
 ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
-# Groq's free tier allows 30 requests a minute. Three passes a page is well
-# inside it, and the sleep keeps a run of pages inside it too.
-PAUSE = 2.5
+# The vision model this account is served. Groq's catalogue moves: check
+# https://api.groq.com/openai/v1/models before assuming a name still exists.
+MODEL = "qwen/qwen3.8-27b"
+# Groq's free tier meters output tokens per minute, not just requests: this
+# model allows 1000, and it refuses a request whose ceiling alone exceeds
+# that. So a reading is capped under the limit and the passes are spaced to
+# stay inside it. A page longer than the cap is reported as cut off rather
+# than quietly truncated.
+MAX_OUTPUT = 900
+PAUSE = 28.0
 LONG_EDGE = 1600
+# Groq sits behind Cloudflare, which refuses urllib's default user agent
+# with a 403 and error code 1010 before the request ever reaches the API.
+UA = "toran-pipeline/0.1 (SIH26096 research project)"
 
 PROMPT = (
     "This is a photograph of a handwritten manuscript page. Transcribe it exactly, "
@@ -89,11 +98,11 @@ def sendable(source: Path) -> str:
         return "data:image/jpeg;base64," + base64.b64encode(small.read_bytes()).decode()
 
 
-def read_once(key: str, data_url: str, temperature: float) -> str:
+def read_once(key: str, data_url: str, temperature: float) -> tuple[str, bool]:
     body = json.dumps({
         "model": MODEL,
         "temperature": temperature,
-        "max_completion_tokens": 2048,
+        "max_completion_tokens": MAX_OUTPUT,
         "messages": [{
             "role": "user",
             "content": [
@@ -104,13 +113,18 @@ def read_once(key: str, data_url: str, temperature: float) -> str:
     }).encode()
     request = urllib.request.Request(
         ENDPOINT, data=body,
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "User-Agent": UA,
+        },
     )
     for attempt in range(5):
         try:
             with urllib.request.urlopen(request, timeout=180) as response:
                 reply = json.loads(response.read())
-            return reply["choices"][0]["message"]["content"].strip()
+            choice = reply["choices"][0]
+            return choice["message"]["content"].strip(), choice.get("finish_reason") == "length"
         except urllib.error.HTTPError as error:
             detail = error.read().decode("utf-8", "replace")[:300]
             if error.code not in (429, 500, 502, 503) or attempt == 4:
@@ -184,10 +198,13 @@ def main() -> int:
     for page in pages:
         data_url = sendable(SCANS / page["file"])
         readings = []
+        cut = False
         for i in range(args.passes):
             # The first reading is greedy and is the one kept; the others vary,
             # so agreement between them means something.
-            readings.append(lines_of(read_once(key, data_url, 0.0 if i == 0 else 0.4)))
+            text, truncated = read_once(key, data_url, 0.0 if i == 0 else 0.4)
+            cut = cut or truncated
+            readings.append(lines_of(text))
             time.sleep(PAUSE)
         scored = agreement(readings)
         regions = [
@@ -214,6 +231,9 @@ def main() -> int:
             "imageSha256": page["sha256"],
             "passes": args.passes,
             "confidenceIs": "agreement between independent readings, not the model's own estimate",
+            # A reading that hit the provider's output ceiling is short, and
+            # saying so is the difference between a gap and a silent lie.
+            "truncated": cut,
             "regions": regions,
         }
         path = write_result(page["id"], payload)
@@ -227,7 +247,7 @@ def main() -> int:
             agent=f"groq {MODEL}",
         )
         print(f"  {page['id']:<28} {len(regions):>3} lines  mean agreement {mean:.3f}  "
-              f"under 0.9: {low}  -> {path.name}")
+              f"under 0.9: {low}{'  CUT OFF at the output limit' if cut else ''}  -> {path.name}")
 
     print(f"handwriting OCR: {len(pages)} page(s), {args.passes} readings each")
     return 0
