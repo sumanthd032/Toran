@@ -1,0 +1,58 @@
+{
+  "note": "Scanned pages for the Manuscript Station. Two kinds, because OCR is two problems: printed pages for Surya and handwriting for a vision model, per D-012. A source is kept only if its bytes hash to the SHA-1 its repository publishes. Licences are recorded as the repository records them and are not independently confirmed here. The page images the kiosk serves are renders of these masters, made by this pipeline.",
+  "sources": [
+    {
+      "id": "samvidhan-1957",
+      "kind": "archive.org",
+      "item": "in.ernet.dli.2015.424297",
+      "file": "2015.424297.Bharat-Ka.pdf",
+      "title": "Bharat Ka Samvidhan: The Constitution of India as modified up to 1 December 1957",
+      "creator": "Government of India, Ministry of Law",
+      "date": "1957",
+      "rights": "Text of the Constitution of India, a public document. Wikimedia Commons records this scan as public domain.",
+      "credit": "Digital Library of India, scanned from the Ministry of Law printing",
+      "note": "A bilingual printing: the Hindi text on the verso and the English on the recto, both official. Articles 15 to 17 fall on one opening, which is why this pair was taken: the same three articles, printed, in two scripts, and the English is already in the archive as coi-art17.",
+      "dpi": 300,
+      "pages": [
+        {
+          "id": "samvidhan-1957-en-p007",
+          "pdfPage": 57,
+          "kind": "printed",
+          "language": "en",
+          "script": "Latin",
+          "printedPage": "7",
+          "heading": "Part III, Fundamental Rights, Articles 15 to 17",
+          "cites": "coi-art17"
+        },
+        {
+          "id": "samvidhan-1957-hi-p007",
+          "pdfPage": 58,
+          "kind": "printed",
+          "language": "hi",
+          "script": "Devanagari",
+          "printedPage": "७",
+          "heading": "भाग ३, मूल अधिकार, अनुच्छेद १५ से १७",
+          "cites": null
+        }
+      ]
+    },
+    {
+      "id": "riddles-manuscript",
+      "kind": "commons",
+      "file": "Sample of BR Ambedkar's handwriting from the Riddles in Hinduism manuscript.png",
+      "title": "A page of the Riddles in Hinduism manuscript in Ambedkar's hand",
+      "note": "Ambedkar wrote Riddles in Hinduism between January 1954 and the end of November 1955 and it was unpublished when he died. Commons records the passage this page carries, and the editors of Writings and Speeches printed the same words in volume 4 at pages 348 to 349. That printed text is the ground truth this page is scored against.",
+      "pages": [
+        {
+          "id": "riddles-manuscript-p001",
+          "kind": "handwritten",
+          "language": "en",
+          "script": "Latin",
+          "printedPage": null,
+          "heading": "Riddles in Hinduism, manuscript leaf",
+          "cites": null
+        }
+      ]
+    }
+  ]
+}
