@@ -239,5 +239,7 @@
   "citation.corpus.manuscript": "पांडुलिपि",
   "citation.folio": "{manuscript}, पन्ना {folio}",
   "citation.folio.unnumbered": "{manuscript}, बिना संख्या का पन्ना",
-  "citation.folio.printed": "{printed} पर मुद्रित"
+  "citation.folio.printed": "{printed} पर मुद्रित",
+  "manuscript.scored": "{passages} अलग रखे गए अंशों पर, इस मॉडल ने {cer}% अक्षर और {wer}% शब्द गलत पढ़े।",
+  "manuscript.unscored": "अभी तक किसी ने इस मॉडल को जाँची हुई प्रतिलिपि के विरुद्ध नहीं मापा है, इसलिए यह कितनी बार सही है यह ज्ञात नहीं।"
 }

@@ -150,8 +150,16 @@ export function DeepZoom({
     return () => {
       live = false;
       setReady(false);
-      instance?.destroy();
+      // Cleared first, so the overlay effect's own cleanup, which runs after
+      // this one, knows the viewer is gone and does not reach into it.
       viewer.current = null;
+      try {
+        instance?.destroy();
+      } catch {
+        // The viewer's teardown must not take the hall down with it. A throw
+        // here used to break React's unmount and leave the Twin without its
+        // interface after a visit to this device.
+      }
     };
     // The viewer is built once per page. Callbacks are read through refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,7 +230,11 @@ export function DeepZoom({
         location: rectOf(region.box.x, region.box.y, region.box.width, region.box.height),
       });
     }
-    return () => created.clearOverlays();
+    return () => {
+      // Only while the viewer is still the live one. On unmount the effect
+      // above has already destroyed it and cleared the ref.
+      if (viewer.current === created) created.clearOverlays();
+    };
     // The boxes are rebuilt only when the page's regions or the selection
     // change, never on an unrelated render.
   }, [regions, selected, ready]);

@@ -16,6 +16,7 @@ import {
   readAbstract,
   readArticle,
   readPage,
+  readAccuracy,
   readCorrection,
   readProvenance,
   readScans,
@@ -25,6 +26,7 @@ import {
   readTimeline,
   readTranslation,
   type Abstract,
+  type Accuracy,
   type Citation,
   type Correction,
   type ReadingDocument,
@@ -229,6 +231,18 @@ export async function transcriptions(scan: Scan): Promise<readonly Transcription
 export async function corrections(): Promise<readonly Correction[]> {
   const raw = await load('corrections.json');
   return Array.isArray(raw) ? raw.map(readCorrection) : [];
+}
+
+/**
+ * What each OCR pipeline scored on the held-out set. Empty when nobody has
+ * measured it, which the station says rather than hiding.
+ */
+export async function accuracy(): Promise<readonly Accuracy[]> {
+  try {
+    return readAccuracy(await load('accuracy.json'));
+  } catch {
+    return [];
+  }
 }
 
 /** Where an archive file, such as a timeline photograph, is served from. */

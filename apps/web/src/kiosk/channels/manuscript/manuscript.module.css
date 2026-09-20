@@ -299,3 +299,12 @@
 .label {
   font-family: var(--font-ui);
 }
+
+/* The measured number, set apart from the model's own opinion of itself. */
+.scored {
+  margin: var(--s-1) 0 0;
+  padding-top: var(--s-1);
+  border-top: var(--hairline) solid var(--border);
+  font-size: var(--t-meta);
+  color: var(--text);
+}

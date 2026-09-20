@@ -16,6 +16,7 @@
 
 import {
   heatOf,
+  type Accuracy,
   type CorrectedRegion,
   type Pipeline,
   type Transcription,
@@ -27,6 +28,8 @@ import styles from './manuscript.module.css';
 export interface TranscriptProps {
   readonly transcription: Transcription;
   readonly regions: readonly CorrectedRegion[];
+  /** What this pipeline scored, where anyone has measured it. */
+  readonly accuracy: Accuracy | null;
   readonly selected: string | null;
   readonly onSelect: (id: string) => void;
 }
@@ -54,6 +57,7 @@ function Words({ region, pipeline }: { region: CorrectedRegion; pipeline: Pipeli
 export function Transcript({
   transcription,
   regions,
+  accuracy,
   selected,
   onSelect,
 }: TranscriptProps) {
@@ -76,6 +80,18 @@ export function Transcript({
         </p>
         <p className={styles.counts}>
           {t('manuscript.counts', { regions: regions.length, doubted })}
+        </p>
+        {/* The measured number, beside the reading it judges. A confidence
+            says how sure the model was; only this says whether that was
+            worth anything, and where there is none the screen says so. */}
+        <p className={styles.scored}>
+          {accuracy === null
+            ? t('manuscript.unscored')
+            : t('manuscript.scored', {
+                cer: (accuracy.cer * 100).toFixed(1),
+                wer: (accuracy.wer * 100).toFixed(1),
+                passages: accuracy.passages,
+              })}
         </p>
       </header>
 

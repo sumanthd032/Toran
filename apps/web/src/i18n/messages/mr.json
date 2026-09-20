@@ -239,5 +239,7 @@
   "citation.corpus.manuscript": "हस्तलिखित",
   "citation.folio": "{manuscript}, पान {folio}",
   "citation.folio.unnumbered": "{manuscript}, क्रमांक नसलेले पान",
-  "citation.folio.printed": "{printed} येथे छापलेले"
+  "citation.folio.printed": "{printed} येथे छापलेले",
+  "manuscript.scored": "{passages} वेगळ्या ठेवलेल्या उताऱ्यांवर, या प्रतिमानाने {cer}% अक्षरे आणि {wer}% शब्द चुकीचे वाचले.",
+  "manuscript.unscored": "अद्याप कोणीही या प्रतिमानाची तपासलेल्या प्रतिलेखाशी तुलना केलेली नाही, त्यामुळे ते किती वेळा बरोबर असते हे माहीत नाही."
 }

@@ -15,8 +15,15 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { heatOf, type Correction, type Scan, type Transcription } from '@toran/contracts';
 import {
+  heatOf,
+  type Accuracy,
+  type Correction,
+  type Scan,
+  type Transcription,
+} from '@toran/contracts';
+import {
+  accuracy as loadAccuracy,
   corrections as loadCorrections,
   scans as loadScans,
   transcriptions,
@@ -37,6 +44,7 @@ interface Loaded {
   readonly scans: readonly Scan[];
   readonly readings: ReadonlyMap<string, readonly Transcription[]>;
   readonly corrections: readonly Correction[];
+  readonly accuracy: readonly Accuracy[];
 }
 
 export function ManuscriptStation() {
@@ -52,10 +60,15 @@ export function ManuscriptStation() {
     let live = true;
     void (async () => {
       try {
-        const [pages, marks] = await Promise.all([loadScans(), loadCorrections()]);
+        const [pages, marks, scored] = await Promise.all([
+          loadScans(),
+          loadCorrections(),
+          loadAccuracy(),
+        ]);
         const readings = new Map<string, readonly Transcription[]>();
         for (const scan of pages) readings.set(scan.id, await transcriptions(scan));
-        if (live) setLoaded({ scans: pages, readings, corrections: marks });
+        if (live)
+          setLoaded({ scans: pages, readings, corrections: marks, accuracy: scored });
       } catch {
         if (live) setFailed(true);
       }
@@ -197,6 +210,11 @@ export function ManuscriptStation() {
             <Transcript
               transcription={reading.transcription}
               regions={reading.regions}
+              accuracy={
+                loaded.accuracy.find(
+                  (a) => a.pipeline === reading.transcription.pipeline,
+                ) ?? null
+              }
               selected={selected}
               onSelect={setSelected}
             />

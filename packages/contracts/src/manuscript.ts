@@ -116,6 +116,39 @@ export interface Correction {
   readonly note: string | null;
 }
 
+/**
+ * What a pipeline scored on the held-out set. The only number that says
+ * whether to believe a reading, so it is shown beside one.
+ */
+export interface Accuracy {
+  readonly pipeline: Pipeline;
+  readonly model: string;
+  /** How many passages it was scored on. A small number is still the truth. */
+  readonly passages: number;
+  /** Character error rate, 0 to 1. */
+  readonly cer: number;
+  /** Word error rate, 0 to 1. */
+  readonly wer: number;
+  /** Where the ground truth came from, because a score is worth what that is. */
+  readonly methods: readonly string[];
+}
+
+export function readAccuracy(raw: unknown): readonly Accuracy[] {
+  if (typeof raw !== 'object' || raw === null) return [];
+  const summary = (raw as Json)['summary'];
+  if (typeof summary !== 'object' || summary === null) return [];
+  return Object.entries(summary as Record<string, Json>).map(([pipeline, s]) => ({
+    pipeline: oneOf(pipeline, PIPELINES, 'accuracy pipeline'),
+    model: text(s['model'], `${pipeline} model`),
+    passages: number_(s['passages'], `${pipeline} passages`),
+    cer: confidence(s['cer'], `${pipeline} cer`),
+    wer: confidence(s['wer'], `${pipeline} wer`),
+    methods: (Array.isArray(s['methods']) ? s['methods'] : []).map((m, i) =>
+      text(m, `${pipeline} method ${i}`),
+    ),
+  }));
+}
+
 export type Heat = 'certain' | 'high' | 'middling' | 'low';
 
 /**

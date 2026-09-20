@@ -239,5 +239,7 @@
   "citation.corpus.manuscript": "Manuscript",
   "citation.folio": "{manuscript}, leaf {folio}",
   "citation.folio.unnumbered": "{manuscript}, an unnumbered leaf",
-  "citation.folio.printed": "printed at {printed}"
+  "citation.folio.printed": "printed at {printed}",
+  "manuscript.scored": "On a held-out set of {passages}, this model misread {cer}% of characters and {wer}% of words.",
+  "manuscript.unscored": "Nobody has measured this model against a checked transcription yet, so how often it is right is not known."
 }
