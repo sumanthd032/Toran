@@ -232,6 +232,12 @@ def main() -> int:
             served.append({
                 "id": page["id"],
                 "sourceId": sid,
+                # The page's own citation. Every word a machine reads off this
+                # page inherits it, so a transcription cannot be shown uncited.
+                "corpus": page["corpus"],
+                "workId": page["workId"],
+                "pageId": page["id"],
+                "locator": page["locator"],
                 "kind": page["kind"],
                 "language": page["language"],
                 "script": page["script"],

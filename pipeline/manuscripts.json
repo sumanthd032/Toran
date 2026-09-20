@@ -22,7 +22,16 @@
           "script": "Latin",
           "printedPage": "7",
           "heading": "Part III, Fundamental Rights, Articles 15 to 17",
-          "cites": "coi-art17"
+          "cites": "coi-art17",
+          "corpus": "constitution",
+          "workId": "samvidhan-1957",
+          "locator": {
+            "kind": "page",
+            "volume": null,
+            "part": null,
+            "page": 7,
+            "observed": true
+          }
         },
         {
           "id": "samvidhan-1957-hi-p007",
@@ -32,7 +41,67 @@
           "script": "Devanagari",
           "printedPage": "७",
           "heading": "भाग ३, मूल अधिकार, अनुच्छेद १५ से १७",
-          "cites": null
+          "cites": null,
+          "corpus": "constitution",
+          "workId": "samvidhan-1957-hi",
+          "locator": {
+            "kind": "page",
+            "volume": null,
+            "part": null,
+            "page": 7,
+            "observed": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "coi-calligraphic",
+      "kind": "archive.org",
+      "item": "TheConstitutionOfIndiaCalligraphicEdition",
+      "file": "2672.pdf",
+      "title": "The Constitution of India, the original calligraphed and illuminated version",
+      "creator": "Constituent Assembly of India; written out by Prem Behari Narain Raizada",
+      "date": "1949",
+      "rights": "Text of the Constitution of India, a public document. Wikimedia Commons records this scan under EdictGov-India and the Internet Archive marks it public domain.",
+      "credit": "World Digital Library, by way of the Internet Archive",
+      "note": "The signed copy, written out by hand rather than printed. Page 8 carries Article 17, the article the Provenance Graph walks back from, so the same words can be read in the graph, in the reading copy and in the hand that wrote them. Ground truth for scoring is the ratified text already in the archive.",
+      "dpi": 300,
+      "pages": [
+        {
+          "id": "coi-calligraphic-p007",
+          "pdfPage": 21,
+          "kind": "handwritten",
+          "language": "en",
+          "script": "Latin",
+          "printedPage": "7",
+          "heading": "Part III, Right to Equality, Articles 14 to 16",
+          "cites": "coi-art15",
+          "corpus": "manuscript",
+          "workId": "coi-calligraphic",
+          "locator": {
+            "kind": "folio",
+            "manuscript": "The Constitution of India, calligraphed",
+            "folio": "7",
+            "printed": "Articles 14 to 16 of the Constitution of India"
+          }
+        },
+        {
+          "id": "coi-calligraphic-p008",
+          "pdfPage": 23,
+          "kind": "handwritten",
+          "language": "en",
+          "script": "Latin",
+          "printedPage": "8",
+          "heading": "Part III, Articles 17 to 19: abolition of untouchability, abolition of titles, right to freedom",
+          "cites": "coi-art17",
+          "corpus": "manuscript",
+          "workId": "coi-calligraphic",
+          "locator": {
+            "kind": "folio",
+            "manuscript": "The Constitution of India, calligraphed",
+            "folio": "8",
+            "printed": "Articles 17 to 19 of the Constitution of India"
+          }
         }
       ]
     },
@@ -50,7 +119,15 @@
           "script": "Latin",
           "printedPage": null,
           "heading": "Riddles in Hinduism, manuscript leaf",
-          "cites": null
+          "cites": null,
+          "corpus": "manuscript",
+          "workId": "riddles-manuscript",
+          "locator": {
+            "kind": "folio",
+            "manuscript": "Riddles in Hinduism",
+            "folio": null,
+            "printed": "Writings and Speeches, volume 4, pages 348 to 349"
+          }
         }
       ]
     }
