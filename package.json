@@ -37,7 +37,8 @@
     "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts",
     "photos": "python3 pipeline/photos.py",
     "build:timeline": "node tools/build-timeline.mjs",
-    "verify:visitor": "node tools/verify-visitor.mjs"
+    "verify:visitor": "node tools/verify-visitor.mjs",
+    "build:candidates": "npm run build:candidates --workspace @toran/indexer"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
