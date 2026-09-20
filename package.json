@@ -39,7 +39,8 @@
     "build:timeline": "node tools/build-timeline.mjs",
     "verify:visitor": "node tools/verify-visitor.mjs",
     "build:candidates": "npm run build:candidates --workspace @toran/indexer",
-    "build:graph": "node tools/build-graph.mjs"
+    "build:graph": "node tools/build-graph.mjs",
+    "confirm:edges": "node tools/confirm-edges.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
