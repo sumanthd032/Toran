@@ -27,6 +27,7 @@ export const CORPORA = [
   'cad',
   'constitution',
   'statute',
+  'manuscript',
   'media',
   'photograph',
 ] as const;
@@ -91,6 +92,22 @@ export interface ArticleLocator {
   readonly version: ArticleVersion | null;
 }
 
+/**
+ * Cites a leaf of a manuscript. A leaf carries no printed page number, and
+ * inventing one would make a citation that cannot be followed, so the leaf is
+ * named as the manuscript names it and the printed edition of the same words
+ * is given alongside where one exists.
+ */
+export interface FolioLocator {
+  readonly kind: 'folio';
+  /** The manuscript, as the archive names it. */
+  readonly manuscript: string;
+  /** The leaf, where the manuscript numbers its leaves. Null where it does not. */
+  readonly folio: string | null;
+  /** Where the same words are printed, when they are. */
+  readonly printed: string | null;
+}
+
 /** Cites a section of an Act of Parliament. */
 export interface SectionLocator {
   readonly kind: 'section';
@@ -117,7 +134,12 @@ export const PLATES = ['frontispiece'] as const;
 export type PlateName = (typeof PLATES)[number];
 
 export type Locator =
-  PageLocator | ParagraphLocator | ArticleLocator | PlateLocator | SectionLocator;
+  | PageLocator
+  | ParagraphLocator
+  | ArticleLocator
+  | PlateLocator
+  | SectionLocator
+  | FolioLocator;
 
 export interface Citation {
   readonly corpus: Corpus;
@@ -246,6 +268,21 @@ export function sectionLocator(input: {
   return { kind: 'section', act: input.act, year: input.year, section: input.section };
 }
 
+export function folioLocator(input: {
+  manuscript: string;
+  folio?: string | null;
+  printed?: string | null;
+}): FolioLocator {
+  if (input.manuscript.trim() === '')
+    throw new CitationError('a manuscript must be named');
+  return {
+    kind: 'folio',
+    manuscript: input.manuscript,
+    folio: input.folio ?? null,
+    printed: input.printed ?? null,
+  };
+}
+
 export function plateLocator(input: {
   plate: string;
   volume?: number | null;
@@ -329,6 +366,8 @@ export function citationKey(c: Citation): string {
         : `art. ${l.article} v${l.version.ordinal}`;
     case 'section':
       return `${l.act} ${l.year} s. ${l.section}`;
+    case 'folio':
+      return l.folio === null ? `ms ${l.manuscript}` : `ms ${l.manuscript} f. ${l.folio}`;
     case 'plate': {
       const vol =
         l.volume === null ? '' : `${l.volume}${l.part === null ? '' : `.${l.part}`}`;

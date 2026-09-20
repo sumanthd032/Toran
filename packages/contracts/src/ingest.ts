@@ -16,6 +16,7 @@ import {
   pageLocator,
   paragraphLocator,
   plateLocator,
+  folioLocator,
   sectionLocator,
   type CitedPassage,
   type Locator,
@@ -82,6 +83,12 @@ export function readLocator(raw: unknown): Locator {
         draft: version['draft'] === true,
       });
     }
+    case 'folio':
+      return folioLocator({
+        manuscript: str(l['manuscript'], 'manuscript'),
+        folio: typeof l['folio'] === 'string' ? l['folio'] : null,
+        printed: typeof l['printed'] === 'string' ? l['printed'] : null,
+      });
     case 'section':
       return sectionLocator({
         act: str(l['act'], 'act'),
