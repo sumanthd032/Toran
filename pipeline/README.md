@@ -13,8 +13,22 @@ sudo dnf install poppler-utils ImageMagick      # Fedora
 sudo apt install poppler-utils imagemagick      # Debian, Ubuntu
 ```
 
-There is no `requirements.txt` because there are no dependencies. Step 8 adds
-Surya for OCR and will bring one.
+The text pipeline has no dependencies. OCR does: Surya needs PyTorch, which
+publishes no wheels for the Python this machine ships, so it runs in its own
+Python 3.13 environment. Build it once:
+
+```
+uv python install 3.13
+uv venv --python 3.13 pipeline/.venv
+uv pip install --python pipeline/.venv --torch-backend=cpu surya-ocr==0.17.1 "transformers>=4.56.1,<5"
+```
+
+1.1 GB, gitignored, and nothing in it ships to a kiosk. The first OCR run
+downloads a 1.34 GB model from models.datalab.to. See DECISIONS.md D-113 for
+why the versions are pinned.
+
+The handwriting pipeline needs no environment, only `GROQ_API_KEY` in
+`.env.local`. A free key, no card, is at https://console.groq.com/keys.
 
 ## Run
 
@@ -22,7 +36,18 @@ Surya for OCR and will bring one.
 python3 pipeline/ingest.py            # fetch, parse, package
 python3 pipeline/ingest.py --refetch  # re-download even if present
 python3 pipeline/photos.py            # photographs for the Timeline Wall
+python3 pipeline/scans.py             # scanned pages for the Manuscript Station
 python3 pipeline/verify.py            # check the result against the originals
+```
+
+OCR is separate from `ingest.py` because one half needs a 1.1 GB environment
+and the other needs an API key, and neither should stand between a fresh
+clone and a working archive:
+
+```
+pipeline/.venv/bin/python pipeline/ocr/printed.py      # Surya, printed pages
+python3 pipeline/ocr/handwriting.py                    # a vision model, hands
+python3 pipeline/ocr/accuracy.py                       # what each one is worth
 ```
 
 Both are idempotent. `ingest.py` does not re-download a file it already has,
@@ -36,6 +61,11 @@ and re-running it produces the same digests.
 | `fetch/` | retrieval, reserved for step 8 when sources multiply |
 | `parse/pdf_pages.py` | per page text, and the printed page number where it can be read |
 | `parse/cad.py` | debate paragraphs, speakers and procedural records |
+| `parse/statute.py` | sections of an Act of Parliament |
+| `scans.py` | scanned page masters and the page images rendered from them |
+| `ocr/printed.py` | Surya over printed pages, with a confidence per word |
+| `ocr/handwriting.py` | a vision model over manuscript hands, several readings |
+| `ocr/accuracy.py` | character and word error against the held-out set |
 | `oais/packages.py` | SIP/AIP/DIP, fixity, PREMIS events, Dublin Core |
 | `ingest.py` | orchestrates the three stages |
 | `photos.json`, `photos.py` | photographs: Commons files checked against Commons' SHA-1, and plates taken from a volume |
