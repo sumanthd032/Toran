@@ -1,0 +1,15 @@
+{"edge":"draft-8--becomes--art-13","digest":"78391e00f08cc3c81971b126958c90d0dd6b1395fe1ce084feb676f6a9f7f751","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:06.746Z","note":null}
+{"edge":"draft-9--becomes--art-15","digest":"a37a444e2f018027757d8d45db6f0804790282ac29cd4a33ae0ca865df84ee36","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:10.570Z","note":null}
+{"edge":"draft-11--becomes--art-17","digest":"fefb7305734e49f5d54d9fc05b16cf3fa40d773583a7291b70c9a2e7d50d55b2","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:13.424Z","note":null}
+{"edge":"art-17--enforces--pcr-1955","digest":"b28355a92361819e47ebda1c1cd8554f202dfced71f15d5d4cbd13b3262d743b","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:17.225Z","note":null}
+{"edge":"rtc-1930--proposes--draft-11","digest":"280a5d74c87a078fb64f9474325894301e30ea9ca1d3ab3c858c623e7039623d","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:19.144Z","note":null}
+{"edge":"aoc-1936--argues--draft-11","digest":"835a83f8400b1f2439de1d5f4177c1c5c8b1b0607b63d365828d64ce5dfd4625","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:21.808Z","note":null}
+{"edge":"sam-1947--proposes--draft-8","digest":"51f9f2c46c352eda4f9ba437fe646ebdecb338a61b447ab4b78b731a38b97bb8","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:22.882Z","note":null}
+{"edge":"sam-1947--proposes--draft-9","digest":"53cbbd9578524a30df830dc6cf43b0ab283705bcea8932027351ee7730d5dd6f","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:27.844Z","note":null}
+{"edge":"mahad-1927--argues--draft-9","digest":"dae2092354b7c2d8d6fb6d1b1917bec2f7a67d4ece402c8237677bd62d1c1ef9","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:29.752Z","note":null}
+{"edge":"sam-1947--argues--draft-11","digest":"087be680754317e1cacf53cbf64967958b3f3bff433a8eb21e968fface0a9700","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:31.405Z","note":null}
+{"edge":"mahad-1927--argues--draft-11","digest":"4c7c3a665771eb4f72445b95eca650cf5472fecb05cab48e08d4c3e0b07734de","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:32.891Z","note":null}
+{"edge":"rtc-1930--argues--draft-8","digest":"c8eaf87873c448938e987fc886962e9e54791e125850ee9f837c9e43376f2863","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:34.167Z","note":null}
+{"edge":"deadlock-1945--argues--draft-8","digest":"ceb5adc7178d8f0301d539fa80113baf6339ed79ca62f9c5dbdab410406b024e","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:35.287Z","note":null}
+{"edge":"rtc-1930--argues--draft-9","digest":"642fbb38f86315980789f43bfda55f8cedbe15f9dda4ea066ace486a0d65ed0a","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:36.391Z","note":null}
+{"edge":"aoc-1936--argues--draft-9","digest":"11cb7320aec49bec7b1f7240f1db609a5c65535ba663a9a4f64fc4bf46e662cc","decision":"confirmed","by":"Sumanth D","at":"2026-09-20T07:54:37.460Z","note":null}
