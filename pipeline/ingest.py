@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from oais.packages import Premis, dublin_core, now, sha256_file, sha256_text, verify_fixity, write_fixity, write_json
 from parse import cad as cad_parser
 from parse import constitution as coi_parser
+from parse import statute as statute_parser
 from parse.blocks import body_text, page_blocks, vocabulary
 from parse.pdf_pages import parse as parse_pdf
 
@@ -362,9 +363,73 @@ def ingest_constitution_source(source: dict, refetch: bool, premis: Premis) -> d
         "pageId": rec_id, "workId": sid, "corpus": source["corpus"],
         "article": article.article, "heading": article.heading,
         "language": source["language"], "text": article.text,
+        # The drafting history's texts, each citable as a version of this
+        # article: the draft the Assembly debated, and the text of 1950.
+        "versions": [
+            {"ordinal": v.ordinal, "article": v.article, "year": v.year,
+             "draft": bool(v.document and "Draft" in v.document),
+             "label": v.label, "text": v.text}
+            for v in article.versions if v.article and v.year and v.text
+        ],
     }
     return {"id": sid, "pages": 1, "observedPages": 1, "chunks": chunks,
             "reading": {"articles": [reading]}, "sha256": digest}
+
+
+def ingest_statute_source(source: dict, refetch: bool, premis: Premis) -> dict:
+    """An Act of Parliament, cited by section rather than by page."""
+    sid = source["id"]
+    sip_dir = SIP / sid
+    original = sip_dir / "original.pdf"
+
+    downloaded = fetch(source["url"], original, refetch)
+    digest = sha256_file(original)
+    premis.event("ingestion" if downloaded else "validation", "success",
+                 f"{'retrieved' if downloaded else 'already present'} {source['url']}",
+                 objects=[f"{sid}/original.pdf"])
+    premis.event("message digest calculation", "success", f"sha256 {digest}",
+                 objects=[f"{sid}/original.pdf"])
+    write_json(sip_dir / "submission.json", {
+        "sourceId": sid, "url": source["url"], "retrieved": now(), "sha256": digest,
+        "bytes": original.stat().st_size, "format": source["format"],
+        "rights": source["rights"], "rightsVerified": source["rights_verified"],
+    })
+
+    sections = statute_parser.parse(statute_parser.read_layout(original))
+    if len(sections) < 2:
+        premis.event("normalization", "failure", "no sections parsed", objects=[sid])
+        raise SystemExit(f"{sid}: no sections parsed")
+    premis.event("normalization", "success",
+                 f"{len(sections) - 1} sections and the long title, with pdftotext -layout",
+                 objects=[f"{sid}/original.pdf"])
+
+    aip_dir = AIP / sid
+    write_json(aip_dir / "sections.json", [s.to_json() for s in sections])
+    write_json(aip_dir / "dublin-core.json", dublin_core(
+        title=source["title"], creator=source["creator"], publisher=source["publisher"],
+        language=source["language"], type="Text", format=source["format"],
+        identifier=sid, source=source["url"], rights=source["rights"],
+        date=str(source["year"]),
+    ))
+
+    chunks, reading = [], []
+    for sec in sections:
+        rec_id = f"{sid}-s{sec.section.lower()}"
+        locator = {"kind": "section", "act": source["act"], "year": source["year"],
+                   "section": sec.section}
+        for n, body in enumerate(split_text(sec.text)):
+            chunks.append({
+                "chunkId": f"{rec_id}-c{n:02d}", "pageId": rec_id, "workId": sid,
+                "corpus": source["corpus"], "locator": locator,
+                "language": source["language"], "speaker": None, "text": body,
+            })
+        reading.append({
+            "pageId": rec_id, "workId": sid, "corpus": source["corpus"],
+            "act": source["act"], "year": source["year"], "section": sec.section,
+            "heading": sec.heading, "language": source["language"], "text": sec.text,
+        })
+    return {"id": sid, "pages": len(sections), "observedPages": len(sections),
+            "chunks": chunks, "reading": {"acts": reading}, "sha256": digest}
 
 
 def main() -> int:
@@ -378,10 +443,12 @@ def main() -> int:
 
     summaries = []
     all_chunks = []
-    reading: dict[str, list] = {"pages": [], "sittings": [], "articles": []}
+    reading: dict[str, list] = {"pages": [], "sittings": [], "articles": [], "acts": []}
     for source in manifest["sources"]:
         print(f"  {source['id']} ...", flush=True)
-        if source["format"] == "application/pdf":
+        if source["corpus"] == "statute":
+            summary = ingest_statute_source(source, args.refetch, premis)
+        elif source["format"] == "application/pdf":
             summary = ingest_pdf_source(source, args.refetch, premis)
         elif source["corpus"] == "constitution":
             summary = ingest_constitution_source(source, args.refetch, premis)
@@ -412,7 +479,7 @@ def main() -> int:
     premis.event("dissemination", "success",
                  f"built {len(all_chunks)} retrieval chunks and a reading copy of "
                  f"{len(reading['pages'])} pages, {len(reading['sittings'])} sittings, "
-                 f"{len(reading['articles'])} articles")
+                 f"{len(reading['articles'])} articles, {len(reading['acts'])} sections of Acts")
 
     # Fixity manifest over the submission packages.
     fixity = write_fixity(SIP, DATA / "fixity.json")

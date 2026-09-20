@@ -16,6 +16,7 @@ import {
   pageLocator,
   paragraphLocator,
   plateLocator,
+  sectionLocator,
   type CitedPassage,
   type Locator,
 } from './citation.ts';
@@ -67,8 +68,26 @@ export function readLocator(raw: unknown): Locator {
         date: str(l['date'], 'date'),
         procedural: l['procedural'] === true,
       });
-    case 'article':
-      return articleLocator(str(l['article'], 'article'));
+    case 'article': {
+      const v = l['version'];
+      if (v === undefined || v === null)
+        return articleLocator(str(l['article'], 'article'));
+      if (typeof v !== 'object')
+        throw new CitationError('article version must be an object');
+      const version = v as Record<string, unknown>;
+      return articleLocator(str(l['article'], 'article'), {
+        ordinal: int(version['ordinal'], 'version ordinal'),
+        article: str(version['article'], 'version article'),
+        year: int(version['year'], 'version year'),
+        draft: version['draft'] === true,
+      });
+    }
+    case 'section':
+      return sectionLocator({
+        act: str(l['act'], 'act'),
+        year: int(l['year'], 'act year'),
+        section: str(l['section'], 'section'),
+      });
     case 'plate':
       return plateLocator({
         plate: str(l['plate'], 'plate'),

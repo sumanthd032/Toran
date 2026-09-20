@@ -8,6 +8,7 @@ const CORPUS_KEY = {
   baws: 'citation.corpus.baws',
   cad: 'citation.corpus.cad',
   constitution: 'citation.corpus.constitution',
+  statute: 'citation.corpus.statute',
   media: 'citation.corpus.media',
   photograph: 'citation.corpus.photograph',
 } as const satisfies Record<CitationData['corpus'], MessageKey>;
@@ -54,7 +55,26 @@ export function Citation({
       break;
     }
     case 'article': {
-      parts.push(t('citation.article', { article: l.article }));
+      const v = l.version;
+      if (v === null) {
+        parts.push(t('citation.article', { article: l.article }));
+      } else if (v.draft) {
+        // The draft the Assembly debated, and the article it became.
+        parts.push(t('citation.article.draft', { article: v.article, year: v.year }));
+        parts.push(t('citation.article.now', { article: l.article }));
+      } else {
+        parts.push(t('citation.article', { article: l.article }));
+        parts.push(t('citation.article.text', { year: v.year }));
+      }
+      break;
+    }
+    case 'section': {
+      parts.push(t('citation.act', { act: l.act, year: l.year }));
+      parts.push(
+        l.section === 'title'
+          ? t('citation.section.title')
+          : t('citation.section', { section: l.section }),
+      );
       break;
     }
     case 'plate': {
@@ -77,11 +97,8 @@ export function Citation({
     >
       <span className={styles.corpus}>{t(CORPUS_KEY[citation.corpus])}</span>
       <span className={styles.locator}>{parts.join(', ')}</span>
-      {inferred && (
-        <span className={styles.inferred} title={t('citation.inferred.explain')}>
-          {t('citation.inferred')}
-        </span>
-      )}
+      {/* Said on the page, not in a tooltip: a group at a kiosk sees no hover. */}
+      {inferred && <span className={styles.inferred}>{t('citation.inferred')}</span>}
     </cite>
   );
 }

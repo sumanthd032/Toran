@@ -91,7 +91,56 @@
       "articles": ["17"],
       "rights": "Text of the Constitution of India, a public document. Annotation and drafting history by the Centre for Law and Policy Research.",
       "rights_verified": false,
-      "note": "Carries the drafting history: Article 17 (1950) was Draft Article 11 (1948), debated 29 November 1948. That link is the seed of the provenance graph in step 7. Slugs for the other articles Ambedkar shaped are not discoverable from an index page and are deferred to step 7."
+      "note": "Carries the drafting history: Article 17 (1950) was Draft Article 11 (1948), debated 29 November 1948. That link is the seed of the provenance graph."
+    },
+    {
+      "id": "coi-art13",
+      "corpus": "constitution",
+      "title": "Constitution of India, Article 13: Laws inconsistent with or in derogation of the fundamental rights",
+      "creator": "Constituent Assembly of India",
+      "publisher": "Government of India",
+      "volume": null,
+      "part": "III",
+      "language": "en",
+      "format": "text/html",
+      "url": "https://www.constitutionofindia.net/articles/article-13-laws-inconsistent-with-or-in-derogation-of-the-fundamental-rights/",
+      "articles": ["13"],
+      "rights": "Text of the Constitution of India, a public document. Annotation and drafting history by the Centre for Law and Policy Research.",
+      "rights_verified": false,
+      "note": "Draft Article 8 (1948), adopted as amended on 29 November 1948. Found through the site's articles sitemap, which step 2 had not looked for."
+    },
+    {
+      "id": "coi-art15",
+      "corpus": "constitution",
+      "title": "Constitution of India, Article 15: Prohibition of discrimination on grounds of religion, race, caste, sex or place of birth",
+      "creator": "Constituent Assembly of India",
+      "publisher": "Government of India",
+      "volume": null,
+      "part": "III",
+      "language": "en",
+      "format": "text/html",
+      "url": "https://www.constitutionofindia.net/articles/article-15-prohibition-of-discrimination-on-grounds-of-religion-race-caste-sex-or-place-of-birth/",
+      "articles": ["15"],
+      "rights": "Text of the Constitution of India, a public document. Annotation and drafting history by the Centre for Law and Policy Research.",
+      "rights_verified": false,
+      "note": "Draft Article 9 (1948), adopted as amended on 29 November 1948; the debate in which Ambedkar answered that ponds are included in tanks."
+    },
+    {
+      "id": "pcr-1955",
+      "corpus": "statute",
+      "title": "The Protection of Civil Rights Act, 1955 (22 of 1955)",
+      "creator": "Parliament of India",
+      "publisher": "Ministry of Social Justice and Empowerment",
+      "act": "Protection of Civil Rights Act",
+      "year": 1955,
+      "volume": null,
+      "part": null,
+      "language": "en",
+      "format": "application/pdf",
+      "url": "https://socialjustice.gov.in/writereaddata/UploadFile/The%20Protection%20of%20Civil%20Rights635748995396817343.pdf",
+      "rights": "An Act of Parliament. Consolidated text as published by the Ministry of Social Justice and Empowerment.",
+      "rights_verified": false,
+      "note": "Enacted as the Untouchability (Offences) Act, 1955, in force from 1 June 1955, and renamed by Act 106 of 1976, which also inserted the definition of civil rights that cites Article 17. This is the Ministry's consolidated text, with the 1976 amendments marked in brackets and its own typographical errors; India Code, the authoritative copy, did not answer this build machine. Replace the source with India Code's when it can be fetched."
     }
   ]
 }

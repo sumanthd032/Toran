@@ -20,8 +20,6 @@
   "citation.volume": "Volume {volume}",
   "citation.page": "page {page}",
   "citation.part": "Part {part}",
-  "provenance.confirmed": "Confirmed",
-  "provenance.unconfirmed": "Not yet confirmed",
   "language.choose": "Choose a language",
   "system.title": "Design system",
   "system.subtitle": "Every token, type style and primitive in both themes",
@@ -40,7 +38,6 @@
   "citation.paragraph": "para {paragraph}",
   "citation.article": "Article {article}",
   "citation.inferred": "page inferred",
-  "citation.inferred.explain": "This page number was inferred from the surrounding sequence, not read off the page.",
   "twin.institution": "Dr. Ambedkar International Centre",
   "twin.address": "15 Janpath, New Delhi",
   "twin.devices": "Devices",
@@ -167,5 +164,15 @@
   "timeline.event.shudras": "Who Were the Shudras?",
   "timeline.event.article-11": "Untouchability abolished",
   "timeline.event.nagpur": "Dhamma Deeksha at Nagpur",
-  "timeline.event.died": "His death, the Mahaparinirvan"
+  "timeline.event.died": "His death, the Mahaparinirvan",
+  "citation.corpus.statute": "Acts of Parliament",
+  "citation.article.draft": "Draft Article {article}, {year}",
+  "citation.article.now": "now Article {article}",
+  "citation.article.text": "text of {year}",
+  "citation.act": "{act}, {year}",
+  "citation.section": "section {section}",
+  "citation.section.title": "long title",
+  "reading.drafting": "Drafting history",
+  "reading.act.section": "{act}, {year}, section {section}",
+  "reading.act.title": "{act}, {year}"
 }

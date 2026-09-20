@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from oais.packages import DC_ELEMENTS, sha256_file
+from parse import statute
 from parse.pdf_pages import strip_slug_lines
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -81,6 +82,10 @@ def main() -> int:
         elif kind == "plate":
             if loc.get("plate") not in ("frontispiece",):
                 bad.append(c["chunkId"])
+        elif kind == "section":
+            if not (loc.get("act") and isinstance(loc.get("year"), int)
+                    and re.fullmatch(r"title|\d{1,3}[A-Z]{0,2}", str(loc.get("section", "")))):
+                bad.append(c["chunkId"])
         else:
             bad.append(c["chunkId"])
     check("every chunk has a resolvable locator", not bad, f"{len(bad)} bad")
@@ -122,6 +127,8 @@ def main() -> int:
         for para in json.loads(line)["paragraphs"]
     }
     articles = {a["pageId"]: a["text"] for a in map(json.loads, (DATA / "dip" / "articles.jsonl").read_text(encoding="utf-8").splitlines())}
+    acts = [json.loads(l) for l in (DATA / "dip" / "acts.jsonl").read_text(encoding="utf-8").splitlines()]
+    articles |= {a["pageId"]: a["text"] for a in acts}
     lost = []
     for c in chunks:
         page = pages.get(c["pageId"])
@@ -133,6 +140,20 @@ def main() -> int:
             lost.append(c["chunkId"])
     check("every chunk is found verbatim in its page's reading copy", not lost,
           f"{len(chunks) - len(lost)}/{len(chunks)}" + ("  " + "; ".join(lost[:3]) if lost else ""))
+
+    # --- every section of an Act is in the Act as published ---
+    # The published text with its footnote lines dropped, and nothing else
+    # changed, must hold each section whole and in order. Compared on letters
+    # and figures, as above.
+    missing = []
+    for work in sorted({a["workId"] for a in acts}):
+        layout = statute.read_layout(DATA / "sip" / work / "original.pdf")
+        whole = normalise(" ".join(statute.without_history(layout)))
+        for a in (x for x in acts if x["workId"] == work):
+            if normalise(a["text"]) not in whole:
+                missing.append(a["pageId"])
+    check("every section of an Act is found in the Act as published", not missing,
+          f"{len(acts) - len(missing)}/{len(acts)}" + ("  " + "; ".join(missing[:3]) if missing else ""))
 
     # --- printed page number agrees with the running head on that page ---
     checked = 0

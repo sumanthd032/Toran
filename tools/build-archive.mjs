@@ -1,10 +1,11 @@
 /**
  * Publishes the reading copy of the archive for the kiosks.
  *
- * Reads the DIP (data/dip/pages.jsonl, sittings.jsonl, articles.jsonl and
- * works.json) and writes apps/web/public/archive/: a manifest, and one small
- * file per printed page, per sitting and per article, so opening a page on a
- * kiosk fetches a few kilobytes rather than a volume.
+ * Reads the DIP (data/dip/pages.jsonl, sittings.jsonl, articles.jsonl,
+ * acts.jsonl and works.json) and writes apps/web/public/archive/: a manifest,
+ * and one small file per printed page, per sitting, per article and per
+ * section of an Act, so opening a page on a kiosk fetches a few kilobytes
+ * rather than a volume.
  *
  * Sections are worked out here, once. A recto page prints its section's title
  * in the running head; a chapter opens on a page whose first block is a
@@ -29,6 +30,7 @@ const works = JSON.parse(fs.readFileSync(path.join(DIP, 'works.json'), 'utf8'));
 const pages = lines('pages.jsonl');
 const sittings = lines('sittings.jsonl');
 const articles = lines('articles.jsonl');
+const acts = lines('acts.jsonl');
 
 // A heading that opens a chapter, as opposed to a section numeral ("IV") or
 // a signature. Chapter titles are words.
@@ -83,10 +85,10 @@ function sectionsOf(workPages) {
 }
 
 fs.rmSync(OUT, { recursive: true, force: true });
-for (const dir of ['pages', 'sittings', 'articles']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+for (const dir of ['pages', 'sittings', 'articles', 'acts']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
-const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], translations: {} };
+const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {} };
 
 for (const work of works) {
   const workPages = pages.filter((p) => p.workId === work.id);
@@ -152,6 +154,18 @@ for (const article of articles) {
   });
 }
 
+for (const section of acts) {
+  write(`acts/${section.pageId}.json`, section);
+  manifest.actSections.push({
+    pageId: section.pageId,
+    workId: section.workId,
+    act: section.act,
+    year: section.year,
+    section: section.section,
+    heading: section.heading,
+  });
+}
+
 // Translations, where any exist: data/dip/translations/<language>/<pageId>.json.
 // The manifest lists them, so a kiosk never asks for one that is not there.
 const TRANSLATIONS = path.join(DIP, 'translations');
@@ -172,7 +186,7 @@ const sections = manifest.works.reduce((n, w) => n + w.sections.length, 0);
 const titled = manifest.works.reduce((n, w) => n + w.sections.filter((s) => s.head !== null).length, 0);
 console.log(
   `archive: ${pages.length} pages in ${sections} sections (${titled} titled), ` +
-    `${sittings.length} sittings, ${articles.length} articles, ` +
+    `${sittings.length} sittings, ${articles.length} articles, ${acts.length} sections of Acts, ` +
     `${Object.values(manifest.translations).flat().length} translated pages`,
 );
 for (const w of manifest.works) {

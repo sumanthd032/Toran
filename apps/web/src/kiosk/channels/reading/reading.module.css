@@ -266,6 +266,42 @@
   border-radius: var(--radius);
 }
 
+/* An article's drafting history, under the text it became. */
+.history {
+  margin-top: var(--s-6);
+  padding-top: var(--s-3);
+  border-top: var(--hairline) solid var(--border);
+}
+
+.historyTitle {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.version + .version {
+  margin-top: var(--s-4);
+}
+
+.versionLabel {
+  margin: 0 0 var(--s-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.versionText {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  white-space: pre-line;
+}
+
 .translationSource {
   margin: 0 0 var(--s-2);
   font-family: var(--font-ui);

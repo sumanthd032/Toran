@@ -20,8 +20,6 @@
   "citation.volume": "खंड {volume}",
   "citation.page": "पृष्ठ {page}",
   "citation.part": "भाग {part}",
-  "provenance.confirmed": "निश्चित",
-  "provenance.unconfirmed": "अद्याप निश्चित नाही",
   "language.choose": "भाषा निवडा",
   "system.title": "रचना प्रणाली",
   "system.subtitle": "दोन्ही रूपांत प्रत्येक टोकन, टाइप शैली आणि घटक",
@@ -40,7 +38,6 @@
   "citation.paragraph": "परिच्छेद {paragraph}",
   "citation.article": "अनुच्छेद {article}",
   "citation.inferred": "अनुमानित पृष्ठ",
-  "citation.inferred.explain": "हा पृष्ठक्रमांक पृष्ठावर वाचलेला नाही, आसपासच्या क्रमावरून अनुमानित आहे.",
   "twin.institution": "डॉ. आंबेडकर आंतरराष्ट्रीय केंद्र",
   "twin.address": "15 जनपथ, नवी दिल्ली",
   "twin.devices": "उपकरणे",
@@ -167,5 +164,15 @@
   "timeline.event.shudras": "शूद्र पूर्वी कोण होते?",
   "timeline.event.article-11": "अस्पृश्यता निर्मूलन",
   "timeline.event.nagpur": "नागपूर येथे धम्मदीक्षा",
-  "timeline.event.died": "महापरिनिर्वाण"
+  "timeline.event.died": "महापरिनिर्वाण",
+  "citation.corpus.statute": "संसदेचे अधिनियम",
+  "citation.article.draft": "मसुदा अनुच्छेद {article}, {year}",
+  "citation.article.now": "आता अनुच्छेद {article}",
+  "citation.article.text": "{year} चा पाठ",
+  "citation.act": "{act}, {year}",
+  "citation.section": "कलम {section}",
+  "citation.section.title": "पूर्ण शीर्षक",
+  "reading.drafting": "मसुद्याचा इतिहास",
+  "reading.act.section": "{act}, {year}, कलम {section}",
+  "reading.act.title": "{act}, {year}"
 }

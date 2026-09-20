@@ -24,6 +24,7 @@ import type {
   CitedPassage,
   ReadingArticle,
   ReadingPage,
+  ReadingSection,
   ReadingSitting,
   Translation,
 } from '@toran/contracts';
@@ -394,25 +395,41 @@ function SittingView({
   );
 }
 
-function ArticleView({
-  article,
+/**
+ * An article of the Constitution or a section of an Act: one provision, one
+ * passage. An article also shows its drafting history, each text cited as
+ * the version it was, so the draft the Assembly debated is read beside the
+ * text it became.
+ */
+function ProvisionView({
+  document,
   chosen,
   kept,
   onChoose,
 }: {
-  article: ReadingArticle;
+  document: ReadingArticle | ReadingSection;
   chosen: string | null;
   kept: ReadonlySet<string>;
   onChoose: (chosen: Chosen) => void;
 }) {
   const t = useT();
-  const ref = refFor(article.passage, null);
-  const press = usePress(() => onChoose({ ref, passage: article.passage }));
+  const ref = refFor(document.passage, null);
+  const press = usePress(() => onChoose({ ref, passage: document.passage }));
+  const title =
+    document.kind === 'article'
+      ? t('citation.article', { article: document.article })
+      : document.section === 'title'
+        ? t('reading.act.title', { act: document.act, year: document.year })
+        : t('reading.act.section', {
+            act: document.act,
+            year: document.year,
+            section: document.section,
+          });
   return (
     <article className={styles.document} data-testid="reading-document">
       <div className={styles.pane} data-testid="reading-page" {...press}>
         <h3 className={styles.articleHead}>
-          {t('citation.article', { article: article.article })}. {article.heading}
+          {title}. {document.heading}
         </h3>
         <p
           className={styles.articleText}
@@ -420,11 +437,23 @@ function ArticleView({
           data-kept={kept.has(ref) || undefined}
           aria-current={chosen === ref ? 'true' : undefined}
           tabIndex={0}
-          onFocus={() => onChoose({ ref, passage: article.passage })}
+          onFocus={() => onChoose({ ref, passage: document.passage })}
         >
-          {article.passage.text}
+          {document.passage.text}
         </p>
-        <Citation citation={article.passage.citation} block />
+        <Citation citation={document.passage.citation} block />
+        {document.kind === 'article' && document.versions.length > 0 && (
+          <section className={styles.history} data-testid="reading-drafting-history">
+            <h4 className={styles.historyTitle}>{t('reading.drafting')}</h4>
+            {document.versions.map((v) => (
+              <div key={v.label} className={styles.version}>
+                <p className={styles.versionLabel}>{v.label}</p>
+                <p className={styles.versionText}>{v.passage.text}</p>
+                <Citation citation={v.passage.citation} block />
+              </div>
+            ))}
+          </section>
+        )}
       </div>
     </article>
   );
@@ -447,9 +476,10 @@ export function DocumentView(props: DocumentViewProps) {
         />
       );
     case 'article':
+    case 'section':
       return (
-        <ArticleView
-          article={document}
+        <ProvisionView
+          document={document}
           chosen={props.chosen}
           kept={props.kept}
           onChoose={props.onChoose}

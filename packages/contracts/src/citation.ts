@@ -22,7 +22,14 @@ type Brand<T, B extends string> = T & { readonly [brand]: B };
 export type PageId = Brand<string, 'PageId'>;
 export type WorkId = Brand<string, 'WorkId'>;
 
-export const CORPORA = ['baws', 'cad', 'constitution', 'media', 'photograph'] as const;
+export const CORPORA = [
+  'baws',
+  'cad',
+  'constitution',
+  'statute',
+  'media',
+  'photograph',
+] as const;
 export type Corpus = (typeof CORPORA)[number];
 
 /** Cites a page in a printed volume. */
@@ -60,11 +67,38 @@ export interface ParagraphLocator {
   readonly procedural: boolean;
 }
 
+/**
+ * A text of an article from its drafting history: draft Article 11 of the
+ * Draft Constitution of 1948, which became Article 17, or Article 15 as it was
+ * adopted in 1950, before the amendments that followed.
+ */
+export interface ArticleVersion {
+  /** Its place in the drafting history, 1 for the earliest. */
+  readonly ordinal: number;
+  /** The number the article had in that text: 11 in the Draft Constitution. */
+  readonly article: string;
+  readonly year: number;
+  /** True for the Draft Constitution, false for the Constitution as adopted. */
+  readonly draft: boolean;
+}
+
 /** Cites an article of the Constitution. */
 export interface ArticleLocator {
   readonly kind: 'article';
   /** "17", "15", "21A". Articles are not always plain integers. */
   readonly article: string;
+  /** Null for the article as it now stands; a version for an earlier text. */
+  readonly version: ArticleVersion | null;
+}
+
+/** Cites a section of an Act of Parliament. */
+export interface SectionLocator {
+  readonly kind: 'section';
+  /** The Act's short title as it now reads, without the year. */
+  readonly act: string;
+  readonly year: number;
+  /** "2", "15A", or "title" for the long title. */
+  readonly section: string;
 }
 
 /**
@@ -82,7 +116,8 @@ export interface PlateLocator {
 export const PLATES = ['frontispiece'] as const;
 export type PlateName = (typeof PLATES)[number];
 
-export type Locator = PageLocator | ParagraphLocator | ArticleLocator | PlateLocator;
+export type Locator =
+  PageLocator | ParagraphLocator | ArticleLocator | PlateLocator | SectionLocator;
 
 export interface Citation {
   readonly corpus: Corpus;
@@ -171,11 +206,44 @@ export function paragraphLocator(input: {
   };
 }
 
-export function articleLocator(article: string): ArticleLocator {
-  if (!/^\d{1,3}[A-Z]?$/.test(article)) {
+const ARTICLE = /^\d{1,3}[A-Z]?$/;
+
+export function articleLocator(
+  article: string,
+  version: ArticleVersion | null = null,
+): ArticleLocator {
+  if (!ARTICLE.test(article)) {
     throw new CitationError(`article must look like "17" or "21A", got ${article}`);
   }
-  return { kind: 'article', article };
+  if (version !== null) {
+    if (!ARTICLE.test(version.article)) {
+      throw new CitationError(
+        `version article must look like "11", got ${version.article}`,
+      );
+    }
+    positiveInt(version.ordinal, 'version ordinal');
+    if (!Number.isInteger(version.year) || version.year < 1900) {
+      throw new CitationError(`version year ${String(version.year)} is not a year`);
+    }
+  }
+  return { kind: 'article', article, version };
+}
+
+export function sectionLocator(input: {
+  act: string;
+  year: number;
+  section: string;
+}): SectionLocator {
+  if (input.act.trim() === '') throw new CitationError('an Act must be named');
+  if (!Number.isInteger(input.year) || input.year < 1800) {
+    throw new CitationError(`Act year ${String(input.year)} is not a year`);
+  }
+  if (!/^(title|\d{1,3}[A-Z]{0,2})$/.test(input.section)) {
+    throw new CitationError(
+      `section must look like "2", "15A" or "title", got ${input.section}`,
+    );
+  }
+  return { kind: 'section', act: input.act, year: input.year, section: input.section };
 }
 
 export function plateLocator(input: {
@@ -256,7 +324,11 @@ export function citationKey(c: Citation): string {
         ? `${c.corpus} ${l.volume}.${l.sitting}.${l.paragraph}+`
         : `${c.corpus} ${l.volume}.${l.sitting}.${l.paragraph}`;
     case 'article':
-      return `art. ${l.article}`;
+      return l.version === null
+        ? `art. ${l.article}`
+        : `art. ${l.article} v${l.version.ordinal}`;
+    case 'section':
+      return `${l.act} ${l.year} s. ${l.section}`;
     case 'plate': {
       const vol =
         l.volume === null ? '' : `${l.volume}${l.part === null ? '' : `.${l.part}`}`;

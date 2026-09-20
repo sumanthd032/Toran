@@ -20,8 +20,6 @@
   "citation.volume": "खंड {volume}",
   "citation.page": "पृष्ठ {page}",
   "citation.part": "भाग {part}",
-  "provenance.confirmed": "पुष्ट",
-  "provenance.unconfirmed": "अभी पुष्ट नहीं",
   "language.choose": "भाषा चुनें",
   "system.title": "डिज़ाइन प्रणाली",
   "system.subtitle": "दोनों रूपों में हर टोकन, टाइप शैली और घटक",
@@ -40,7 +38,6 @@
   "citation.paragraph": "अनुच्छेद {paragraph}",
   "citation.article": "अनुच्छेद {article}",
   "citation.inferred": "अनुमानित पृष्ठ",
-  "citation.inferred.explain": "यह पृष्ठ संख्या पृष्ठ पर पढ़ी नहीं गई, आसपास के क्रम से अनुमानित की गई है।",
   "twin.institution": "डॉ. अम्बेडकर अंतरराष्ट्रीय केंद्र",
   "twin.address": "15 जनपथ, नई दिल्ली",
   "twin.devices": "उपकरण",
@@ -167,5 +164,15 @@
   "timeline.event.shudras": "शूद्र कौन थे?",
   "timeline.event.article-11": "अस्पृश्यता का उन्मूलन",
   "timeline.event.nagpur": "नागपुर में धम्म दीक्षा",
-  "timeline.event.died": "महापरिनिर्वाण"
+  "timeline.event.died": "महापरिनिर्वाण",
+  "citation.corpus.statute": "संसद के अधिनियम",
+  "citation.article.draft": "प्रारूप अनुच्छेद {article}, {year}",
+  "citation.article.now": "अब अनुच्छेद {article}",
+  "citation.article.text": "{year} का पाठ",
+  "citation.act": "{act}, {year}",
+  "citation.section": "धारा {section}",
+  "citation.section.title": "पूरा शीर्षक",
+  "reading.drafting": "प्रारूपण का इतिहास",
+  "reading.act.section": "{act}, {year}, धारा {section}",
+  "reading.act.title": "{act}, {year}"
 }

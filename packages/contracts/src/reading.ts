@@ -66,16 +66,39 @@ export interface ReadingSitting {
   readonly paragraphs: readonly ReadingParagraph[];
 }
 
+/** A text from an article's drafting history, cited as that version. */
+export interface ReadingArticleVersion {
+  /** As the drafting history labels it: "Article 11, Draft Constitution of India 1948". */
+  readonly label: string;
+  readonly passage: CitedPassage;
+}
+
 export interface ReadingArticle {
   readonly kind: 'article';
   readonly pageId: string;
   readonly workId: string;
   readonly article: string;
   readonly heading: string;
+  /** The article as it now stands. */
+  readonly passage: CitedPassage;
+  /** Earliest first: the draft the Assembly debated, then the text of 1950. */
+  readonly versions: readonly ReadingArticleVersion[];
+}
+
+/** A section of an Act of Parliament, or its long title. */
+export interface ReadingSection {
+  readonly kind: 'section';
+  readonly pageId: string;
+  readonly workId: string;
+  readonly act: string;
+  readonly year: number;
+  readonly section: string;
+  readonly heading: string;
   readonly passage: CitedPassage;
 }
 
-export type ReadingDocument = ReadingPage | ReadingSitting | ReadingArticle;
+export type ReadingDocument =
+  ReadingPage | ReadingSitting | ReadingArticle | ReadingSection;
 
 export interface Abstract {
   readonly sectionId: string;
@@ -194,6 +217,7 @@ export function readSitting(raw: unknown): ReadingSitting {
 export function readArticle(raw: unknown): ReadingArticle {
   const a = record(raw, 'article');
   const article = text(a['article'], 'article');
+  const versions = Array.isArray(a['versions']) ? a['versions'] : [];
   return {
     kind: 'article',
     pageId: text(a['pageId'], 'pageId'),
@@ -201,6 +225,51 @@ export function readArticle(raw: unknown): ReadingArticle {
     article,
     heading: text(a['heading'], 'heading'),
     passage: readChunk({ ...a, locator: { kind: 'article', article }, speaker: null }),
+    versions: versions.map((rawVersion, i): ReadingArticleVersion => {
+      const v = record(rawVersion, `version ${i}`);
+      return {
+        label: text(v['label'], 'version label'),
+        passage: readChunk({
+          ...a,
+          text: v['text'],
+          speaker: null,
+          locator: {
+            kind: 'article',
+            article,
+            version: {
+              ordinal: v['ordinal'],
+              article: v['article'],
+              year: v['year'],
+              draft: v['draft'] === true,
+            },
+          },
+        }),
+      };
+    }),
+  };
+}
+
+export function readSection(raw: unknown): ReadingSection {
+  const a = record(raw, 'section');
+  const act = text(a['act'], 'act');
+  const section = text(a['section'], 'section');
+  const year = a['year'];
+  if (typeof year !== 'number' || !Number.isInteger(year)) {
+    throw new CitationError('an Act must carry its year');
+  }
+  return {
+    kind: 'section',
+    pageId: text(a['pageId'], 'pageId'),
+    workId: text(a['workId'], 'workId'),
+    act,
+    year,
+    section,
+    heading: text(a['heading'], 'heading'),
+    passage: readChunk({
+      ...a,
+      locator: { kind: 'section', act, year, section },
+      speaker: null,
+    }),
   };
 }
 

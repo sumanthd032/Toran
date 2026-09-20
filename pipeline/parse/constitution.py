@@ -23,11 +23,14 @@ from dataclasses import dataclass, asdict
 # is not.
 SLUG = re.compile(r'/articles/article-(\d{1,3}[a-z]?)-[^"/]*/', re.I)
 HEADING = re.compile(r'<h1[^>]*>\s*(.*?)\s*</h1>', re.S)
-INTRO = re.compile(r'<div class="[^"]*\bcontent\b[^"]*">\s*<p>(.*?)</p>', re.S)
+# The article's text as it stands, every clause of it. An article of one
+# paragraph (17) and one of six clauses (15) sit in the same block.
+INTRO = re.compile(r'<div class="[^"]*\barticle-detail__intro-content\b[^"]*">(.*?)</div>', re.S)
+# A version's label is a strong paragraph on some pages and an h4 on others.
 VERSION = re.compile(
     r'<h3[^>]*>\s*Version\s+(\d+)\s*</h3>.*?'
     r'<div class="article-detail__content__sub-block[^"]*">\s*'
-    r'<p><strong>(.*?)</strong></p>\s*(.*?)\s*</div>',
+    r'(?:<p><strong>(.*?)</strong></p>|<h4>(.*?)</h4>)\s*(.*?)\s*</div>',
     re.S,
 )
 VERSION_LABEL = re.compile(
@@ -64,7 +67,9 @@ class Article:
     heading: str
     text: str
     versions: list[Version]
+    # The last day the draft was debated, which is the day it was adopted.
     debated_on: str | None
+    debated_days: list[str]
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -95,8 +100,8 @@ def parse(html_source: str) -> Article | None:
     text = _text(intro.group(1)) if intro else ""
 
     versions: list[Version] = []
-    for ordinal, label_raw, body in VERSION.findall(html_source):
-        label = _text(label_raw)
+    for ordinal, strong, h4, body in VERSION.findall(html_source):
+        label = _text(strong or h4)
         m = VERSION_LABEL.match(label)
         versions.append(Version(
             ordinal=int(ordinal),
@@ -107,9 +112,21 @@ def parse(html_source: str) -> Article | None:
             text=_text(body),
         ))
 
+    # "was debated on 29 November 1948", or over several days: "was debated
+    # in the Constituent Assembly on the 25, 26 and 29 November 1948".
     flat = _text(html_source)
-    d = re.search(r"Draft Article\s+\d{1,3}[A-Z]?.*?was debated on\s*(\d{1,2}\s+\w+\s+\d{4})", flat, re.S)
-    debated = _iso(d.group(1)) if d else None
+    days: list[str] = []
+    d = re.search(
+        r"Article\s+\d{1,3}[A-Z]?[^.]*?was debated[^.]*?\bon\s+(?:the\s+)?"
+        r"((?:\d{1,2}(?:\s*,\s*|\s+and\s+))*\d{1,2})\s+(\w+)\s+(\d{4})",
+        flat,
+    )
+    if d is not None:
+        for day in re.findall(r"\d{1,2}", d.group(1)):
+            iso = _iso(f"{day} {d.group(2)} {d.group(3)}")
+            if iso is not None:
+                days.append(iso)
 
     return Article(article=article, heading=heading, text=text,
-                   versions=versions, debated_on=debated)
+                   versions=versions, debated_on=days[-1] if days else None,
+                   debated_days=days)

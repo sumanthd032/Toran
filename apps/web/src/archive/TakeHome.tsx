@@ -32,6 +32,7 @@ async function passageFor(ref: string): Promise<CitedPassage | null> {
     case 'sitting':
       return document.paragraphs.find((p) => p.pageId === parsed.pageId)?.passage ?? null;
     case 'article':
+    case 'section':
       return document.passage;
   }
 }

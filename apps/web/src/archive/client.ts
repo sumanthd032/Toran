@@ -16,6 +16,7 @@ import {
   readAbstract,
   readArticle,
   readPage,
+  readSection,
   readSitting,
   readTimeline,
   readTranslation,
@@ -57,6 +58,14 @@ export interface ArchiveManifest {
     article: string;
     heading: string;
   }[];
+  readonly actSections: readonly {
+    pageId: string;
+    workId: string;
+    act: string;
+    year: number;
+    section: string;
+    heading: string;
+  }[];
   /** Pages with a translation, by language. Step 9 fills this through Bhashini. */
   readonly translations: Readonly<Record<string, readonly string[]>>;
 }
@@ -92,7 +101,8 @@ export async function openPage(pageId: string): Promise<ReadingPage> {
 }
 
 /**
- * Whatever a citation points into: a printed page, a sitting, an article.
+ * Whatever a citation points into: a printed page, a sitting, an article, a
+ * section of an Act.
  * Only the id and the kind of locator are needed to find it, so a caller that
  * has only those (a dossier reference, a page turn) never has to invent the
  * rest of a citation.
@@ -117,6 +127,11 @@ export async function openCitation(target: {
     case 'article':
       return {
         document: readArticle(await load(`articles/${pageId}.json`)),
+        focus: pageId,
+      };
+    case 'section':
+      return {
+        document: readSection(await load(`acts/${pageId}.json`)),
         focus: pageId,
       };
   }
@@ -159,11 +174,12 @@ export async function translationOf(
   );
 }
 
-/** What an archive id names, from the manifest: a printed page, a paragraph of a sitting, an article. */
+/** What an archive id names, from the manifest: a printed page, a paragraph of a sitting, an article, a section of an Act. */
 export async function kindOf(pageId: string): Promise<Citation['locator']['kind']> {
   const m = await manifest();
   if (m.sittingOf[pageId] !== undefined) return 'paragraph';
   if (m.articles.some((a) => a.pageId === pageId)) return 'article';
+  if (m.actSections.some((a) => a.pageId === pageId)) return 'section';
   return 'page';
 }
 

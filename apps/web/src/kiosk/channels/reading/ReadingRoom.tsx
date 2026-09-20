@@ -163,9 +163,10 @@ export function ReadingRoom({ live }: { live: boolean }) {
       setLoaded({ key, opened, context, abstract, translation });
       patina.wear(opened.focus);
       // The passage a search hit landed on is chosen already, so keeping it
-      // is one tap. An article is one passage and always chosen.
+      // is one tap. An article, or a section of an Act, is one passage and
+      // always chosen.
       const doc = opened.document;
-      if (doc.kind === 'article') {
+      if (doc.kind === 'article' || doc.kind === 'section') {
         setChosen({ ref: refFor(doc.passage, null), passage: doc.passage });
       } else if (doc.kind === 'sitting') {
         const p = doc.paragraphs.find((x) => x.pageId === opened.focus);
