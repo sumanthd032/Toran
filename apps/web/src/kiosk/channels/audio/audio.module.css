@@ -1,0 +1,128 @@
+/*
+  The Audio Booth. A list of what can be heard on one side, the words being
+  spoken on the other, set large enough to follow from a step back.
+
+  The spoken passage is the largest thing on the screen because it is what a
+  visitor checks against what they are hearing. The engine line and the
+  translation mark sit directly under the citation, never in a tooltip: a
+  group standing at a kiosk cannot see a hover, and whether a voice is a
+  machine is not a detail to hide.
+*/
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, clamp(16em, 32%, 26em)) minmax(0, 1fr);
+  gap: var(--s-3);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  border-inline-end: 1px solid var(--border);
+  padding-inline-end: var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.item {
+  inline-size: 100%;
+  min-block-size: 30mm;
+  text-align: start;
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  color: var(--text);
+  font-family: var(--font-read);
+  font-size: var(--t-meta);
+  line-height: var(--leading-read);
+  padding: var(--s-2);
+  cursor: pointer;
+}
+
+.item[data-selected='true'] {
+  border-color: var(--accent);
+  background: var(--surface-sunken);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.itemText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemMeta {
+  display: block;
+  margin-block-start: var(--s-1);
+  font-family: var(--font-mono);
+  font-size: calc(var(--t-meta) * 0.8);
+  color: var(--text-soft);
+}
+
+.stage {
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.spoken {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  line-height: var(--leading-read);
+  color: var(--text);
+}
+
+.engine,
+.fallback,
+.plain,
+.emptyLead,
+.emptyNote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: var(--leading-read);
+  color: var(--text-soft);
+}
+
+.fallback {
+  color: var(--section-text);
+}
+
+.plain {
+  padding: var(--s-4);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  justify-content: center;
+  max-inline-size: 60ch;
+}
+
+.emptyLead {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.clock {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}

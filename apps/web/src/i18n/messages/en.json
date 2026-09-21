@@ -241,5 +241,20 @@
   "citation.folio.unnumbered": "{manuscript}, an unnumbered leaf",
   "citation.folio.printed": "printed at {printed}",
   "manuscript.scored": "On a held-out set of {passages}, this model misread {cer}% of characters and {wer}% of words.",
-  "manuscript.unscored": "Nobody has measured this model against a checked transcription yet, so how often it is right is not known."
+  "manuscript.unscored": "Nobody has measured this model against a checked transcription yet, so how often it is right is not known.",
+  "audio.passages": "Passages",
+  "audio.languages": "languages",
+  "audio.play": "Play",
+  "audio.pause": "Pause",
+  "audio.restart": "Start again",
+  "audio.speed": "Speed {speed}x",
+  "audio.voice.female": "Voice one",
+  "audio.voice.male": "Voice two",
+  "audio.engine": "Read aloud by {engine}. A machine reading, not a recording of anyone.",
+  "audio.notInYourLanguage": "Not yet narrated in your language. This is the passage as printed.",
+  "audio.none": "Nothing is narrated in this language yet.",
+  "audio.failed": "The narration on this device could not be read.",
+  "audio.empty.lead": "This booth has no narration cached yet.",
+  "audio.empty.why": "Narration is fetched once, from Bhashini, and stored on the device so it plays with the network off. None has been fetched for this device.",
+  "audio.recordings.none": "The archive holds no recording of Dr. Ambedkar's voice. None could be traced to a source that documents where it came from, and an unverified recording in a memorial is worse than none."
 }

@@ -45,4 +45,10 @@ export const ICON = {
   gather: 'M3 12h7M21 12h-7M10 12l-3-3M10 12l-3 3M14 12l3-3M14 12l3 3',
   scan: 'M4 4h6v6H4zM4 4v16h16V4zM7 14h10M7 17h7',
   text: 'M5 6h14M5 10h14M5 14h10M5 18h12',
+  play: 'M8 5l11 7-11 7z',
+  pause: 'M9 5v14M15 5v14',
+  replay: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5',
+  sound: 'M4 9h5l5-4v14l-5-4H4zM17 9a4 4 0 0 1 0 6',
+  voice: 'M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4',
+  speed: 'M4 17a8 8 0 0 1 16 0M12 17l4-6',
 } as const;

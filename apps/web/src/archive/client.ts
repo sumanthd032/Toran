@@ -19,6 +19,7 @@ import {
   readAccuracy,
   readCorrection,
   readProvenance,
+  readNarration,
   readScans,
   readSection,
   readTranscription,
@@ -29,6 +30,7 @@ import {
   type Accuracy,
   type Citation,
   type Correction,
+  type NarrationClip,
   type ReadingDocument,
   type ProvenanceGraph,
   type Scan,
@@ -76,8 +78,10 @@ export interface ArchiveManifest {
     section: string;
     heading: string;
   }[];
-  /** Pages with a translation, by language. Step 9 fills this through Bhashini. */
+  /** Pages with a translation, by language. Filled by npm run translate. */
   readonly translations: Readonly<Record<string, readonly string[]>>;
+  /** Narration clips the device holds. Filled by npm run narrate. */
+  readonly narration: readonly unknown[];
 }
 
 export interface OpenedDocument {
@@ -244,6 +248,20 @@ export async function accuracy(): Promise<readonly Accuracy[]> {
     return [];
   }
 }
+
+/**
+ * Every narration clip on this device, read through the narration contract.
+ *
+ * The clips come from the manifest, which the kiosk already has, so the Audio
+ * Booth learns what it can play in one fetch and can say plainly that a
+ * passage is not narrated rather than asking for a file that is not there.
+ */
+export async function narration(): Promise<readonly NarrationClip[]> {
+  return readNarration((await manifest()).narration ?? []);
+}
+
+/** Where a narration clip is served from. */
+export const narrationUrl = (file: string): string => `${ROOT}narration/${file}`;
 
 /** Where an archive file, such as a timeline photograph, is served from. */
 export function archiveUrl(file: string): string {
