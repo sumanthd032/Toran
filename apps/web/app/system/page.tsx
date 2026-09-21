@@ -333,9 +333,10 @@ export default function SystemPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>{t('system.section.scripts')}</h2>
         <p style={{ color: 'var(--text-soft)', maxWidth: '68ch' }}>
-          The 22 languages of the Eighth Schedule, plus English. Step 1 self-hosts Latin
-          and Devanagari only, so the ambient script carousel may cycle just the nine
-          marked below. Step 9 adds the remaining scripts.
+          The 22 languages of the Eighth Schedule, plus English. This repository
+          self-hosts a full reading face for Latin, Devanagari, Bengali, Tamil and Telugu,
+          which is every script the interface is offered in. The rest have a carousel
+          subset only: enough to set one vendored welcome, not arbitrary text.
         </p>
         <table className={styles.table}>
           <thead>

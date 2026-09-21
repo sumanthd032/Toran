@@ -13,6 +13,9 @@
  * like Marathi and says nothing, which is worse than silence.
  *
  * Run: npm run narrate [-- --language mr] [-- --voice male] [-- --dry-run]
+ *
+ * npm takes --dry-run for itself, so that one flag needs node directly:
+ * node packages/narrate/src/narrate.mjs --dry-run
  */
 import fs from 'node:fs';
 import path from 'node:path';

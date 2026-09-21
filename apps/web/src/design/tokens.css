@@ -30,9 +30,20 @@
   --m-brass-lit: #c89b52;
 
   /* ---- type ---- */
-  --font-read: 'Spectral', 'Noto Serif Devanagari', Georgia, serif;
+  --font-read:
+    'Spectral', 'Noto Serif Devanagari', 'Noto Serif Bengali', 'Noto Serif Tamil',
+    'Noto Serif Telugu', Georgia, serif;
   --font-ui: 'Archivo', system-ui, sans-serif;
-  --font-indic: 'Noto Serif Devanagari', 'Spectral', serif;
+  /*
+    One Indic stack, four faces. Every face carries a unicode-range, so a
+    page with no Tamil on it downloads no Tamil, and a Bengali translation
+    beside an English original picks its own face without a second rule.
+    Devanagari leads because its Latin is the one that matches the Indic
+    metrics, and a Marathi interface sets its Latin in it.
+  */
+  --font-indic:
+    'Noto Serif Devanagari', 'Noto Serif Bengali', 'Noto Serif Tamil',
+    'Noto Serif Telugu', 'Spectral', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /*

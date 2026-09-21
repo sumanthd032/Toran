@@ -28,8 +28,16 @@ export type MessageKey = keyof typeof en;
 type Catalogue = Record<MessageKey, string>;
 
 /**
- * Loaded catalogues. Step 1 ships three. Step 9 loads the remaining scheduled
- * languages on demand rather than eagerly, once there are twenty-two of them.
+ * The catalogues that exist, and therefore the languages the interface offers.
+ *
+ * A language is offered when it has a complete catalogue, not when Bhashini
+ * can translate it. Those are different claims: Bhashini covers all 22
+ * scheduled languages, and this repository offers the ones it can set in type
+ * and label completely. Bengali, Tamil and Telugu have their reading faces
+ * vendored and are waiting on `npm run catalogue`, which needs a Bhashini key.
+ * See DECISIONS.md D-122.
+ *
+ * To add one: generate its catalogue, import it here, add it to this map.
  */
 const CATALOGUES: Readonly<Record<string, Catalogue>> = {
   en: en as Catalogue,

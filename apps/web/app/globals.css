@@ -99,7 +99,7 @@ p {
   color: var(--text);
 }
 
-/* Devanagari and the other Indic scripts need the serif Indic face. */
+/* The Indic scripts need the serif Indic stack, whichever of them it is. */
 :lang(hi),
 :lang(mr),
 :lang(sa),
@@ -107,7 +107,11 @@ p {
 :lang(kok),
 :lang(mai),
 :lang(doi),
-:lang(brx) {
+:lang(brx),
+:lang(bn),
+:lang(as),
+:lang(ta),
+:lang(te) {
   font-family: var(--font-indic);
 }
 

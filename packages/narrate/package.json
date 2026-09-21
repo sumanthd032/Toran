@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit",
     "translate": "node src/translate.mjs",
     "narrate": "node src/narrate.mjs",
-    "probe": "node src/probe.mjs"
+    "probe": "node src/probe.mjs",
+    "catalogue": "node src/catalogue.mjs"
   },
   "exports": {
     ".": {

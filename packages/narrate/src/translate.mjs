@@ -13,6 +13,9 @@
  * translated once, ever, which is what keeps the free tier sufficient.
  *
  * Run: npm run translate [-- --all] [-- --language mr] [-- --dry-run]
+ *
+ * npm takes --dry-run for itself, so that one flag needs node directly:
+ * node packages/narrate/src/translate.mjs --dry-run
  */
 import fs from 'node:fs';
 import path from 'node:path';

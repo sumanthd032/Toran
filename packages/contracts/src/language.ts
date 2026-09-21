@@ -32,7 +32,10 @@ export interface LanguageInfo {
   readonly scheduled: boolean;
   /**
    * Whether a self-hosted font in this repository can render it today.
-   * Step 1 ships Latin and Devanagari only. Step 9 adds the rest.
+   * Step 1 shipped Latin and Devanagari. Step 9 added Bengali, Tamil and
+   * Telugu, which covers Assamese too, since it shares the Bengali script.
+   * The remaining scripts still have only a carousel subset, which can set
+   * one vendored phrase and not arbitrary text.
    * The script carousel must only cycle languages where this is true.
    */
   readonly fontCoverage: boolean;
@@ -127,7 +130,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
     script: 'bengali',
     direction: 'ltr',
     scheduled: true,
-    fontCoverage: false,
+    fontCoverage: true,
   },
   {
     code: 'as',
@@ -136,7 +139,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
     script: 'bengali',
     direction: 'ltr',
     scheduled: true,
-    fontCoverage: false,
+    fontCoverage: true,
   },
   {
     code: 'gu',
@@ -190,7 +193,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
     script: 'tamil',
     direction: 'ltr',
     scheduled: true,
-    fontCoverage: false,
+    fontCoverage: true,
   },
   {
     code: 'te',
@@ -199,7 +202,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
     script: 'telugu',
     direction: 'ltr',
     scheduled: true,
-    fontCoverage: false,
+    fontCoverage: true,
   },
   {
     code: 'ur',

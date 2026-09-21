@@ -52,6 +52,7 @@
     "verify:manuscript": "node tools/verify-manuscript.mjs",
     "translate": "npm run translate --workspace @toran/narrate",
     "narrate": "npm run narrate --workspace @toran/narrate",
+    "catalogue": "npm run catalogue --workspace @toran/narrate",
     "verify:narrate": "node tools/verify-narrate.mjs"
   },
   "devDependencies": {

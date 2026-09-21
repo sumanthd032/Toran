@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readConfig } from '../packages/narrate/src/bhashini.mjs';
 import { haveCredentials } from '../packages/narrate/src/credentials.mjs';
+import { LANGUAGES } from '@toran/contracts';
 import {
   INTERFACE_LANGUAGES, NARRATION_LANGUAGES, SOURCE_LANGUAGE, TARGET_LANGUAGES,
 } from '../packages/narrate/src/languages.mjs';
@@ -47,17 +48,14 @@ for (const language of NARRATION_LANGUAGES) {
 check('spoken queries have a recogniser in English and Hindi',
   ['en', 'hi'].every((l) => readConfig(readJson(`${FIXTURES}/config-asr-${l}.json`)).services.has('asr')));
 
-// 2. Six interface languages, each with a complete catalogue and a font.
+// 2. Every language the interface OFFERS has a complete catalogue and a face.
+// A language with a vendored face but no catalogue is not a failure; it is
+// waiting on a Bhashini key, and it is counted as outstanding further down.
 const en = readJson(`${MESSAGES}/en.json`);
-check('the interface offers six languages', INTERFACE_LANGUAGES.length === 6,
-  INTERFACE_LANGUAGES.join(', '));
-for (const language of INTERFACE_LANGUAGES) {
-  const file = `${MESSAGES}/${language}.json`;
-  if (!fs.existsSync(file)) {
-    check(`${language} has a catalogue`, false, 'missing');
-    continue;
-  }
-  const catalogue = readJson(file);
+const offered = INTERFACE_LANGUAGES.filter((l) => fs.existsSync(`${MESSAGES}/${l}.json`));
+const waiting = INTERFACE_LANGUAGES.filter((l) => !offered.includes(l));
+for (const language of offered) {
+  const catalogue = readJson(`${MESSAGES}/${language}.json`);
   const missing = Object.keys(en).filter((k) => catalogue[k] === undefined);
   const untranslated = language === SOURCE_LANGUAGE
     ? []
@@ -67,6 +65,12 @@ for (const language of INTERFACE_LANGUAGES) {
   check(`${language} catalogue is actually translated`, untranslated.length <= 4,
     `${untranslated.length} strings identical to English`);
 }
+check('every offered language has a self-hosted reading face',
+  offered.every((l) => LANGUAGES.find((x) => x.code === l)?.fontCoverage === true),
+  offered.join(', '));
+check('every language we intend to offer already has its face vendored',
+  INTERFACE_LANGUAGES.every((l) => LANGUAGES.find((x) => x.code === l)?.fontCoverage === true),
+  INTERFACE_LANGUAGES.join(', '));
 
 // 3. The selection is derived from surfaces that already cite their sources.
 const pages = selectedPages();
@@ -91,15 +95,25 @@ check('every cached narration clip names its citation and its engine',
 console.log('');
 const live = haveCredentials();
 console.log(`credentials present: ${live ? 'yes' : 'no'}`);
+console.log(`languages offered:   ${offered.join(', ')} (${offered.length} of ${INTERFACE_LANGUAGES.length})`);
+console.log(`faces vendored:      ${LANGUAGES.filter((l) => l.fontCoverage).length} of ${LANGUAGES.length} scheduled languages`);
 console.log(`translations cached: ${cached} pages across ${Object.keys(manifest.translations ?? {}).length} languages`);
 console.log(`narration cached:    ${clips} clips`);
-if (cached === 0 || clips === 0) {
+if (cached === 0 || clips === 0 || waiting.length > 0) {
+  console.log('\nOUTSTANDING, and reported as outstanding rather than passed:');
+  if (waiting.length > 0) {
+    console.log(
+      `  ${waiting.join(', ')} have a vendored face but no catalogue, so the\n` +
+        '  interface does not offer them yet. Run: npm run catalogue',
+    );
+  }
+  if (cached === 0) console.log('  No page is translated. Run: npm run translate');
+  if (clips === 0) console.log('  No passage is narrated. Run: npm run narrate');
   console.log(
-    '\nOUTSTANDING, and reported as outstanding rather than passed:\n' +
-      '  Translation and narration in six languages are UNMEASURED. The Bhashini\n' +
-      '  key request was submitted on 21 September 2026 and has not been granted.\n' +
-      '  Run: npm run translate && npm run narrate && npm run build:archive\n' +
-      '  then this tool measures it. See DECISIONS.md D-121.',
+    '  All three need a Bhashini key. The request was submitted on\n' +
+      '  21 September 2026 and has not been granted. Afterwards, run the\n' +
+      '  commands above, then npm run build:archive, and this tool measures it.\n' +
+      '  See DECISIONS.md D-121 and D-122.',
   );
 }
 
