@@ -38,6 +38,10 @@ apps/web/public/iiif/
 data/sip/
 data/aip/
 data/dip/
+
+# Toran Core's store. Operator state and anonymous card sessions, neither of
+# which belongs in a repository. Core creates it on first boot.
+data/core.sqlite*
 *.onnx
 *.bin
 

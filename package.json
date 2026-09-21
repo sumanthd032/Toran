@@ -16,7 +16,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
-    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor && npm run verify:graph && npm run verify:manuscript && npm run verify:narrate && npm run verify:audio",
+    "verify": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run verify:contrast && npm run verify:render && npm run verify:a11y && npm run verify:ingest && npm run verify:search && npm run verify:twin && npm run verify:kiosk && npm run verify:transition && npm run verify:visitor && npm run verify:graph && npm run verify:manuscript && npm run verify:narrate && npm run verify:audio && npm run verify:core",
     "verify:contrast": "node tools/contrast-check.mjs",
     "verify:render": "node tools/verify-system.mjs",
     "verify:a11y": "node tools/a11y-check.mjs",
@@ -34,7 +34,7 @@
     "verify:transition": "node tools/verify-transition.mjs",
     "shoot:twin": "node tools/shoot-twin.mjs",
     "build:ambient": "node tools/build-ambient.mjs",
-    "test": "node --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts apps/web/src/kiosk/channels/provenance/provenance.test.ts apps/web/src/kiosk/channels/manuscript/manuscript.test.ts packages/contracts/src/narration.test.ts apps/web/src/kiosk/channels/audio/audio.test.ts packages/narrate/src/bhashini.test.mjs",
+    "test": "node --no-warnings=ExperimentalWarning --test apps/web/src/kiosk/machine.test.ts apps/web/src/kiosk/sensor/smooth.test.ts packages/contracts/src/reading.test.ts apps/web/src/kiosk/visitor/visitor.test.ts apps/web/src/kiosk/channels/reading/reading.test.ts apps/web/src/kiosk/channels/timeline/timeline.test.ts apps/web/src/kiosk/channels/provenance/provenance.test.ts apps/web/src/kiosk/channels/manuscript/manuscript.test.ts packages/contracts/src/dossier.test.ts packages/contracts/src/narration.test.ts apps/web/src/kiosk/channels/audio/audio.test.ts packages/narrate/src/bhashini.test.mjs apps/core/src/core.test.ts",
     "photos": "python3 pipeline/photos.py",
     "build:timeline": "node tools/build-timeline.mjs",
     "verify:visitor": "node tools/verify-visitor.mjs",
@@ -54,7 +54,9 @@
     "narrate": "npm run narrate --workspace @toran/narrate",
     "catalogue": "npm run catalogue --workspace @toran/narrate",
     "verify:narrate": "node tools/verify-narrate.mjs",
-    "verify:audio": "node tools/verify-audio.mjs"
+    "verify:audio": "node tools/verify-audio.mjs",
+    "core": "npm run start --workspace @toran/core",
+    "verify:core": "node tools/verify-core.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
