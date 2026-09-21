@@ -68,8 +68,23 @@ console.log('\nToran step 5 transition verification  (AMD Radeon 680M, not the t
   const first = stats(await page.evaluate(() => window.__toranTwin.transitionFrames));
   check('the first fly in holds 60fps, before the engine loads', first.p95 < 20, `${first.n} frames, p95 ${first.p95.toFixed(1)} ms, worst ${first.worst.toFixed(1)} ms`);
   await page.waitForFunction(() => window.__toranTwin.searchStarted !== null, { timeout: 5000 });
-  // The watcher sees "open" on the first frame after it, up to one frame late.
-  const lead = await page.evaluate(() => window.__toranTwin.searchStarted - window.__openAt);
+  /*
+    Against the Director's own stamp, not the rAF watcher above, which sighted
+    the phase change up to two frames late under load and made this check fail
+    about one run in four on a build that was behaving correctly.
+
+    One frame of tolerance remains, and it is structural rather than slack.
+    Both the engine and the Director react to the same phase change, but the
+    Director runs inside the React Three Fiber reconciler, which commits a
+    frame after the DOM tree the Reading Room lives in. The engine therefore
+    stamps first by design. What this check protects is that the 118 MB model
+    does not load while the camera is flying, which cost the flight a third of
+    its frames when it did; the fly-in frame check above is the other half of
+    that guard.
+  */
+  const lead = await page.evaluate(
+    () => window.__toranTwin.searchStarted - window.__toranTwin.openedAt,
+  );
   check('the engine starts loading only once the application covers the hall', lead > -20, `${Math.round(lead)} ms after the application covered the hall`);
   await page.waitForFunction(() => window.__toranTwin.searchReady != null, { timeout: 60000 });
   const waited = await page.evaluate(() => window.__toranTwin.searchReady - window.__openAt);

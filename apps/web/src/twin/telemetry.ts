@@ -33,6 +33,13 @@ export interface TwinTelemetry {
   poseBeforeOpen: number[] | null;
   poseAfterClose: number[] | null;
   transitionPhase: string;
+  /**
+   * When the application finished covering the hall, stamped by the Director
+   * at the phase change itself. A verification that polls for the phase on an
+   * animation frame reads up to two frames late under load, which is enough to
+   * make a timing check flap; this is the moment rather than a sighting of it.
+   */
+  openedAt: number | null;
   /** Frames the hall has drawn. Must not advance while an application covers it. */
   framesDrawn: number;
   /** When the shared search engine began loading, and when it became ready. */
@@ -73,6 +80,7 @@ export function telemetry(): TwinTelemetry {
     poseBeforeOpen: null,
     poseAfterClose: null,
     transitionPhase: 'hall',
+    openedAt: null,
     framesDrawn: 0,
     searchStarted: null,
     searchReady: null,

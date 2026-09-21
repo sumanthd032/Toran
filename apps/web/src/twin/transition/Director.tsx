@@ -145,6 +145,9 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
   // Phase changes set up the move; frames carry it out.
   useEffect(() => {
     telemetry().transitionPhase = phase;
+    // Stamped here, not observed from outside, so the number is the moment.
+    if (phase === 'open') telemetry().openedAt = performance.now();
+    else if (phase === 'hall') telemetry().openedAt = null;
     if (device === undefined) return;
 
     const aspect = size.width / size.height;
