@@ -6,11 +6,28 @@
  * we do not have one. RRF only uses the position of a document in each list,
  * so the two scores never have to be made commensurable.
  *
- * Cormack, Clarke and Buettcher (2009). k = 60 is their reported default and
- * is not tuned here; tuning it without a relevance set would be guessing.
+ * Cormack, Clarke and Buettcher (2009) report k = 60, fusing many TREC runs of
+ * broadly similar quality. This index fuses two retrievers with complementary
+ * strengths rather than similar ones: the vectors find meaning and cannot find
+ * an identifier, because a number like 17 survives embedding badly, and BM25
+ * finds the identifier exactly. When the two lists disagree here it is usually
+ * because only one of them was able to find the passage at all.
+ *
+ * k = 60 damps the top of both lists, which is right when both retrievers
+ * could have found the answer and wrong when only one could. It buried Article
+ * 17 for the query "what does Article 17 of the Constitution do": BM25 ranked
+ * it first and the vectors did not return it in sixty candidates, so a single
+ * first place at k = 60 scored below two middling places. k = 5 says that a
+ * retriever which is confident should be listened to, which is what this
+ * particular hybrid is for.
+ *
+ * Measured over the eleven benchmark cases in tools/benchmark-search.mjs, which
+ * is the relevance set this repository does have: k = 5 passes all of them and
+ * k = 10, 20, 30 and 60 each fail the identifier case. Raising it again means
+ * re-running that benchmark.
  */
 
-export const RRF_K = 60;
+export const RRF_K = 5;
 
 export interface Ranked {
   readonly id: number;

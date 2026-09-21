@@ -13,80 +13,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pipeline, env } from '@huggingface/transformers';
-import { scoreBm25, tokenise } from '../packages/indexer/src/bm25.mjs';
-import { indexableText } from '../packages/indexer/src/build.mjs';
+import { openIndex, RRF_K, searchIndex } from '../packages/indexer/src/query.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const INDEX = path.join(ROOT, 'apps/web/public/index');
-const RRF_K = 60;
 
-const read = (f) => JSON.parse(fs.readFileSync(path.join(INDEX, f), 'utf8'));
-
-const manifest = read('manifest.json');
-const meta = read('meta.json');
-const texts = read('text.json');
-const lexical = read('lexical.json');
-const raw = fs.readFileSync(path.join(INDEX, 'vectors.bin'));
-const vectors = new Int8Array(raw.buffer, raw.byteOffset, raw.byteLength);
-
-env.allowLocalModels = false;
-const extract = await pipeline('feature-extraction', manifest.model, {
-  dtype: manifest.dtype,
-});
-
-function dense(query, limit) {
-  const { dims, count, quantisation } = manifest;
-  const out = [];
-  for (let doc = 0; doc < count; doc++) {
-    const base = doc * dims;
-    let dot = 0;
-    for (let d = 0; d < dims; d++) dot += vectors[base + d] * query[d];
-    out.push({ id: doc, score: dot / quantisation.scale });
-  }
-  out.sort((a, b) => b.score - a.score);
-  return out.slice(0, limit);
-}
-
-function fuse(a, b, k = RRF_K) {
-  const m = new Map();
-  const add = (list, field) =>
-    list.forEach((e, i) => {
-      const cur = m.get(e.id) ?? { score: 0, dense: null, lexical: null };
-      cur.score += 1 / (k + i + 1);
-      cur[field] = e.score;
-      m.set(e.id, cur);
-    });
-  add(a, 'dense');
-  add(b, 'lexical');
-  return [...m.entries()]
-    .map(([id, v]) => ({ id, ...v }))
-    .sort((x, y) => y.score - x.score);
-}
-
-async function search(query, limit = 10) {
-  const t0 = performance.now();
-  const out = await extract([manifest.queryPrefix + query], {
-    pooling: 'mean',
-    normalize: true,
-  });
-  const embedMs = performance.now() - t0;
-  const v = Float32Array.from(out.data);
-  const d = dense(v, 60);
-  const terms = tokenise(query);
-  const lex = [...scoreBm25(lexical, terms).entries()]
-    .map(([id, score]) => ({ id, score }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 60);
-  const hits = fuse(d, lex).slice(0, limit);
-  return {
-    hits,
-    tookMs: performance.now() - t0,
-    embedMs,
-    denseOnly: d,
-    lexicalOnly: lex,
-  };
-}
+// The engine is the one in packages/indexer, which is the one the kiosk's
+// worker mirrors. A benchmark with its own copy of the fusion would prove the
+// copy rather than the ranking that ships.
+const { manifest, meta, texts } = await openIndex(INDEX);
+const search = searchIndex;
 
 // Each case: a query, and what must be true of the results.
 const CASES = [
@@ -99,6 +35,11 @@ const CASES = [
     q: 'Mahad',
     why: 'a rare place name, the 1927 satyagraha in volume 17. Pure vector search loses these, which is why BM25 is here. Whole word: "Mahadev" does not count',
     expect: (h) => h.slice(0, 5).some((x) => /\bMahad\b/.test(texts[x.id])),
+  },
+  {
+    q: 'What does Article 17 of the Constitution do?',
+    why: 'an identifier query. The text of Article 17 does not contain the number 17, so only BM25 can find it, and only if the locator is indexed. This case is why lexicalText exists and why RRF_K is 5',
+    expect: (h) => h.slice(0, 5).some((x) => meta[x.id].pageId === 'coi-art17-a17'),
   },
   {
     q: 'untouchability is abolished and its practice in any form is forbidden',

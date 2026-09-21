@@ -13,7 +13,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { pipeline, env } from '@huggingface/transformers';
 import { buildLexical } from './bm25.mjs';
 import { DIMS, DTYPE, MODEL, PASSAGE_PREFIX, QUERY_PREFIX } from './model.mjs';
@@ -38,6 +38,72 @@ export function indexableText(row) {
   return row.speaker ? `${row.speaker}. ${row.text}` : row.text;
 }
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/**
+ * What a citation asserts, as words somebody would type.
+ *
+ * The text of Article 17 does not contain the number 17. Neither does section
+ * 3 of an Act contain its own section number, nor a sitting of the Assembly
+ * the date it was held. Those facts live in the locator, so a visitor asking
+ * "what does Article 17 do" matched nothing in the article and the assistant
+ * cited the 1955 Act instead, which mentions Article 17 in its own text. The
+ * citation was defensible and the retrieval was wrong.
+ *
+ * Written as words rather than as the short citation key, because "art. 17"
+ * tokenises to "art" and nobody types that. This is the lexical index's job
+ * specifically: D-027 put BM25 in the hybrid for exactly the rare literal
+ * token a vector loses.
+ */
+export function locatorWords(locator) {
+  if (locator === null || typeof locator !== 'object') return '';
+  switch (locator.kind) {
+    case 'article': {
+      const now = `article ${locator.article}`;
+      if (locator.version == null) return now;
+      return `${now} draft article ${locator.version.article} ${locator.version.year}`;
+    }
+    case 'section':
+      return `${locator.act} ${locator.year} section ${locator.section}`;
+    case 'paragraph': {
+      // The date, and the name of the body. Not the volume, sitting and
+      // paragraph numbers: nobody searches "sitting 62", and emitting them
+      // would put the token 62 in every paragraph of that sitting.
+      const [year, month, day] = String(locator.date).split('-');
+      const name = MONTHS[Number(month) - 1] ?? '';
+      return `Constituent Assembly Debates ${Number(day)} ${name} ${year}`;
+    }
+    case 'folio':
+      return `manuscript ${locator.manuscript} ${locator.folio ?? ''}`;
+    case 'plate':
+      return String(locator.plate);
+    // A page locator contributes nothing. Nobody searches "volume 17 page 9",
+    // and emitting the volume took the token 17 from rare to 1,296 documents,
+    // which is every page of volume 17. That buried Article 17 at rank 37 in
+    // the lexical list: the change meant to find it was what lost it.
+    case 'page':
+    default:
+      return '';
+  }
+}
+
+/**
+ * What BM25 indexes: the passage, its speaker, and its citation's own facts.
+ *
+ * Deliberately not what the embedding sees. Adding these words to the embedded
+ * text would change every vector, and the graph's candidate edges are built
+ * from that same vector space, so it would move a part of the archive a curator
+ * has already confirmed. The dense side already finds Article 17 by meaning;
+ * what it could not do was find it by number, and that is a lexical problem.
+ */
+export function lexicalText(row) {
+  const words = locatorWords(row.locator);
+  return words === '' ? indexableText(row) : `${indexableText(row)} ${words}`;
+}
+
 function quantise(float32) {
   // Vectors are L2 normalised, so every component is within [-1, 1] and a
   // single scale of 127 is exact enough. Recorded so the worker dequantises
@@ -58,6 +124,18 @@ async function main() {
     .filter((l) => l.trim())
     .map((l) => JSON.parse(l));
   console.log(`chunks        ${rows.length}`);
+
+  // The lexical index is cheap to rebuild and the vectors are not. More to the
+  // point, re-embedding would move the space the provenance graph's candidate
+  // edges were drawn in, so a change to what BM25 indexes should not force one.
+  if (process.argv.includes('--lexical')) {
+    const lexical = buildLexical(rows.map(lexicalText));
+    fs.writeFileSync(path.join(OUT, 'lexical.json'), JSON.stringify(lexical));
+    const size = fs.statSync(path.join(OUT, 'lexical.json')).size;
+    console.log(`lexical       ${lexical.vocabulary.length} terms, ${(size / 1e6).toFixed(2)} MB`);
+    console.log('vectors       left alone, as --lexical asks');
+    return;
+  }
 
   const t0 = Date.now();
   const extract = await pipeline('feature-extraction', MODEL, { dtype: DTYPE });
@@ -87,7 +165,7 @@ async function main() {
   console.log(`\nembedded      ${rows.length} in ${embedSeconds.toFixed(1)}s`);
   console.log(`quantisation  max component error ${maxError.toFixed(5)}`);
 
-  const lexical = buildLexical(rows.map(indexableText));
+  const lexical = buildLexical(rows.map(lexicalText));
   console.log(`lexical       ${lexical.vocabulary.length} terms`);
 
   // Metadata the result list needs. Text is separate so a result can render
@@ -135,4 +213,9 @@ async function main() {
   console.log(`  ${'total'.padEnd(16)} ${(total / 1e6).toFixed(2)} MB`);
 }
 
-await main();
+// Only when run, never when imported. This module exports the definition of
+// what gets indexed, and `tools/benchmark-search.mjs` used to import that and
+// rebuild the whole index as a side effect of asking what a chunk's text is.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
+}
