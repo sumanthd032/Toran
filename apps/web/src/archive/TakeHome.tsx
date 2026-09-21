@@ -11,10 +11,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CitedPassage } from '@toran/contracts';
+import { parseRef, type CitedPassage } from '@toran/contracts';
 import { Citation } from '@/design/primitives';
 import { hasCatalogue, useI18n } from '@/i18n';
-import { parseRef } from '@/kiosk/visitor/dossier';
 import { refsFromHash } from '@/kiosk/visitor/link';
 import { kindOf, openCitation } from './client';
 import styles from './takehome.module.css';

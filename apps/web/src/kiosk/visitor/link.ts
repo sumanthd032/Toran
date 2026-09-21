@@ -7,7 +7,7 @@
  * what anyone read. The dossier page rebuilds the passages from the archive.
  */
 
-import { DOSSIER_LIMIT, parseRef } from './dossier.ts';
+import { DOSSIER_LIMIT, parseRef } from '@toran/contracts';
 
 export const DOSSIER_PATH = '/dossier/';
 

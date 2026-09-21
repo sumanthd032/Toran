@@ -5,18 +5,22 @@
  * The token is the card, not the person. Nothing here identifies anyone, and
  * nothing survives the card being returned at the exit or the day ending.
  *
- * Until Toran Core arrives in step 10 this lives in the browser's storage.
- * Every kiosk in the Twin shares it, as do kiosk routes opened in the same
- * browser, which is enough for a tap at one device to be recognised at the
- * next. Across physical kiosks, continuity needs Core.
+ * This is the device's own copy, in the browser's storage. Every kiosk in the
+ * Twin shares it, as do kiosk routes opened in the same browser, which is
+ * enough for a tap at one device to be recognised at the next. Across physical
+ * kiosks, continuity comes from Toran Core's session service, and this store
+ * is what the kiosk falls back to when Core is not reachable.
  */
 
-import type { AccessibilityProfile, SutraSession } from '@toran/contracts';
-import { DEFAULT_ACCESSIBILITY } from '@toran/contracts';
-import { restore, store, type DossierItem } from './dossier.ts';
-
-/** A visit is a day. After this a card's session and dossier are gone. */
-export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+import {
+  DEFAULT_ACCESSIBILITY,
+  restore,
+  SESSION_TTL_MS,
+  store,
+  type AccessibilityProfile,
+  type DossierItem,
+  type SutraSession,
+} from '@toran/contracts';
 
 const PREFIX = 'toran.card.';
 

@@ -8,7 +8,8 @@
  * of reading, only what they kept.
  */
 
-import { readChunk, type CitedPassage } from '@toran/contracts';
+import { readChunk } from './ingest.ts';
+import type { CitedPassage } from './citation.ts';
 
 /** Enough for a five minute visit, and small enough to fit in one QR code. */
 export const DOSSIER_LIMIT = 16;

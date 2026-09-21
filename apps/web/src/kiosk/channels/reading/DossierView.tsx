@@ -10,11 +10,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { Citation as CitationData } from '@toran/contracts';
+import type { Citation as CitationData, DossierItem } from '@toran/contracts';
 import { Button, Card, Citation } from '@/design/primitives';
 import { useI18n } from '@/i18n';
 import { ICON, Icon } from '../../icons';
-import type { DossierItem } from '../../visitor/dossier';
 import { dossierUrl } from '../../visitor/link';
 import { QrCode } from '../../visitor/QrCode';
 import styles from './reading.module.css';

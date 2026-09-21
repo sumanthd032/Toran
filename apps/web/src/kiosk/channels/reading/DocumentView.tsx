@@ -31,7 +31,7 @@ import type {
 import { Citation, type PatinaLevel } from '@/design/primitives';
 import { useT } from '@/i18n';
 import type { ArchiveSection, ArchiveWork, OpenedDocument } from '@/archive/client';
-import { refFor } from '../../visitor/dossier';
+import { refFor } from '@toran/contracts';
 import { hitMarks, type HitRange } from './highlight';
 import { usePress } from './usePress';
 import styles from './reading.module.css';

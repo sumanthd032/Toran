@@ -1,23 +1,24 @@
 /**
- * The visitor layer: dossier, card store and patina. Run with `npm test`.
+ * The visitor layer at the kiosk: the card store and patina. Run with `npm test`.
+ *
+ * The dossier itself is a contract and is tested in
+ * `packages/contracts/src/dossier.test.ts`, because Toran Core reads and
+ * writes the same items with the same functions.
  */
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { citation, citedPassage, pageLocator, paragraphLocator } from '@toran/contracts';
-import { DEFAULT_ACCESSIBILITY } from '@toran/contracts';
 import {
-  add,
-  DOSSIER_LIMIT,
-  merge,
-  parseRef,
+  citation,
+  citedPassage,
+  DEFAULT_ACCESSIBILITY,
+  pageLocator,
   refFor,
-  restore,
-  store,
   type DossierItem,
-} from './dossier.ts';
+} from '@toran/contracts';
 import { levelOf, Patina, PATINA_THRESHOLDS } from './patina.ts';
-import { CardStore, SESSION_TTL_MS, type KeyValue } from './store.ts';
+import { SESSION_TTL_MS } from '@toran/contracts';
+import { CardStore, type KeyValue } from './store.ts';
 
 function memory(): KeyValue & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -40,67 +41,9 @@ const page47 = citedPassage({
   language: 'en',
 });
 
-const debate = citedPassage({
-  text: 'The answer is categorically in the affirmative.',
-  citation: citation({
-    corpus: 'cad',
-    workId: 'cad-v7',
-    pageId: 'cad-v7-62-131-para-98638',
-    locator: paragraphLocator({
-      volume: 7,
-      sitting: 62,
-      paragraph: 131,
-      date: '1948-11-29',
-    }),
-  }),
-  language: 'en',
-  speaker: 'B. R. Ambedkar',
-});
-
 const item = (passage = page47, block: number | null = 3): DossierItem => ({
   ref: refFor(passage, block),
   passage,
-});
-
-test('a ref names a block of a page, or a paragraph on its own', () => {
-  assert.equal(refFor(page47, 3), 'baws-v1-p0100~3');
-  assert.deepEqual(parseRef('baws-v1-p0100~3'), { pageId: 'baws-v1-p0100', block: 3 });
-  assert.equal(refFor(debate, null), 'cad-v7-62-131-para-98638');
-  assert.deepEqual(parseRef('cad-v7-62-131-para-98638'), {
-    pageId: 'cad-v7-62-131-para-98638',
-    block: null,
-  });
-  assert.equal(parseRef('<script>'), null);
-});
-
-test('saving a passage twice keeps one, and the dossier stops at its limit', () => {
-  let items = add([], item());
-  items = add(items, item());
-  assert.equal(items.length, 1);
-  for (let i = 0; i < DOSSIER_LIMIT + 5; i++) items = add(items, item(page47, i));
-  assert.equal(items.length, DOSSIER_LIMIT);
-});
-
-test('a dossier kept without a card goes onto the card when one is tapped', () => {
-  const onCard = [item(debate, null)];
-  const local = [item(page47, 3), item(debate, null)];
-  assert.deepEqual(
-    merge(onCard, local).map((i) => i.ref),
-    ['cad-v7-62-131-para-98638', 'baws-v1-p0100~3'],
-  );
-});
-
-test('a stored item comes back through the contract, and an uncited one does not', () => {
-  const stored = store(item(debate, null));
-  const good = restore([stored]);
-  assert.equal(good.items[0]?.passage.speaker, 'B. R. Ambedkar');
-  assert.equal(good.items[0]?.passage.citation.locator.kind, 'paragraph');
-  const bad = restore([
-    { ...stored, locator: undefined },
-    { ...stored, ref: 'x y' },
-  ]);
-  assert.equal(bad.items.length, 0);
-  assert.equal(bad.refused, 2);
 });
 
 test('a card issued in Marathi reads back in Marathi, with its dossier', () => {

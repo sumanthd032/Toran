@@ -24,11 +24,17 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { DEFAULT_ACCESSIBILITY, type AccessibilityProfile } from '@toran/contracts';
+import {
+  add,
+  DEFAULT_ACCESSIBILITY,
+  merge,
+  remove,
+  type AccessibilityProfile,
+  type DossierItem,
+} from '@toran/contracts';
 import { playTouch } from '@/design/feedback/sound';
 import { useI18n } from '@/i18n';
 import type { CardKind, CardReader } from './card';
-import { add, merge, remove, type DossierItem } from './dossier';
 import { Patina } from './patina';
 import { CardStore, type KeyValue } from './store';
 

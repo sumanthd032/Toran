@@ -29,7 +29,7 @@ import type { SearchHit, SearchResponse } from '@/search/types';
 import { ICON, Icon } from '../../icons';
 import { useChannelNav } from '../../nav';
 import { ReachTools } from '../../reach';
-import { refFor } from '../../visitor/dossier';
+import { refFor } from '@toran/contracts';
 import { useVisitor } from '../../visitor/VisitorProvider';
 import { DocumentView, type Chosen, type Hit } from './DocumentView';
 import { hitMarks } from './highlight';

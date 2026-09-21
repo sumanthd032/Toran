@@ -7,3 +7,5 @@ export * from './timeline.ts';
 export * from './provenance.ts';
 export * from './manuscript.ts';
 export * from './narration.ts';
+export * from './dossier.ts';
+export * from './core.ts';
