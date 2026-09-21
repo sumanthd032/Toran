@@ -1,0 +1,54 @@
+{
+  "note": "The AV ingest manifest. Every recording is listed here with where it came from, who produced it, and under what licence. media.py refuses anything whose licence does not permit a transcript, because a transcript is a derivative work and a No Derivatives licence does not allow one. Nothing is ingested that is not on this list.",
+  "why": "D-126 refused to ingest audio of Dr. Ambedkar because the uploads that claim to be his voice record nothing about where they came from. The same bar applies here, which is why this list is short. These two are productions of Doordarshan, the Government of India's public service broadcaster, mirrored by Public.Resource.Org under Creative Commons Attribution 3.0, which permits the transcript this application is built on. They are about the subject rather than by him, and the kiosk says so.",
+  "recordings": [
+    {
+      "id": "bek-04-caste-formation",
+      "title": "Bharat Ek Khoj, Episode 4: Caste Formation",
+      "series": "Bharat Ek Khoj (The Discovery of India)",
+      "episode": 4,
+      "creator": "Benegal, Shyam",
+      "publisher": "Doordarshan, Government of India",
+      "year": 1988,
+      "language": "hi",
+      "kind": "documentary",
+      "based_on": "Jawaharlal Nehru, The Discovery of India",
+      "source": "https://archive.org/details/youtube-lKv7d0vi_sA",
+      "url": "https://archive.org/download/youtube-lKv7d0vi_sA/lKv7d0vi_sA.mp4",
+      "original": "https://www.youtube.com/watch?v=lKv7d0vi_sA",
+      "mirrored_by": "Public.Resource.Org",
+      "licence": "https://creativecommons.org/licenses/by/3.0/",
+      "licence_name": "CC BY 3.0",
+      "attribution": "Bharat Ek Khoj, a production of Doordarshan, the Government of India's public service broadcaster. Produced and directed by Shyam Benegal, based on Jawaharlal Nehru's The Discovery of India. Mirrored by Public.Resource.Org under CC BY 3.0.",
+      "why_here": "Nehru's account of how the four-fold division hardened into caste, dramatised. It is the position Dr. Ambedkar argues against in Who Were the Shudras, which is in volume 7 of the archive, so a visitor can put the two beside each other."
+    },
+    {
+      "id": "bek-45-mahatma-phule",
+      "title": "Bharat Ek Khoj, Episode 45: Mahatma Phule",
+      "series": "Bharat Ek Khoj (The Discovery of India)",
+      "episode": 45,
+      "creator": "Benegal, Shyam",
+      "publisher": "Doordarshan, Government of India",
+      "year": 1988,
+      "language": "hi",
+      "kind": "documentary",
+      "based_on": "Jawaharlal Nehru, The Discovery of India",
+      "source": "https://archive.org/details/youtube-HLBT4GgMwBY",
+      "url": "https://archive.org/download/youtube-HLBT4GgMwBY/HLBT4GgMwBY.mp4",
+      "original": "https://www.youtube.com/watch?v=HLBT4GgMwBY",
+      "mirrored_by": "Public.Resource.Org",
+      "licence": "https://creativecommons.org/licenses/by/3.0/",
+      "licence_name": "CC BY 3.0",
+      "attribution": "Bharat Ek Khoj, a production of Doordarshan, the Government of India's public service broadcaster. Produced and directed by Shyam Benegal, based on Jawaharlal Nehru's The Discovery of India. Mirrored by Public.Resource.Org under CC BY 3.0.",
+      "why_here": "Jyotirao Phule, whom Dr. Ambedkar named as one of his three teachers. The anti-caste argument the archive holds does not begin in 1891, and this is where a visitor can see that."
+    }
+  ],
+  "licences_that_permit_a_transcript": [
+    "https://creativecommons.org/licenses/by/3.0/",
+    "https://creativecommons.org/licenses/by/4.0/",
+    "https://creativecommons.org/licenses/by-sa/3.0/",
+    "https://creativecommons.org/licenses/by-sa/4.0/",
+    "https://creativecommons.org/publicdomain/zero/1.0/",
+    "https://creativecommons.org/publicdomain/mark/1.0/"
+  ]
+}

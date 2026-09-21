@@ -1,0 +1,273 @@
+/*
+  The AV Archive. The transcript is the left two thirds and the picture is the
+  right third, which inverts the usual player and is the point: in a hall you
+  cannot hear a film over the room, so the words are what a visitor reads and
+  the picture is what tells them where they are.
+
+  The transcript scrolls itself as the film plays. The line being spoken is
+  marked with a brass rule on its leading edge and a slightly deeper ground,
+  not a highlight colour: this is paper, and a moving highlight at 24 px would
+  be the loudest thing in the hall.
+*/
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, clamp(18em, 34%, 26em));
+  gap: var(--s-4);
+}
+
+.transcript {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  scroll-padding-block: var(--s-8);
+}
+
+.cue {
+  inline-size: 100%;
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  gap: var(--s-2);
+  align-items: baseline;
+  text-align: start;
+  background: transparent;
+  border: 0;
+  border-inline-start: 3px solid transparent;
+  color: var(--text);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+  cursor: pointer;
+  min-block-size: var(--touch-min);
+}
+
+.cue[data-current='true'] {
+  border-inline-start-color: var(--accent);
+  background: var(--surface-sunken);
+}
+
+.cue:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.cueTime {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.cueText {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+}
+
+.noTranscript {
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+  padding: var(--s-3);
+}
+
+/* The picture, and everything that has to travel with it. */
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  overflow-y: auto;
+}
+
+.video {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--m-hall);
+  object-fit: contain;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--text);
+}
+
+.why {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: calc(var(--t-meta) * 0.9);
+  line-height: var(--leading-read);
+  color: var(--text-soft);
+}
+
+.attribution,
+.licence,
+.engine {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: calc(var(--t-meta) * 0.78);
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+/* Results */
+
+.results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-inline-size: 48em;
+}
+
+.result {
+  inline-size: 100%;
+  min-block-size: var(--touch-min);
+  text-align: start;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.result:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.resultText {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+}
+
+.resultMeta {
+  font-family: var(--font-mono);
+  font-size: calc(var(--t-meta) * 0.85);
+  color: var(--text-soft);
+}
+
+/* The empty state and the honest failures */
+
+.plain,
+.emptyNote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: var(--leading-read);
+  color: var(--text-soft);
+  padding: var(--s-3) 0;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-inline-size: 40em;
+}
+
+.emptyLead {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  line-height: var(--leading-tight);
+  color: var(--text);
+}
+
+/* The reach zone */
+
+.form {
+  display: flex;
+  gap: var(--s-2);
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/*
+  A bare input rather than the Field primitive. Field stacks a label above the
+  box, and in a reach zone that already holds three navigation affordances and
+  the language control there is no vertical room for it: the label wrapped to
+  four lines and squeezed the box to 63 px. The label is the placeholder and
+  the aria-label here, which is what the Reading Room's search does too.
+*/
+.query {
+  flex: 1;
+  min-inline-size: 8ch;
+  min-block-size: var(--touch-min);
+  padding: 0 var(--s-3);
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.query:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.clock {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.chooser {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.choose {
+  inline-size: 100%;
+  min-block-size: var(--touch-min);
+  text-align: start;
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  border-inline-start: 3px solid transparent;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: calc(var(--t-meta) * 0.95);
+  line-height: var(--leading-tight);
+  padding: var(--s-2);
+  cursor: pointer;
+}
+
+.choose:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* At 200% the labels step aside and the icons carry the controls. */
+.label {
+  white-space: nowrap;
+}

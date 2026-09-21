@@ -20,6 +20,7 @@ import {
   readCorrection,
   readProvenance,
   readNarration,
+  readRecordings,
   readUiNarration,
   readScans,
   readSection,
@@ -32,6 +33,7 @@ import {
   type Citation,
   type Correction,
   type NarrationClip,
+  type Recording,
   type UiClip,
   type ReadingDocument,
   type ProvenanceGraph,
@@ -158,6 +160,12 @@ export async function openCitation(target: {
       throw new Error(
         `archive: ${pageId} is a manuscript leaf, opened in the Manuscript Station`,
       );
+    case 'timecode':
+      // A line of a transcript is a moment in a recording. The AV Archive
+      // plays it, at its second; there is no page to turn to.
+      throw new Error(
+        `archive: ${pageId} is a moment in a recording, opened in the AV Archive`,
+      );
   }
 }
 
@@ -275,6 +283,26 @@ export async function spokenInterface(): Promise<readonly UiClip[]> {
 
 /** Where a narration clip is served from. */
 export const narrationUrl = (file: string): string => `${ROOT}narration/${file}`;
+
+/**
+ * Every recording on this device, with its transcript, read through the media
+ * contract. A recording that lost its licence or a cue that lost its timecode
+ * is refused here, so the AV Archive cannot show one.
+ *
+ * Its own file rather than the manifest, because a transcript of two 46 minute
+ * episodes is a thousand cues and the manifest is fetched by every room.
+ */
+let recordingsOnce: Promise<readonly Recording[]> | null = null;
+
+export function recordings(): Promise<readonly Recording[]> {
+  recordingsOnce ??= load('media.json')
+    .then(readRecordings)
+    .catch(() => []);
+  return recordingsOnce;
+}
+
+/** Where a recording is served from. Not under the archive: video is bulk. */
+export const mediaUrl = (file: string): string => `/media/${file}`;
 
 /** Where an archive file, such as a timeline photograph, is served from. */
 export function archiveUrl(file: string): string {

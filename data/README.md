@@ -14,9 +14,10 @@ data/
 │  │  ├─ original.pdf       the bytes as retrieved, never modified
 │  │  ├─ <date>.html        for sources fetched per sitting
 │  │  └─ submission.json    url, retrieval time, sha256, rights
-│  └─ photos/<id>/
-│     ├─ original.<ext>     a Commons file, kept only if its SHA-1 matches Commons
-│     └─ submission.json    file page, licence and what Commons records about it
+│  ├─ photos/<id>/
+│  │  ├─ original.<ext>     a Commons file, kept only if its SHA-1 matches Commons
+│  │  └─ submission.json    file page, licence and what Commons records about it
+│  └─ media/<id>.mp4        a recording as retrieved, never modified
 ├─ aip/                     ARCHIVAL. What is kept. The authority.
 │  ├─ premis.jsonl          append-only preservation event log
 │  ├─ <source-id>/
@@ -24,8 +25,11 @@ data/
 │  │  ├─ pages.json         per page: printed number, observed or inferred
 │  │  ├─ records.json       per paragraph, for debate sources
 │  │  └─ pages/*.txt        normalised page text
-│  └─ photos/<id>/
-│     └─ dublin-core.json   a photograph's record, as Commons gives it
+│  ├─ photos/<id>/
+│  │  └─ dublin-core.json   a photograph's record, as Commons gives it
+│  └─ media/
+│     ├─ premis.jsonl       what was fetched, and what was refused, and why
+│     └─ <id>.opus          mono 16 kHz speech, for transcription only
 ├─ dip/                     DISSEMINATION. What is served. Rebuildable.
 │  ├─ works.json            catalogue
 │  ├─ chunks.jsonl          retrieval units, one JSON object per line
@@ -89,3 +93,15 @@ Photographs are listed in `pipeline/photos.json` and fetched by
 domain are fetched, and the date, author and source shown with each are what
 Commons records, labelled as such on screen. Several give their source only as
 "Via Internet"; none has been confirmed beyond Commons.
+
+Recordings are listed in `pipeline/media.json` and fetched by
+`python3 pipeline/media.py`. A recording is fetched only if its licence is on
+the list of licences that permit a derivative, because a transcript is a
+derivative work and a No Derivatives licence does not allow one. A refusal is
+written to the PREMIS log with the licence that caused it, so the record of what
+was left out survives as well as the record of what was taken in.
+
+Unlike the printed sources, the rights position here is verified rather than
+stated: both recordings carry a licence URL, a named broadcaster and a named
+mirror, and the original is still online to check against. The attribution CC BY
+requires travels with the work and is printed under the player on the kiosk.

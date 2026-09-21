@@ -1,6 +1,6 @@
 'use client';
 
-import type { Citation as CitationData } from '@toran/contracts';
+import { timecode, type Citation as CitationData } from '@toran/contracts';
 import { useT, type MessageKey } from '@/i18n';
 import styles from './Citation.module.css';
 
@@ -93,6 +93,13 @@ export function Citation({
       if (l.volume !== null) parts.push(t('citation.volume', { volume: l.volume }));
       if (l.part !== null) parts.push(t('citation.part', { part: l.part }));
       parts.push(t(`citation.plate.${l.plate}`));
+      break;
+    }
+    case 'timecode': {
+      // The recording and the second it is said at. A film has no page, and
+      // the timecode is what a viewer can actually go to.
+      parts.push(t('citation.recording', { recording: l.recording }));
+      parts.push(t('citation.at', { at: timecode(l.from) }));
       break;
     }
   }

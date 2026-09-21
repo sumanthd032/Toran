@@ -20,7 +20,6 @@ export const CHANNEL_STEP: Partial<Readonly<Record<DeviceChannel, number>>> = {
   provenance: 7,
   timeline: 6,
   manuscript: 8,
-  av: 10,
   curator: 10,
 };
 

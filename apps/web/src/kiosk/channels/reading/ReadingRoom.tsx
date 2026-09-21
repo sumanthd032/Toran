@@ -124,8 +124,17 @@ export function ReadingRoom({ live }: { live: boolean }) {
   useEffect(() => {
     if (query === '' || !ready || results.has(query)) return;
     let current = true;
-    void client.current?.search(query, 8).then((response) => {
-      if (current) setResults((m) => new Map(m).set(query, response));
+    // Over-fetch and keep what this room can open. The index holds the film
+    // transcripts as well, in the same vector space, which is what lets the AV
+    // Archive answer an English question with a Hindi line. A cue is not a page
+    // though: there is nothing here to turn to, and offering one would be a
+    // result that leads nowhere. Device 9 is where a film is watched.
+    void client.current?.search(query, 20).then((response) => {
+      if (!current) return;
+      const readable = response.hits
+        .filter((hit) => hit.passage.citation.locator.kind !== 'timecode')
+        .slice(0, 8);
+      setResults((m) => new Map(m).set(query, { ...response, hits: readable }));
     });
     return () => {
       current = false;

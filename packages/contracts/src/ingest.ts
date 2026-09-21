@@ -18,6 +18,7 @@ import {
   plateLocator,
   folioLocator,
   sectionLocator,
+  timecodeLocator,
   type CitedPassage,
   type Locator,
 } from './citation.ts';
@@ -44,6 +45,14 @@ function str(value: unknown, field: string): string {
 function int(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     throw new CitationError(`${field} must be an integer`);
+  }
+  return value;
+}
+
+/** A time in seconds. Speech does not begin on whole seconds, so this is not int. */
+function num(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new CitationError(`${field} must be a number`);
   }
   return value;
 }
@@ -100,6 +109,12 @@ export function readLocator(raw: unknown): Locator {
         plate: str(l['plate'], 'plate'),
         volume: l['volume'] === null ? null : int(l['volume'], 'volume'),
         part: typeof l['part'] === 'string' ? l['part'] : null,
+      });
+    case 'timecode':
+      return timecodeLocator({
+        recording: str(l['recording'], 'recording'),
+        from: num(l['from'], 'from'),
+        to: num(l['to'], 'to'),
       });
     default:
       throw new CitationError(`unknown locator kind: ${String(l['kind'])}`);

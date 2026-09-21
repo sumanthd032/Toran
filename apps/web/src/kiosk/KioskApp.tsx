@@ -16,6 +16,7 @@ import { AnnounceProvider } from './announce';
 import { KioskShell } from './KioskShell';
 import { ResearchDesk } from './channels/assistant/ResearchDesk';
 import { AudioBooth } from './channels/audio/AudioBooth';
+import { AvArchive } from './channels/av/AvArchive';
 import { Entrance } from './channels/entrance/Entrance';
 import { PendingChannel } from './channels/PendingChannel';
 import { ManuscriptStation } from './channels/manuscript/ManuscriptStation';
@@ -69,6 +70,8 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
       return <AudioBooth />;
     case 'assistant':
       return <ResearchDesk />;
+    case 'av':
+      return <AvArchive />;
     default:
       return <PendingChannel channel={device.channel} />;
   }

@@ -20,6 +20,11 @@ import { DIMS, DTYPE, MODEL, PASSAGE_PREFIX, QUERY_PREFIX } from './model.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const CHUNKS = path.join(ROOT, 'data/dip/chunks.jsonl');
+// Transcript cues, written by tools/build-media.mjs. They are a separate file
+// because a different pipeline produces them, and the same chunks because a
+// cue is just another cited passage: one query therefore reaches a printed
+// page, a sitting of the Assembly and a minute of film. PROJECT.md 7.6.
+const MEDIA_CHUNKS = path.join(ROOT, 'data/dip/media-chunks.jsonl');
 const OUT = path.join(ROOT, 'apps/web/public/index');
 
 export { MODEL, DTYPE, DIMS, PASSAGE_PREFIX, QUERY_PREFIX } from './model.mjs';
@@ -118,12 +123,21 @@ function quantise(float32) {
 async function main() {
   env.allowLocalModels = false;
 
-  const rows = fs
-    .readFileSync(CHUNKS, 'utf8')
-    .split('\n')
-    .filter((l) => l.trim())
-    .map((l) => JSON.parse(l));
-  console.log(`chunks        ${rows.length}`);
+  const readChunks = (file) =>
+    fs.existsSync(file)
+      ? fs
+          .readFileSync(file, 'utf8')
+          .split('\n')
+          .filter((l) => l.trim())
+          .map((l) => JSON.parse(l))
+      : [];
+  const text = readChunks(CHUNKS);
+  const media = readChunks(MEDIA_CHUNKS);
+  const rows = [...text, ...media];
+  console.log(
+    `chunks        ${rows.length}` +
+      (media.length > 0 ? `  (${text.length} text, ${media.length} transcript cues)` : ''),
+  );
 
   // The lexical index is cheap to rebuild and the vectors are not. More to the
   // point, re-embedding would move the space the provenance graph's candidate

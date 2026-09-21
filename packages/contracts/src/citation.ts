@@ -108,6 +108,26 @@ export interface FolioLocator {
   readonly printed: string | null;
 }
 
+/**
+ * Cites a moment in a recording.
+ *
+ * A film has no page, so the citable unit is the second at which a thing is
+ * said. The recording is named as the archive names it and the timecode is
+ * where a viewer can go and hear it, which is the same test every other
+ * locator has to pass: a reader must be able to follow it back.
+ *
+ * `to` is the end of the cue rather than of the recording, so a transcript
+ * line cites the span it covers and not the whole film.
+ */
+export interface TimecodeLocator {
+  readonly kind: 'timecode';
+  /** The recording, as the ingest manifest names it. */
+  readonly recording: string;
+  /** Seconds from the start. Fractional, because speech does not fall on seconds. */
+  readonly from: number;
+  readonly to: number;
+}
+
 /** Cites a section of an Act of Parliament. */
 export interface SectionLocator {
   readonly kind: 'section';
@@ -139,7 +159,8 @@ export type Locator =
   | ArticleLocator
   | PlateLocator
   | SectionLocator
-  | FolioLocator;
+  | FolioLocator
+  | TimecodeLocator;
 
 export interface Citation {
   readonly corpus: Corpus;
@@ -283,6 +304,37 @@ export function folioLocator(input: {
   };
 }
 
+export function timecodeLocator(input: {
+  recording: string;
+  from: number;
+  to: number;
+}): TimecodeLocator {
+  if (input.recording.trim() === '') {
+    throw new CitationError('a recording must be named');
+  }
+  for (const [field, value] of [
+    ['from', input.from],
+    ['to', input.to],
+  ] as const) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new CitationError(`${field} must be a time in seconds, got ${String(value)}`);
+    }
+  }
+  // A cue that ends before it starts is a cue nobody can play, and a
+  // zero-length one puts a citation on a moment with no words in it.
+  if (input.to <= input.from) {
+    throw new CitationError(
+      `a cue must end after it starts, got ${String(input.from)} to ${String(input.to)}`,
+    );
+  }
+  return {
+    kind: 'timecode',
+    recording: input.recording,
+    from: input.from,
+    to: input.to,
+  };
+}
+
 export function plateLocator(input: {
   plate: string;
   volume?: number | null;
@@ -373,5 +425,18 @@ export function citationKey(c: Citation): string {
         l.volume === null ? '' : `${l.volume}${l.part === null ? '' : `.${l.part}`}`;
       return `${c.corpus} ${vol}:${l.plate}`;
     }
+    case 'timecode':
+      return `${l.recording} @${timecode(l.from)}`;
   }
+}
+
+/** h:mm:ss, which is how a viewer reads a position in a film. */
+export function timecode(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const s = whole % 60;
+  const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+  return `${h > 0 ? `${String(h)}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
 }

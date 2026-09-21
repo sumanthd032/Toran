@@ -32,6 +32,9 @@ apps/web/public/ort/
 apps/web/public/kiosk/
 apps/web/public/archive/
 apps/web/public/iiif/
+# Recordings. 226 MB of video, rebuildable with: npm run media && npm run
+# transcribe && npm run build:media
+apps/web/public/media/
 
 # Archive packages. Large, and fully reproducible from pipeline/sources.json.
 # data/README.md and data/fixity.json are kept.
