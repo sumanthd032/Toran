@@ -295,5 +295,6 @@
   "av.empty.why": "A film is only ingested when its licence permits a transcript and its source can be traced. The archive would rather hold nothing than show a recording it cannot attribute.",
   "av.recordings": "Recordings",
   "av.find": "Find",
-  "av.alsoHere": "Also here: {title}"
+  "av.alsoHere": "Also here: {title}",
+  "av.notHere": "This device does not hold the film, and nothing else serves it. The transcript below is still searchable and still cited."
 }

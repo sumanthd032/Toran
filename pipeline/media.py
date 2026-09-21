@@ -299,6 +299,13 @@ def main() -> int:
             "playWidth": PLAY_WIDTH,
             "file": f"{rid}.mp4",
             "audio": f"{rid}.opus",
+            # Where the film can be played from when this device does not carry
+            # it. A kiosk always does; a public web deployment cannot, because
+            # Cloudflare Pages refuses a file over 25 MiB and these are 100 MB
+            # and 115 MB. The Internet Archive serves them with range requests
+            # and an open CORS header, so the player falls back to the same
+            # copy this pipeline downloaded.
+            "stream": recording["url"],
             "sha256": checksum,
             # Everything a screen needs to say where this came from. The AV
             # Archive prints the attribution under the player, because CC BY

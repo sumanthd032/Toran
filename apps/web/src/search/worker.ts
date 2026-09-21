@@ -67,20 +67,28 @@ async function loadJson<T>(url: string, stage: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * Whether this device carries the embedding model.
+ *
+ * Asked of the config file rather than the 113 MB weights, and treated as a no
+ * on any failure: a device that cannot answer the question is a device that
+ * should fetch the model rather than one that should fail to search.
+ */
+async function hasLocalModel(model: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/models/${model}/config.json`, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function init(): Promise<void> {
   const started = performance.now();
 
-  /*
-    The model is served from this origin, not from a content delivery network.
-    A cold kiosk that cannot reach the internet must still be able to search,
-    and a citizen's query must not depend on a foreign host being reachable.
-    The files are put in place by packages/indexer/src/vendor-model.mjs.
-  */
-  env.allowLocalModels = true;
-  env.allowRemoteModels = false;
-  env.localModelPath = '/models/';
   // ONNX Runtime fetches its WebAssembly from a CDN unless told otherwise.
-  // Without this the model is local but inference still needs the internet.
+  // It is 21 MB, it ships with every deployment, and without this the model
+  // would be local but inference would still need the internet.
   const wasm = env.backends?.onnx?.wasm;
   if (wasm === undefined) {
     throw new Error(
@@ -88,6 +96,7 @@ async function init(): Promise<void> {
     );
   }
   wasm.wasmPaths = '/ort/';
+  env.localModelPath = '/models/';
 
   manifest = await loadJson<IndexManifest>('/index/manifest.json', 'manifest');
 
@@ -121,7 +130,25 @@ async function init(): Promise<void> {
     throw new Error(`index mismatch: ${vectors.length} components, expected ${expected}`);
   }
 
+  /*
+    Where the model comes from is decided here, at run time, rather than at
+    build time, so that one build serves both deployments. ARCHITECTURE.md
+    section 11 says there is one artifact, not two, and this is what keeps that
+    true now that the two deployments cannot carry the same files.
+
+    A kiosk carries the model on its own disk, and must: a cold kiosk that
+    cannot reach the internet still has to search, and a citizen's query must
+    not depend on a foreign host being reachable. The public web build cannot
+    carry it, because the quantised model is 113 MB and Cloudflare Pages
+    refuses a file over 25 MiB.
+
+    So the worker asks whether this device has one. It is a 600 byte config
+    file, not the model, and the answer decides the rest.
+  */
   post({ type: 'progress', stage: 'model' });
+  const onThisDevice = await hasLocalModel(manifest.model);
+  env.allowLocalModels = onThisDevice;
+  env.allowRemoteModels = !onThisDevice;
   extractor = await loadExtractor('feature-extraction', manifest.model, {
     dtype: manifest.dtype,
   });

@@ -62,7 +62,8 @@
     "media": "python3 pipeline/media.py",
     "transcribe": "node tools/transcribe.mjs",
     "build:media": "node tools/build-media.mjs",
-    "verify:av": "node tools/verify-av.mjs"
+    "verify:av": "node tools/verify-av.mjs",
+    "deploy:web": "node tools/deploy-web.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",

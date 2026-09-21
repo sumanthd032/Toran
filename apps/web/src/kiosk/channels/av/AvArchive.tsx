@@ -50,6 +50,11 @@ export function AvArchive() {
   const [playing, setPlaying] = useState(false);
   const video = useRef<HTMLVideoElement | null>(null);
   const transcript = useRef<HTMLOListElement | null>(null);
+  // Recordings this device does not carry. A kiosk carries all of them; a
+  // public web deployment carries none, because Cloudflare Pages refuses a
+  // file over 25 MiB and these are 100 MB and 115 MB. The player finds out by
+  // failing to load one and falls back to where the archive got it from.
+  const [remote, setRemote] = useState<ReadonlySet<string>>(new Set());
   // A cue waiting for a recording to load. Setting currentTime on a video
   // whose source has just changed does nothing, because there is no timeline
   // to seek in yet, so the seek is held until the browser says there is one.
@@ -198,6 +203,17 @@ export function AvArchive() {
           onTime={setAt}
           onEnded={() => setPlaying(false)}
           onSeek={seek}
+          src={
+            remote.has(recording.id) ? recording.stream : mediaUrl(recording.file)
+          }
+          onMissing={() =>
+            setRemote((had) => {
+              if (had.has(recording.id)) return had;
+              const next = new Set(had);
+              next.add(recording.id);
+              return next;
+            })
+          }
           onReady={() => {
             const waiting = pending.current;
             if (waiting === null) return;
@@ -283,6 +299,8 @@ function Player({
   onEnded,
   onSeek,
   onReady,
+  src,
+  onMissing,
 }: {
   recording: Recording;
   all: readonly Recording[];
@@ -296,6 +314,10 @@ function Player({
   onSeek: (cue: TranscriptCue) => void;
   /** The new recording has a timeline, so a seek held across the change can run. */
   onReady: () => void;
+  /** Null when the film is neither on this device nor served anywhere else. */
+  src: string | null;
+  /** This device does not carry the file. Try where the archive got it from. */
+  onMissing: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -333,18 +355,25 @@ function Player({
       </ol>
 
       <aside className={styles.side}>
-        <video
-          ref={videoRef}
-          className={styles.video}
-          src={mediaUrl(recording.file)}
-          preload="metadata"
-          playsInline
-          controls={false}
-          onTimeUpdate={(e) => onTime(e.currentTarget.currentTime)}
-          onLoadedMetadata={onReady}
-          onEnded={onEnded}
-          data-testid="av-video"
-        />
+        {src === null ? (
+          <p className={styles.plain} data-testid="av-unplayable">
+            {t('av.notHere')}
+          </p>
+        ) : (
+          <video
+            ref={videoRef}
+            className={styles.video}
+            src={src}
+            preload="metadata"
+            playsInline
+            controls={false}
+            onTimeUpdate={(e) => onTime(e.currentTarget.currentTime)}
+            onLoadedMetadata={onReady}
+            onError={onMissing}
+            onEnded={onEnded}
+            data-testid="av-video"
+          />
+        )}
         <p className={styles.clock} aria-hidden="true">
           {timecode(at)} / {timecode(recording.durationSeconds)}
         </p>

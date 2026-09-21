@@ -27,6 +27,7 @@ node_modules/
 .next/
 .next-build/
 out/
+out-web/
 dist/
 build/
 *.tsbuildinfo

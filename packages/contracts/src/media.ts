@@ -47,6 +47,12 @@ export interface Recording {
   readonly durationSeconds: number;
   /** Path under the archive's media directory. */
   readonly file: string;
+  /**
+   * Where the film plays from when this device does not carry the file.
+   * Null when nothing else serves it, and the room then says so rather than
+   * showing a player that cannot start.
+   */
+  readonly stream: string | null;
   readonly creator: string;
   readonly publisher: string;
   readonly year: number;
@@ -132,6 +138,7 @@ export function readRecording(raw: unknown): Recording {
     kind: kind as RecordingKind,
     durationSeconds: num(r['durationSeconds'], 'durationSeconds'),
     file: str(r['file'], 'file'),
+    stream: optional(r['stream']),
     creator: str(r['creator'], 'creator'),
     publisher: str(r['publisher'], 'publisher'),
     year: num(r['year'], 'year'),
