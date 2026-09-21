@@ -97,3 +97,59 @@ export function clipsFor(
 ): readonly NarrationClip[] {
   return clips.filter((c) => c.id === id);
 }
+
+/**
+ * A spoken interface label.
+ *
+ * Deliberately not a NarrationClip. An archival clip cannot exist without the
+ * citation of the passage it reads; an interface label cites nothing, because
+ * it is not from the archive. Keeping them as separate types means a spoken
+ * button can never be handed to a surface that expects a cited reading, and a
+ * reading can never be played as though it were chrome.
+ */
+export interface UiClip {
+  /** The i18n message key this speaks. */
+  readonly key: string;
+  readonly language: string;
+  readonly voice: Voice;
+  readonly file: string;
+  readonly engine: string;
+  /** The words spoken, for the live region that accompanies them. */
+  readonly text: string;
+}
+
+export function readUiClip(raw: unknown): UiClip {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    throw new CitationError('narration: a spoken label must be an object');
+  }
+  const c = raw as Record<string, unknown>;
+  const voice = c['voice'];
+  if (voice !== 'female' && voice !== 'male') {
+    throw new CitationError(`narration: unknown voice ${String(voice)}`);
+  }
+  return {
+    key: str(c['key'], 'key'),
+    language: str(c['language'], 'language'),
+    voice,
+    file: str(c['file'], 'file'),
+    engine: str(c['source'], 'source'),
+    text: str(c['text'], 'text'),
+  };
+}
+
+export function readUiNarration(raw: unknown): readonly UiClip[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(readUiClip);
+}
+
+/** The spoken label for a key in a language, preferring a voice. */
+export function spokenLabel(
+  clips: readonly UiClip[],
+  key: string,
+  language: string,
+  voice: Voice,
+): UiClip | null {
+  const matching = clips.filter((c) => c.key === key && c.language === language);
+  if (matching.length === 0) return null;
+  return matching.find((c) => c.voice === voice) ?? matching[0] ?? null;
+}

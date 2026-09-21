@@ -12,7 +12,13 @@
  * Narrating English text with a Marathi voice produces something that sounds
  * like Marathi and says nothing, which is worse than silence.
  *
- * Run: npm run narrate [-- --language mr] [-- --voice male] [-- --dry-run]
+ * --ui narrates the interface instead of the archive: the button labels and
+ * screen names an audio-first visitor needs in order to use the kiosk without
+ * reading it. Those are written as spoken labels, a separate type from an
+ * archival clip, because a label cites nothing and must never be handed to a
+ * surface that expects a cited reading.
+ *
+ * Run: npm run narrate [-- --language mr] [-- --voice male] [-- --ui]
  *
  * npm takes --dry-run for itself, so that one flag needs node directly:
  * node packages/narrate/src/narrate.mjs --dry-run
@@ -29,6 +35,25 @@ import { selectedPassages } from './selection.mjs';
 const DIP = path.join(ROOT, 'data/dip');
 const OUT = path.join(DIP, 'narration');
 const INDEX = path.join(OUT, 'index.json');
+const UI_INDEX = path.join(OUT, 'ui.json');
+const MESSAGES = path.join(ROOT, 'apps/web/src/i18n/messages');
+
+/**
+ * The interface an audio-first visitor has to hear to get anywhere: the three
+ * navigation affordances, the primary actions, the room names and the
+ * settings. Not all 258 strings. A label nobody can act on is a label nobody
+ * needs read aloud, and every clip is bytes on the device.
+ */
+const SPOKEN_KEYS = [
+  'nav.back', 'nav.home', 'nav.forward',
+  'action.search', 'action.listen', 'action.save', 'action.close',
+  'action.confirm', 'action.cancel',
+  'field.search.label', 'language.choose', 'visitor.settings',
+  'audio.play', 'audio.pause', 'audio.restart',
+  'device.channel.entrance', 'device.channel.reading', 'device.channel.provenance',
+  'device.channel.timeline', 'device.channel.manuscript', 'device.channel.audio',
+  'device.channel.av', 'device.channel.assistant', 'device.channel.curator',
+];
 
 function argv() {
   const args = process.argv.slice(2);
@@ -39,6 +64,7 @@ function argv() {
   return {
     dryRun: args.includes('--dry-run'),
     force: args.includes('--force'),
+    ui: args.includes('--ui'),
     only: value('language'),
     voice: value('voice'),
   };
@@ -79,8 +105,110 @@ function wordsIn(passage, language) {
 
 const clip = (language, voice, id) => path.join(OUT, language, `${id}.${voice}.wav`);
 
+/** Narrates the interface labels an audio-first visitor needs. */
+async function narrateInterface(opts) {
+  const languages = opts.only === null ? NARRATION_LANGUAGES : [opts.only];
+  const voices = opts.voice === null ? VOICES : [opts.voice];
+  const clip = (language, voice, key) =>
+    path.join(OUT, 'ui', language, `${key}.${voice}.wav`);
+
+  const todo = [];
+  const noCatalogue = [];
+  for (const language of languages) {
+    const file = path.join(MESSAGES, `${language}.json`);
+    if (!fs.existsSync(file)) {
+      noCatalogue.push(language);
+      continue;
+    }
+    const catalogue = JSON.parse(fs.readFileSync(file, 'utf8'));
+    for (const key of SPOKEN_KEYS) {
+      const text = catalogue[key];
+      if (typeof text !== 'string' || text.trim() === '') continue;
+      for (const voice of voices) {
+        if (!opts.force && fs.existsSync(clip(language, voice, key))) continue;
+        todo.push({ language, voice, key, text });
+      }
+    }
+  }
+
+  console.log(
+    `narrate --ui: ${SPOKEN_KEYS.length} labels into ${languages.join(', ')}; ` +
+      `${todo.length} clips to fetch`,
+  );
+  if (noCatalogue.length > 0) {
+    console.log(
+      `narrate --ui: ${noCatalogue.join(', ')} have no catalogue yet. ` +
+        `Run npm run catalogue first.`,
+    );
+  }
+  if (opts.dryRun || todo.length === 0) {
+    if (todo.length === 0) console.log('narrate --ui: nothing to do');
+    return;
+  }
+  if (!haveCredentials()) {
+    console.log(
+      'narrate --ui: no Bhashini credentials, so nothing was fetched.\n' +
+        '              Audio-first mode still announces every screen to assistive\n' +
+        '              technology; it just cannot speak for itself yet.',
+    );
+    return;
+  }
+
+  const index = fs.existsSync(UI_INDEX)
+    ? JSON.parse(fs.readFileSync(UI_INDEX, 'utf8'))
+    : { clips: [] };
+  const keyed = new Map(index.clips.map((c) => [`${c.language}/${c.key}/${c.voice}`, c]));
+  let written = 0;
+  let failed = 0;
+
+  for (const language of languages) {
+    const wanted = todo.filter((t) => t.language === language);
+    if (wanted.length === 0) continue;
+    const task = ttsTask(language);
+    const { services, endpoint } = await configure([task]);
+    const service = services.get('tts');
+    console.log(`  ${language}: ${service.serviceId}`);
+    fs.mkdirSync(path.join(OUT, 'ui', language), { recursive: true });
+
+    for (const item of wanted) {
+      const voiced = { ...task, config: { ...task.config, gender: item.voice } };
+      try {
+        const response = await compute(endpoint, [withService(voiced, services)], {
+          input: [{ source: item.text }],
+        });
+        const bytes = Buffer.from(readAudio(response), 'base64');
+        if (bytes.length === 0) throw new BhashiniError('narration audio was empty');
+        const file = clip(language, item.voice, item.key);
+        fs.writeFileSync(file, bytes);
+        keyed.set(`${language}/${item.key}/${item.voice}`, {
+          key: item.key,
+          language,
+          voice: item.voice,
+          file: path.relative(OUT, file),
+          bytes: bytes.length,
+          source: `Bhashini, ${service.serviceId}`,
+          text: item.text,
+        });
+        written += 1;
+      } catch (error) {
+        failed += 1;
+        const why = error instanceof BhashiniError ? error.message : String(error);
+        process.stdout.write(`    ${item.key} ${item.voice} FAILED: ${why}\n`);
+      }
+    }
+  }
+
+  const clips = [...keyed.values()].sort((a, b) =>
+    `${a.language}${a.key}${a.voice}`.localeCompare(`${b.language}${b.key}${b.voice}`),
+  );
+  fs.writeFileSync(UI_INDEX, `${JSON.stringify({ clips }, null, 2)}\n`);
+  console.log(`narrate --ui: ${written} written, ${failed} failed, ${clips.length} in the index`);
+  if (failed > 0) process.exitCode = 1;
+}
+
 async function main() {
   const opts = argv();
+  if (opts.ui) return narrateInterface(opts);
   const languages = opts.only === null ? NARRATION_LANGUAGES : [opts.only];
   const voices = opts.voice === null ? VOICES : [opts.voice];
   const passages = selectedPassages();

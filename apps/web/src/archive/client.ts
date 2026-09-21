@@ -20,6 +20,7 @@ import {
   readCorrection,
   readProvenance,
   readNarration,
+  readUiNarration,
   readScans,
   readSection,
   readTranscription,
@@ -31,6 +32,7 @@ import {
   type Citation,
   type Correction,
   type NarrationClip,
+  type UiClip,
   type ReadingDocument,
   type ProvenanceGraph,
   type Scan,
@@ -82,6 +84,8 @@ export interface ArchiveManifest {
   readonly translations: Readonly<Record<string, readonly string[]>>;
   /** Narration clips the device holds. Filled by npm run narrate. */
   readonly narration: readonly unknown[];
+  /** Spoken interface labels for audio-first mode. npm run narrate -- --ui. */
+  readonly spokenUi: readonly unknown[];
 }
 
 export interface OpenedDocument {
@@ -258,6 +262,15 @@ export async function accuracy(): Promise<readonly Accuracy[]> {
  */
 export async function narration(): Promise<readonly NarrationClip[]> {
   return readNarration((await manifest()).narration ?? []);
+}
+
+/**
+ * The spoken interface labels this device holds, for audio-first mode.
+ * Empty until `npm run narrate -- --ui` has run, which the announcer handles
+ * by falling back to its live region.
+ */
+export async function spokenInterface(): Promise<readonly UiClip[]> {
+  return readUiNarration((await manifest()).spokenUi ?? []);
 }
 
 /** Where a narration clip is served from. */

@@ -88,7 +88,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 for (const dir of ['pages', 'sittings', 'articles', 'acts']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
-const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {}, narration: [] };
+const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {}, narration: [], spokenUi: [] };
 
 for (const work of works) {
   const workPages = pages.filter((p) => p.workId === work.id);
@@ -201,6 +201,24 @@ if (fs.existsSync(narrationIndex)) {
   }
 }
 
+// Spoken interface labels, for audio-first mode. Separate from narration
+// because a label cites nothing; see the narration contract.
+const uiIndex = path.join(NARRATION, 'ui.json');
+if (fs.existsSync(uiIndex)) {
+  const { clips } = JSON.parse(fs.readFileSync(uiIndex, 'utf8'));
+  for (const c of clips) {
+    const from = path.join(NARRATION, c.file);
+    if (!fs.existsSync(from)) continue;
+    const to = path.join(OUT, 'narration', c.file);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(from, to);
+    manifest.spokenUi.push({
+      key: c.key, language: c.language, voice: c.voice,
+      file: c.file, source: c.source, text: c.text,
+    });
+  }
+}
+
 write('manifest.json', manifest);
 
 const sections = manifest.works.reduce((n, w) => n + w.sections.length, 0);
@@ -209,7 +227,8 @@ console.log(
   `archive: ${pages.length} pages in ${sections} sections (${titled} titled), ` +
     `${sittings.length} sittings, ${articles.length} articles, ${acts.length} sections of Acts, ` +
     `${Object.values(manifest.translations).flat().length} translated pages, ` +
-    `${manifest.narration.length} narration clips`,
+    `${manifest.narration.length} narration clips, ` +
+    `${manifest.spokenUi.length} spoken labels`,
 );
 for (const w of manifest.works) {
   if (w.sections.length === 0) continue;

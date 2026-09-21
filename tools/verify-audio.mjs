@@ -133,7 +133,19 @@ const overflow = await page.evaluate(() =>
   document.documentElement.scrollWidth > document.documentElement.clientWidth);
 check('8 nothing overflows sideways at tablet width', !overflow);
 
-check('9 no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));
+// Audio-first: every announcement reaches somebody, with or without a clip.
+const announce = await page.evaluate(() => ({
+  polite: document.querySelector('[aria-live="polite"]') !== null,
+  urgent: document.querySelector('[aria-live="assertive"]') !== null,
+  said: document.querySelector('[aria-live="polite"]')?.textContent?.trim() ?? '',
+}));
+check('9 the kiosk has a live region for a visitor who is not reading it',
+  announce.polite && announce.urgent);
+check('10 arriving at the booth announces which room it is',
+  announce.said.replace(/\u200B/g, '') === catalogue['device.channel.audio'],
+  announce.said.replace(/\u200B/g, '') || 'nothing announced');
+
+check('11 no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 await page.close();
 await browser.close();
 

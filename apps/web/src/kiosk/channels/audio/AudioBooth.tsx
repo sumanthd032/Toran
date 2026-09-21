@@ -21,6 +21,7 @@ import type { NarrationClip } from '@toran/contracts';
 import { narration as loadNarration, narrationUrl } from '@/archive/client';
 import { Button, Citation, Rule } from '@/design/primitives';
 import { useI18n } from '@/i18n';
+import { useAnnounce } from '../../announce';
 import { ICON, Icon } from '../../icons';
 import { useChannelNav } from '../../nav';
 import { ReachTools } from '../../reach';
@@ -40,6 +41,7 @@ import styles from './audio.module.css';
 
 export function AudioBooth() {
   const { t, lang } = useI18n();
+  const announce = useAnnounce();
   const [clips, setClips] = useState<readonly NarrationClip[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [index, setIndex] = useState(0);
@@ -95,6 +97,13 @@ export function AudioBooth() {
     const element = audio.current;
     if (element !== null) element.pause();
   }, [clip?.file]);
+
+  // Where the visitor now is, for anyone not reading the screen. The passage
+  // itself, not "passage 3 of 24", because the words are the content.
+  const spokenText = clip?.passage.text;
+  useEffect(() => {
+    if (spokenText !== undefined) announce(spokenText);
+  }, [announce, spokenText]);
 
   useEffect(() => {
     const element = audio.current;

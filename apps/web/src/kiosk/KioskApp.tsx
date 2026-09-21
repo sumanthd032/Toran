@@ -12,6 +12,7 @@ import { setFeedbackLevel } from '@/design/feedback/sound';
 import { DEVICES, type HallDevice } from '@/fleet/devices';
 import { I18nProvider, useI18n } from '@/i18n';
 import { AmbientSlot } from './ambient';
+import { AnnounceProvider } from './announce';
 import { KioskShell } from './KioskShell';
 import { AudioBooth } from './channels/audio/AudioBooth';
 import { Entrance } from './channels/entrance/Entrance';
@@ -193,36 +194,38 @@ function KioskRoot({
         if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ') touch();
       }}
     >
-      <NavProvider registry={nav.provider}>
-        <ReachSlot value={tools}>
-          <AmbientSlot value={ambient}>
-            <KioskShell
-              device={device}
-              proximity={proximity}
-              driverKind={driverKind}
-              driverStatus={driverStatus}
-              passages={passages}
-              showStatus={showStatus}
-              bootedAt={bootedAt}
-              onBack={() => {
-                // Back within the room first; from the room's own start, Back
-                // leaves it, which in the Twin flies out to the hall.
-                if (!nav.back()) {
-                  if (onExit !== undefined) onExit();
-                  else nav.home();
-                }
-              }}
-              onHome={nav.home}
-              onForward={nav.canForward ? nav.forward : undefined}
-              toolsRef={setTools}
-              ambientRef={setAmbient}
-            >
-              {/* A new visitor finds the room at its start, not where the last one left it. */}
-              <Fragment key={visit}>{children}</Fragment>
-            </KioskShell>
-          </AmbientSlot>
-        </ReachSlot>
-      </NavProvider>
+      <AnnounceProvider audioFirst={profile.audioFirst}>
+        <NavProvider registry={nav.provider}>
+          <ReachSlot value={tools}>
+            <AmbientSlot value={ambient}>
+              <KioskShell
+                device={device}
+                proximity={proximity}
+                driverKind={driverKind}
+                driverStatus={driverStatus}
+                passages={passages}
+                showStatus={showStatus}
+                bootedAt={bootedAt}
+                onBack={() => {
+                  // Back within the room first; from the room's own start, Back
+                  // leaves it, which in the Twin flies out to the hall.
+                  if (!nav.back()) {
+                    if (onExit !== undefined) onExit();
+                    else nav.home();
+                  }
+                }}
+                onHome={nav.home}
+                onForward={nav.canForward ? nav.forward : undefined}
+                toolsRef={setTools}
+                ambientRef={setAmbient}
+              >
+                {/* A new visitor finds the room at its start, not where the last one left it. */}
+                <Fragment key={visit}>{children}</Fragment>
+              </KioskShell>
+            </AmbientSlot>
+          </ReachSlot>
+        </NavProvider>
+      </AnnounceProvider>
     </div>
   );
 }

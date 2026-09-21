@@ -15,6 +15,7 @@ import type { CitedPassage } from '@toran/contracts';
 import { Button, Citation } from '@/design/primitives';
 import type { HallDevice } from '@/fleet/devices';
 import { useI18n, type MessageKey } from '@/i18n';
+import { useAnnounce } from './announce';
 import { ICON, Icon } from './icons';
 import type { Proximity } from './machine';
 import { ScriptCarousel } from './ScriptCarousel';
@@ -90,6 +91,18 @@ export function KioskShell({
   }, [showStatus]);
 
   const title = t(`device.channel.${device.channel}` as MessageKey);
+
+  /*
+    A visitor who has arrived hears which room they are standing in. Announced
+    on arrival rather than on mount, because a kiosk that has been sitting in
+    its ambient state for an hour has nobody to tell.
+  */
+  const announce = useAnnounce();
+  const arrived = state === 'subtle' || state === 'personal';
+  useEffect(() => {
+    if (arrived)
+      announce(title, { key: `device.channel.${device.channel}` as MessageKey });
+  }, [announce, arrived, device.channel, title]);
 
   return (
     <>

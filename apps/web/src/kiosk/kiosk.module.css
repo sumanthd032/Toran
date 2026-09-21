@@ -457,3 +457,17 @@
   font-size: var(--t-meta);
   color: var(--text-soft);
 }
+
+/*
+  The announcement regions. Off screen rather than display:none, because a
+  hidden element is not announced at all. Audio-first mode adds the kiosk's
+  own voice beside these; these carry the words either way.
+*/
+.announce {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

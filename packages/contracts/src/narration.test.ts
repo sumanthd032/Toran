@@ -5,7 +5,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CitationError } from './citation.ts';
-import { readNarration, readNarrationClip } from './narration.ts';
+import {
+  readNarration,
+  readNarrationClip,
+  readUiClip,
+  readUiNarration,
+  spokenLabel,
+} from './narration.ts';
 
 const citation = {
   corpus: 'baws',
@@ -79,4 +85,34 @@ test('an empty archive reads as no clips rather than failing', () => {
 
 test('one bad clip fails the read rather than being dropped quietly', () => {
   assert.throws(() => readNarration([clip, { ...clip, text: '' }]), CitationError);
+});
+
+test('a spoken interface label is not an archival clip and needs no citation', () => {
+  const label = readUiClip({
+    key: 'action.listen',
+    language: 'mr',
+    voice: 'female',
+    file: 'ui/mr/action.listen.female.wav',
+    source: 'Bhashini, ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4',
+    text: 'ऐका',
+  });
+  assert.equal(label.key, 'action.listen');
+  assert.equal(label.text, 'ऐका');
+  assert.equal('passage' in label, false, 'a label carries no cited passage');
+});
+
+test('a spoken label still has to say what produced it', () => {
+  assert.throws(
+    () => readUiClip({ key: 'a', language: 'mr', voice: 'female', file: 'f', text: 'x' }),
+    CitationError,
+  );
+});
+
+test('the spoken label for a key falls back across voices but never across languages', () => {
+  const clips = readUiNarration([
+    { key: 'a', language: 'mr', voice: 'male', file: 'f', source: 's', text: 'x' },
+  ]);
+  assert.equal(spokenLabel(clips, 'a', 'mr', 'female')?.voice, 'male');
+  assert.equal(spokenLabel(clips, 'a', 'ta', 'female'), null);
+  assert.equal(spokenLabel(clips, 'b', 'mr', 'female'), null);
 });
