@@ -9,3 +9,4 @@ export * from './manuscript.ts';
 export * from './narration.ts';
 export * from './dossier.ts';
 export * from './core.ts';
+export * from './assistant.ts';

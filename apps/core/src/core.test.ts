@@ -15,14 +15,17 @@ import {
   citation,
   citedPassage,
   pageLocator,
+  readReply,
   refFor,
   SESSION_TTL_MS,
   store,
   type DeviceConfig,
 } from '@toran/contracts';
+import { ProviderError, type Provider } from './assistant/provider.ts';
 import { one, openDb, rows } from './db.ts';
 import { Fleet } from './fleet.ts';
 import { RateLimit } from './http.ts';
+import { createCore } from './server.ts';
 import { Sessions } from './session.ts';
 
 const HALL: readonly DeviceConfig[] = [
@@ -203,4 +206,220 @@ test('the rate limiter holds a window and then opens', () => {
   assert.equal(limit.retryAfter('a'), 60);
   clock += 60_000;
   assert.equal(limit.take('a'), true);
+});
+
+/**
+ * The assistant route, over real HTTP, against a provider that returns what a
+ * test tells it to.
+ *
+ * A stub rather than Groq, because these are about what Core does with an
+ * answer, not about what a model writes: the retry, the refusal, the rate
+ * limit and the deployment with no key. What the live model actually produces
+ * is measured in `verify:core`, which spends two requests of a 1,000 a day
+ * quota rather than a dozen.
+ */
+
+function stub(replies: string[]): { provider: Provider; asked: number } {
+  const state = { asked: 0 };
+  return {
+    get asked() {
+      return state.asked;
+    },
+    provider: {
+      engine: 'stub',
+      generate: (prompt) => {
+        const text = replies[state.asked] ?? 'INSUFFICIENT';
+        state.asked++;
+        if (text === 'THROW') throw new ProviderError('groq rate limit reached', true);
+        return Promise.resolve({
+          text,
+          model: 'stub',
+          promptTokens: prompt.user.length,
+          completionTokens: text.length,
+          ms: 1,
+        });
+      },
+    },
+  };
+}
+
+const RETRIEVED = [
+  {
+    corpus: 'constitution',
+    workId: 'coi',
+    pageId: 'coi-art17-a17',
+    language: 'en',
+    locator: { kind: 'article', article: '17', version: null },
+    text: '"Untouchability" is abolished and its practice in any form is forbidden.',
+  },
+];
+
+async function serving(provider: Provider | undefined) {
+  const core = createCore({
+    db: openDb(':memory:'),
+    version: 'test',
+    origins: ['*'],
+    seed: HALL,
+    ...(provider === undefined ? {} : { assistant: provider }),
+  });
+  const server = core.router.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const { port } = server.address() as { port: number };
+  return {
+    close: () => server.close(),
+    ask: async (body: unknown) => {
+      const r = await fetch(`http://127.0.0.1:${String(port)}/v1/assistant/ask`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const text = await r.text();
+      return { status: r.status, json: text === '' ? null : JSON.parse(text) };
+    },
+    status: async () => {
+      const r = await fetch(`http://127.0.0.1:${String(port)}/v1/status`);
+      return (await r.json()) as { services: string[] };
+    },
+  };
+}
+
+test('a cited answer comes back through the route with its passages', async () => {
+  const { provider } = stub(['Article 17 abolishes untouchability [1].']);
+  const core = await serving(provider);
+  try {
+    const { status, json } = await core.ask({
+      question: 'What does Article 17 do?',
+      passages: RETRIEVED,
+    });
+    assert.equal(status, 200);
+    const reply = readReply(json);
+    assert.equal(reply.kind, 'answer');
+    assert.equal(
+      reply.kind === 'answer' ? reply.segments[0]?.support[0]?.citation.pageId : null,
+      'coi-art17-a17',
+    );
+  } finally {
+    core.close();
+  }
+});
+
+test('an ungrounded answer is retried once, and the second try is shown', async () => {
+  // The first reply ends with a claim nobody sourced, which is the failure the
+  // retry exists for.
+  const s = stub([
+    'Article 17 abolishes untouchability [1]. It was enforced from 1955.',
+    'Article 17 abolishes untouchability [1].',
+  ]);
+  const core = await serving(s.provider);
+  try {
+    const { json } = await core.ask({
+      question: 'What does it do?',
+      passages: RETRIEVED,
+    });
+    assert.equal(readReply(json).kind, 'answer');
+    assert.equal(s.asked, 2);
+  } finally {
+    core.close();
+  }
+});
+
+test('an answer that fails twice is refused, never shown with the bad sentence removed', async () => {
+  const s = stub([
+    'Article 17 abolishes untouchability [1]. It was enforced from 1955.',
+    'Article 17 abolishes untouchability [1]. It was enforced from 1955.',
+  ]);
+  const core = await serving(s.provider);
+  try {
+    const { json } = await core.ask({
+      question: 'What does it do?',
+      passages: RETRIEVED,
+    });
+    const reply = readReply(json);
+    assert.equal(reply.kind, 'refusal');
+    assert.equal(reply.kind === 'refusal' ? reply.because : null, 'ungrounded');
+    // The refusal still hands back what search found, so the screen has
+    // somewhere to send the visitor.
+    assert.equal(reply.kind === 'refusal' ? reply.nearest.length : 0, 1);
+    assert.equal(s.asked, 2);
+  } finally {
+    core.close();
+  }
+});
+
+test('a model that says the corpus does not cover it is believed, not asked again', async () => {
+  const s = stub(['INSUFFICIENT', 'Article 17 abolishes untouchability [1].']);
+  const core = await serving(s.provider);
+  try {
+    const { json } = await core.ask({
+      question: 'Where did he study?',
+      passages: RETRIEVED,
+    });
+    const reply = readReply(json);
+    assert.equal(reply.kind === 'refusal' ? reply.because : null, 'not-in-corpus');
+    assert.equal(s.asked, 1, 'asking twice is asking it to change its mind');
+  } finally {
+    core.close();
+  }
+});
+
+test('a provider over its quota refuses as rate-limited, not as an error', async () => {
+  const { provider } = stub(['THROW']);
+  const core = await serving(provider);
+  try {
+    const { status, json } = await core.ask({
+      question: 'Anything?',
+      passages: RETRIEVED,
+    });
+    // A spent quota is a refusal a visitor can read, not a 500 they cannot.
+    assert.equal(status, 200);
+    const reply = readReply(json);
+    assert.equal(reply.kind, 'refusal');
+    assert.equal(reply.kind === 'refusal' ? reply.because : null, 'rate-limited');
+  } finally {
+    core.close();
+  }
+});
+
+test('the hall shares one quota, so a caller is held to four questions a minute', async () => {
+  const { provider } = stub(Array(10).fill('Article 17 abolishes untouchability [1].'));
+  const core = await serving(provider);
+  try {
+    const body = { question: 'What does Article 17 do?', passages: RETRIEVED };
+    for (let i = 0; i < 4; i++) {
+      assert.equal((await core.ask(body)).status, 200, `question ${String(i + 1)}`);
+    }
+    const fifth = await core.ask(body);
+    assert.equal(fifth.status, 429);
+    assert.match(String(fifth.json?.error), /the hall shares one quota/);
+  } finally {
+    core.close();
+  }
+});
+
+test('a Core with no key says so, rather than failing one question at a time', async () => {
+  const core = await serving(undefined);
+  try {
+    assert.equal((await core.status()).services.includes('assistant'), false);
+    const { status } = await core.ask({ question: 'Anything?', passages: RETRIEVED });
+    assert.equal(status, 503);
+  } finally {
+    core.close();
+  }
+});
+
+test('a question that is not a question never reaches the provider', async () => {
+  const s = stub(['Article 17 abolishes untouchability [1].']);
+  const core = await serving(s.provider);
+  try {
+    assert.equal((await core.ask({ passages: RETRIEVED })).status, 400);
+    assert.equal((await core.ask({ question: 'hi', passages: RETRIEVED })).status, 400);
+    assert.equal(
+      (await core.ask({ question: 'x'.repeat(401), passages: RETRIEVED })).status,
+      400,
+    );
+    assert.equal((await core.ask({ question: 'What does Article 17 do?' })).status, 400);
+    assert.equal(s.asked, 0);
+  } finally {
+    core.close();
+  }
 });

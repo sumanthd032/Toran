@@ -14,6 +14,7 @@ import { I18nProvider, useI18n } from '@/i18n';
 import { AmbientSlot } from './ambient';
 import { AnnounceProvider } from './announce';
 import { KioskShell } from './KioskShell';
+import { ResearchDesk } from './channels/assistant/ResearchDesk';
 import { AudioBooth } from './channels/audio/AudioBooth';
 import { Entrance } from './channels/entrance/Entrance';
 import { PendingChannel } from './channels/PendingChannel';
@@ -66,6 +67,8 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
       return <ManuscriptStation />;
     case 'audio':
       return <AudioBooth />;
+    case 'assistant':
+      return <ResearchDesk />;
     default:
       return <PendingChannel channel={device.channel} />;
   }

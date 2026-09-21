@@ -13,12 +13,16 @@
 import {
   CORE_API,
   readBeat,
+  writeReply,
   type CoreService,
   type DeviceConfig,
+  type RawChunk,
 } from '@toran/contracts';
+import { ask } from './assistant/ask.ts';
+import type { Provider } from './assistant/provider.ts';
 import type { Db } from './db.ts';
 import { Fleet, UnknownDevice } from './fleet.ts';
-import { BadRequest, fail, NotFound, ok, Router } from './http.ts';
+import { BadRequest, fail, NotFound, ok, RateLimit, Router, TooMany } from './http.ts';
 import { Sessions } from './session.ts';
 
 export interface CoreOptions {
@@ -27,8 +31,21 @@ export interface CoreOptions {
   readonly origins: readonly string[];
   /** The hall's devices, used only to seed an empty database. */
   readonly seed: readonly DeviceConfig[];
+  /** Absent when no key was configured, and the status then says so. */
+  readonly assistant?: Provider | undefined;
   readonly now?: () => number;
 }
+
+/**
+ * The assistant's ceiling, per caller per minute.
+ *
+ * Four, because the binding constraint is Groq's 8,000 tokens a minute across
+ * the whole key and one question with six passages costs about 2,000. Thirteen
+ * devices sharing that is not a per-device limit worth having, so this stops
+ * one misbehaving page from spending the hall's minute, and the provider's own
+ * 429 stops the hall from spending its day. D-134.
+ */
+const ASK_PER_MINUTE = 4;
 
 export interface Core {
   readonly router: Router;
@@ -46,10 +63,15 @@ export function createCore(options: CoreOptions): Core {
   fleet.seed(options.seed);
   sessions.sweep();
 
-  // Assistant and language arrive with their own commits in this step. Saying
-  // so in the status is how a kiosk knows to use its cache without first
-  // making a call that fails in front of a visitor.
-  const services: readonly CoreService[] = ['fleet', 'session'];
+  // What this deployment actually serves. A Core with no Groq key still runs
+  // the hall; saying so in the status is how a kiosk knows to answer from its
+  // cache rather than making a call that fails in front of a visitor.
+  const services: readonly CoreService[] = [
+    'fleet',
+    'session',
+    ...(options.assistant === undefined ? [] : (['assistant'] as const)),
+  ];
+  const asking = new RateLimit(ASK_PER_MINUTE, 60_000, now);
 
   const router = new Router(options.origins);
 
@@ -103,6 +125,53 @@ export function createCore(options: CoreOptions): Core {
   router.delete(`${CORE_API}/session/:token`, ({ params }) => {
     sessions.forget(params['token'] ?? '');
     return { status: 204, body: null };
+  });
+
+  /**
+   * A question, and the passages the device's own search found for it.
+   *
+   * Retrieval stays on the kiosk, so Core holds no corpus and the search
+   * stays offline. Only the generation crosses the wire, because only the
+   * generation needs a key.
+   */
+  router.post(`${CORE_API}/assistant/ask`, async ({ body, from }) => {
+    const provider = options.assistant;
+    if (provider === undefined) {
+      // 503 rather than 404: the route exists, this deployment has no key.
+      // A kiosk reads the status and answers from its cache instead.
+      return fail(503, 'this Core serves no assistant');
+    }
+    if (typeof body !== 'object' || body === null) {
+      throw new BadRequest('a question needs a body');
+    }
+    const input = body as { question?: unknown; passages?: unknown };
+    if (typeof input.question !== 'string' || input.question.trim().length < 3) {
+      throw new BadRequest('a question must be a few words');
+    }
+    if (input.question.length > 400) {
+      throw new BadRequest('a question must be shorter than 400 characters');
+    }
+    if (!Array.isArray(input.passages)) {
+      throw new BadRequest('the device must send the passages its search found');
+    }
+    if (!asking.take(from)) {
+      throw new TooMany(
+        `wait ${String(asking.retryAfter(from))} seconds; the hall shares one quota`,
+      );
+    }
+
+    const result = await ask(provider, {
+      question: input.question,
+      passages: input.passages as RawChunk[],
+    });
+    // The numbers, not the question and not the answer. What a visitor asked a
+    // memorial is not something this server writes down.
+    console.log(
+      `core: ask ${String(result.ms)}ms ${String(result.attempts)} attempt(s) ` +
+        `${String(result.tokens)} tokens ${result.reply.kind}` +
+        (result.reply.kind === 'refusal' ? ` ${result.reply.because}` : ''),
+    );
+    return ok(writeReply(result.reply));
   });
 
   return { router, fleet, sessions, services, startedAt };

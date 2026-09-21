@@ -1,0 +1,257 @@
+/*
+  The Research Assistant.
+
+  The layout is an argument. A claim is set in the reading face at body size;
+  the passage it rests on is set directly beneath it in the same face, in a
+  quotation block with its citation. The claim is never larger than its
+  evidence and never separated from it by a click, because the whole point of
+  this screen is that a visitor can check what they are told.
+
+  The numbers that join a claim to its passage are set in the mono face at
+  full size, not as superscripts. A superscript at 3 metres is a speck, and a
+  group standing at a kiosk has to be able to follow the link with their eyes.
+*/
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Opening */
+
+.opening {
+  max-inline-size: 42em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.lead {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  line-height: var(--leading-tight);
+  color: var(--text);
+}
+
+.limit {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  line-height: var(--leading-read);
+  color: var(--text-soft);
+}
+
+.openers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.opener {
+  inline-size: 100%;
+  min-block-size: var(--touch-min);
+  text-align: start;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+}
+
+.opener:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.opener[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.thinking {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+/* Result */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-inline-size: 52em;
+}
+
+.question {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.segment {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.claim {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  color: var(--text);
+}
+
+.marks {
+  display: inline-flex;
+  gap: var(--s-1);
+  flex-shrink: 0;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.8em;
+  min-block-size: 1.8em;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+  border: 1px solid var(--border);
+  text-decoration: none;
+}
+
+.mark:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.engine {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: calc(var(--t-meta) * 0.85);
+  color: var(--text-soft);
+}
+
+/* The refusal. Set as plainly as the answer, because it is one. */
+
+.refusal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  border-inline-start: 3px solid var(--m-correction);
+  padding-inline-start: var(--s-3);
+}
+
+.refusalLead {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  color: var(--text);
+}
+
+.refusalNote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+/* Sources */
+
+.sourcesTitle {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.sources {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.sources > li {
+  display: grid;
+  grid-template-columns: 1.8em minmax(0, 1fr);
+  gap: var(--s-2);
+  align-items: start;
+  border-block-start: 1px solid var(--border);
+  padding-block-start: var(--s-2);
+}
+
+.sourceNumber {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+  text-align: end;
+}
+
+.sourceText {
+  grid-column: 2;
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  line-height: var(--leading-read);
+  color: var(--text);
+}
+
+.sources > li > :global(cite),
+.sources > li > * + * {
+  grid-column: 2;
+}
+
+.speaker {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+/* The question field and its button, in the reach zone. */
+
+.form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-2);
+  inline-size: 100%;
+}
+
+.form > :first-child {
+  flex: 1;
+  min-inline-size: 0;
+}

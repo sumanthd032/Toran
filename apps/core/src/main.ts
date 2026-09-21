@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEVICES } from '../../web/src/fleet/devices.ts';
+import { groqProvider } from './assistant/provider.ts';
 import { openDb } from './db.ts';
 import { createCore } from './server.ts';
 
@@ -30,6 +31,10 @@ const origins = (process.env['TORAN_CORE_ORIGINS'] ?? '*')
   .map((o) => o.trim())
   .filter((o) => o !== '');
 
+// A Core with no key still runs the hall. It says so in its status, and the
+// kiosks answer from their cache rather than calling a route that cannot work.
+const groqKey = (process.env['GROQ_API_KEY'] ?? '').trim();
+
 fs.mkdirSync(path.dirname(file), { recursive: true });
 const db = openDb(file);
 const core = createCore({
@@ -37,6 +42,7 @@ const core = createCore({
   version: '0.1.0',
   origins,
   seed: DEVICES,
+  assistant: groqKey === '' ? undefined : groqProvider(groqKey),
 });
 
 const server = core.router.listen(port, host);
@@ -46,6 +52,9 @@ console.log(`  store     ${path.relative(ROOT, file)}`);
 console.log(`  devices   ${String(core.fleet.configs().length)}`);
 console.log(`  sessions  ${String(core.sessions.count())} live`);
 console.log(`  services  ${core.services.join(', ')}`);
+if (groqKey === '') {
+  console.log('  assistant no GROQ_API_KEY, so kiosks will answer from their cache');
+}
 if (origins.includes('*')) {
   console.log('  origins   any. Set TORAN_CORE_ORIGINS before facing the public.');
 } else {
