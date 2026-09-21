@@ -141,7 +141,13 @@ if (!process.argv.includes('--push')) {
   process.exit(0);
 }
 
-const project = process.env.TORAN_PAGES_PROJECT ?? 'toran';
+/*
+ * The Pages project. Not "toran": that name is taken across Cloudflare, so the
+ * first deploy created "toran-as2" instead, and passing "toran" again would try
+ * to create a second project rather than deploy to the first. Set
+ * TORAN_PAGES_PROJECT to deploy somewhere else.
+ */
+const project = process.env.TORAN_PAGES_PROJECT ?? 'toran-as2';
 console.log(`\nUploading to Cloudflare Pages project "${project}"`);
 const result = spawnSync(
   'npx',
