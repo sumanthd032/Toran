@@ -29,14 +29,18 @@ import {
   DEFAULT_ACCESSIBILITY,
   merge,
   remove,
+  restore,
+  store,
   type AccessibilityProfile,
   type DossierItem,
+  type SessionRecord,
 } from '@toran/contracts';
 import { playTouch } from '@/design/feedback/sound';
+import { sharedCore } from '@/fleet/core';
 import { useI18n } from '@/i18n';
 import type { CardKind, CardReader } from './card';
 import { Patina } from './patina';
-import { CardStore, type KeyValue } from './store';
+import { CardStore, type CardRecord, type KeyValue } from './store';
 
 export interface Visitor {
   /** The card bound to this kiosk now, if any. */
@@ -85,6 +89,18 @@ function storage(): KeyValue {
   }
 }
 
+/**
+ * What Core knows about a card, in the shape the kiosk holds it.
+ *
+ * Core stores an item as the raw record it came from, which is the form that
+ * proves it still resolves. Reading it back through `restore` here means a
+ * passage that lost its citation somewhere between two machines is dropped
+ * rather than shown, exactly as it would be coming off local storage.
+ */
+function fromCore(remote: SessionRecord): CardRecord {
+  return { session: remote.session, dossier: restore(remote.dossier).items };
+}
+
 export interface VisitorProviderProps {
   reader: CardReader;
   /** Whether the proximity machine holds a session for someone. */
@@ -103,6 +119,7 @@ export function VisitorProvider({
   children,
 }: VisitorProviderProps) {
   const { lang, setLang } = useI18n();
+  const core = useMemo(() => sharedCore(), []);
   const kv = useMemo(() => (typeof window === 'undefined' ? null : storage()), []);
   const cards = useMemo(() => (kv === null ? null : new CardStore(kv)), [kv]);
   const patina = useMemo(
@@ -133,50 +150,79 @@ export function VisitorProvider({
   const onCard = useCallback(
     (token: string) => {
       if (cards === null) return;
+      // The tap is acknowledged before anything is resolved. A visitor gets
+      // the sound and the light in the same frame they touched the reader,
+      // which is the 2000 ms contract; what the card turns out to hold can
+      // take as long as reading it takes.
       touch();
       playTouch('firm');
-      const now = latest.current;
-      const record = cards.read(token);
-      // Someone else's card is bound here: this is a different visitor, and
-      // nothing of the last one's may carry over to them.
-      const stranger = now.card !== null && now.card !== token;
-      if (record === null) {
-        // A card seen for the first time today takes on this visitor's
-        // choices so far, and anything they kept before tapping it.
-        const language = stranger ? defaultLanguage : now.lang;
-        const accessibility = stranger ? DEFAULT_ACCESSIBILITY : now.profile;
-        const issued = cards.issue(token, language, accessibility);
-        const kept = stranger ? [] : now.dossier;
-        cards.write({ ...issued, dossier: kept });
-        setDossier(kept);
-        setLang(language);
-        setProfileState(accessibility);
-        setIssuedAt(issued.session.issuedAt);
-      } else {
-        const kept =
-          now.card === null ? merge(record.dossier, now.dossier) : record.dossier;
-        cards.write({ ...record, dossier: kept });
-        setDossier(kept);
-        setLang(record.session.language);
-        setProfileState(record.session.accessibility);
-        setIssuedAt(record.session.issuedAt);
-      }
-      setCard(token);
       setTaps((n) => n + 1);
+
+      void (async () => {
+        const now = latest.current;
+        // Someone else's card is bound here: this is a different visitor, and
+        // nothing of the last one's may carry over to them.
+        const stranger = now.card !== null && now.card !== token;
+
+        // Core first, because a card tapped at another kiosk this morning is
+        // only known there. With no Core configured this makes no request at
+        // all and returns immediately, which is the ordinary case.
+        const remote = await core.session(token);
+        const record = remote === null ? cards.read(token) : fromCore(remote);
+
+        if (record === null) {
+          // A card seen for the first time today takes on this visitor's
+          // choices so far, and anything they kept before tapping it.
+          const language = stranger ? defaultLanguage : now.lang;
+          const accessibility = stranger ? DEFAULT_ACCESSIBILITY : now.profile;
+          const issued = cards.issue(token, language, accessibility);
+          const kept = stranger ? [] : now.dossier;
+          cards.write({ ...issued, dossier: kept });
+          setDossier(kept);
+          setLang(language);
+          setProfileState(accessibility);
+          setIssuedAt(issued.session.issuedAt);
+        } else {
+          const kept =
+            now.card === null ? merge(record.dossier, now.dossier) : record.dossier;
+          cards.write({ ...record, dossier: kept });
+          setDossier(kept);
+          setLang(record.session.language);
+          setProfileState(record.session.accessibility);
+          setIssuedAt(record.session.issuedAt);
+        }
+        setCard(token);
+      })();
     },
-    [cards, defaultLanguage, setLang, touch],
+    [cards, core, defaultLanguage, setLang, touch],
   );
 
   useEffect(() => reader.start(onCard), [reader, onCard]);
 
-  // Whatever the visitor changes while their card is bound goes onto the card.
+  // Whatever the visitor changes while their card is bound goes onto the card,
+  // and onto Core if there is one, so the next kiosk knows it too.
   useEffect(() => {
     if (cards === null || card === null || issuedAt === null) return;
-    cards.write({
+    const record = {
       session: { token: card, language: lang, accessibility: profile, issuedAt },
       dossier,
-    });
-  }, [cards, card, lang, profile, dossier, issuedAt]);
+    };
+    cards.write(record);
+    if (core.base === null) return;
+    // Debounced, because keeping a passage and changing the type scale are
+    // both one state change per press and neither is worth a request of its
+    // own. A visitor who walks away mid-timer still has it on the card.
+    const timer = setTimeout(() => {
+      void core.saveSession(card, { ...record, dossier: dossier.map(store) });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [cards, core, card, lang, profile, dossier, issuedAt]);
+
+  // The device was reconfigured under a kiosk nobody is standing at. It opens
+  // in the language it was just given rather than waiting for a restart.
+  useEffect(() => {
+    if (card === null) setLang(defaultLanguage);
+  }, [defaultLanguage, card, setLang]);
 
   const [visit, setVisit] = useState(0);
   const forget = useCallback(() => {
@@ -207,13 +253,18 @@ export function VisitorProvider({
       discard: (ref) => setDossier((d) => remove(d, ref)),
       taps,
       returnCard: () => {
-        if (card !== null) cards?.forget(card);
+        if (card !== null) {
+          cards?.forget(card);
+          // The card is going back in the bowl for someone else. Core drops it
+          // too, or the next holder would inherit this visitor's language.
+          void core.forgetSession(card);
+        }
         forget();
       },
       patina,
       visit,
     }),
-    [card, reader.kind, profile, dossier, taps, cards, forget, patina, visit],
+    [card, reader.kind, profile, dossier, taps, cards, core, forget, patina, visit],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

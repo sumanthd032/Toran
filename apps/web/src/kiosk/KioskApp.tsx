@@ -31,6 +31,7 @@ import {
 } from './sensor/drivers';
 import type { Proximity } from './machine';
 import { useAmbient } from './useAmbient';
+import { useFleetConfig } from './useFleetConfig';
 import { useProximity } from './useProximity';
 import { useQuery } from './useQuery';
 import { selectReader } from './visitor/card';
@@ -72,7 +73,7 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
 
 function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
   const { t } = useI18n();
-  const device = DEVICES.find((d) => d.deviceId === deviceId);
+  const shipped = DEVICES.find((d) => d.deviceId === deviceId);
   const query = useQuery();
   // A visitor in the Twin has no sensor in front of them, and opening a device
   // is a deliberate act, so it starts engaged. Standalone, the URL decides.
@@ -90,6 +91,10 @@ function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
   const { proximity, driverStatus, touch } = useProximity(driver, {
     startEngaged: context === 'twin',
   });
+  // What this device is now, which is what it shipped with until a curator
+  // pushes something else. Only a standalone kiosk reports in: one opened in
+  // the Twin is a view of a device, not the device.
+  const device = useFleetConfig(shipped, proximity.state, context === 'standalone');
 
   // Physical calibration. The ambient headline is sized in real millimetres,
   // which only holds if CSS millimetres are real on this panel. A kiosk is

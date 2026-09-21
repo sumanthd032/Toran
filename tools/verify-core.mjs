@@ -302,6 +302,180 @@ try {
   console.log(
     `\nstale after ${String(BEAT_STALE_MS / 1000)}s without a beat, checked in apps/core/src/core.test.ts`,
   );
+
+  // The claim step 6 could not finish, made on the screens a visitor sees.
+  //
+  // Two kiosks in one browser share localStorage, so a card carried between
+  // them there proves nothing about two machines. Every page below is given a
+  // fresh browser profile, which is as close to a second Raspberry Pi as a
+  // check on one machine gets: nothing but Core connects them.
+  console.log('\nCard continuity between machines\n');
+
+  const puppeteer = (await import('puppeteer-core')).default;
+  const browser = await puppeteer.launch({
+    executablePath: process.env.CHROME ?? '/usr/bin/google-chrome',
+    headless: 'new',
+    args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
+  });
+
+  const WEB = process.env.BASE ?? 'http://127.0.0.1:4173';
+  const CORE_ORIGIN = `http://127.0.0.1:${PORT}`;
+
+  /** A kiosk on its own machine: its own profile, and only Core to talk to. */
+  async function kiosk(path, { withCore = true } = {}) {
+    const context = await browser.createBrowserContext();
+    const page = await context.newPage();
+    await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });
+    const reachedCore = [];
+    const leaked = [];
+    await page.setRequestInterception(true);
+    page.on('request', (r) => {
+      const url = r.url();
+      if (url.startsWith(CORE_ORIGIN)) reachedCore.push(url.slice(CORE_ORIGIN.length));
+      else if (!url.startsWith(WEB) && !url.startsWith('data:') && !url.startsWith('blob:')) {
+        leaked.push(url);
+        void r.abort();
+        return;
+      }
+      void r.continue();
+    });
+    const query = withCore ? `core=${encodeURIComponent(CORE_ORIGIN)}&` : '';
+    await page.goto(`${WEB}${path}?${query}sensor=sim&card=sim`, {
+      waitUntil: 'networkidle0',
+    });
+    return { context, page, reachedCore, leaked };
+  }
+
+  const langOf = (page) =>
+    page.$eval('[data-testid="kiosk"]', (k) => k.getAttribute('lang'));
+
+  // 19. The default build, with no Core named anywhere, must not call one.
+  const alone = await kiosk('/kiosk/dev-01/', { withCore: false });
+  await alone.page.keyboard.press('F8');
+  await new Promise((r) => setTimeout(r, 1200));
+  check(
+    '19 a kiosk with no Core configured never calls one',
+    alone.reachedCore.length === 0 && alone.leaked.length === 0,
+    [...alone.reachedCore, ...alone.leaked].slice(0, 3).join(' '),
+  );
+  await alone.context.close();
+
+  // 20. The first machine is device 2, the Marathi Reading Room. A blank card
+  // tapped there takes the language the visitor is already reading in, which
+  // is what makes the flip at the English kiosk below mean something.
+  const first = await kiosk('/kiosk/dev-02/');
+  await first.page.keyboard.press('F8');
+  // The search engine is 118 MB of model and takes seconds to become ready.
+  // The field is disabled until it is, which is what to wait on.
+  await first.page.waitForFunction(
+    () => document.querySelector('[data-testid="reading-query"]')?.disabled === false,
+    { timeout: 120000 },
+  );
+  await first.page.type('[data-testid="reading-query"]', 'Mahad');
+  await first.page.keyboard.press('Enter');
+  await first.page.waitForSelector('[data-testid="reading-hit"]', { timeout: 60000 });
+  await first.page.click('[data-testid="reading-hit"]');
+  await first.page.waitForFunction(
+    () => document.querySelector('[data-testid="reading-keep"]')?.disabled === false,
+    { timeout: 20000 },
+  );
+  await first.page.click('[data-testid="reading-keep"]');
+  await first.page.waitForFunction(
+    () => document.querySelector('[data-testid="reading-dossier"]') !== null,
+    { timeout: 5000 },
+  );
+  // The write to Core is debounced, so give the timer its 400 ms and the call.
+  await new Promise((r) => setTimeout(r, 1500));
+
+  const wrote = first.reachedCore.filter((p) => p.includes('/session/'));
+  check(
+    '20 the first kiosk sends the card to Core',
+    wrote.length > 0,
+    `${String(wrote.length)} session calls`,
+  );
+  check(
+    '21 it also reports in, so the Twin can see it',
+    first.reachedCore.some((p) => p.endsWith('/beat')),
+    first.reachedCore.filter((p) => p.endsWith('/beat')).length + ' beats',
+  );
+
+  const stored = await call('GET', '/session/sim-card-a');
+  check(
+    '22 Core holds what the first kiosk stored, with its citation intact',
+    stored.json?.session.language === 'mr' &&
+      stored.json?.dossier.length === 1 &&
+      typeof stored.json?.dossier[0].locator?.kind === 'string',
+    `${String(stored.json?.session.language)}, locator ${String(stored.json?.dossier[0]?.locator?.kind)}`,
+  );
+
+  // 23. A different machine, and one that opens in another language. Fresh
+  // profile, so nothing but Core connects it to the first.
+  const second = await kiosk('/kiosk/dev-01/');
+  const before = await langOf(second.page);
+  await second.page.keyboard.press('F8');
+  await second.page.waitForFunction(
+    () => document.querySelector('[data-testid="reading-dossier"]') !== null,
+    { timeout: 15000 },
+  );
+  check(
+    '23 the same card at a second machine switches it to the visitor\'s language',
+    before === 'en' && (await langOf(second.page)) === 'mr',
+    `${String(before)} before the tap, ${String(await langOf(second.page))} after`,
+  );
+
+  await second.page.click('[data-testid="reading-dossier"]');
+  await second.page.waitForSelector('[data-testid="dossier"]', { timeout: 5000 });
+  const carried = await second.page.$$eval(
+    '[data-testid="dossier-item"]',
+    (n) => n.length,
+  );
+  const cited = await second.page.$$eval(
+    '[data-testid="dossier-item"] cite',
+    (n) => n.length,
+  );
+  check(
+    '24 the passage kept at the first machine is on the second, still cited',
+    carried === 1 && cited === 1,
+    `${String(carried)} passage, ${String(cited)} cited`,
+  );
+  check(
+    '25 nothing on either machine tried to reach anywhere but Core',
+    first.leaked.length === 0 && second.leaked.length === 0,
+    [...first.leaked, ...second.leaked].slice(0, 3).join(' '),
+  );
+
+  // 26. Core is unplugged mid-visit. The kiosk must not notice in front of
+  // anyone: the degradation matrix says card continuity falls back to a local
+  // session and everything else is unchanged.
+  child.kill('SIGKILL');
+  await new Promise((r) => setTimeout(r, 300));
+  const startedFailing = Date.now();
+  await second.page.keyboard.press('F9');
+  await second.page.waitForFunction(
+    () => document.querySelector('[data-testid="kiosk"]')?.getAttribute('lang') === 'en',
+    { timeout: 8000 },
+  );
+  const tookMs = Date.now() - startedFailing;
+  check(
+    '26 with Core unplugged a card still binds, from the device itself',
+    tookMs < 4000,
+    `${String(tookMs)} ms to fall back`,
+  );
+  // The stranger's card emptied the dossier view it was left on. Home is one
+  // of the three affordances a visitor has, and it has to still work: the
+  // Reading Room is in the offline core and Core going away is not its problem.
+  await second.page.click('nav button[aria-label="Home"]');
+  await second.page.waitForFunction(
+    () => document.querySelector('[data-testid="reading-query"]')?.disabled === false,
+    { timeout: 10000 },
+  );
+  const engine = await second.page.$eval(
+    '[data-testid="reading-query"]',
+    (i) => !i.disabled,
+  );
+  check('27 and the room it is in still searches, with Core gone', engine === true);
+
+  await browser.close();
 } finally {
   child.kill('SIGTERM');
   fs.rmSync(store_dir, { recursive: true, force: true });
