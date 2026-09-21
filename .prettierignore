@@ -3,3 +3,7 @@ node_modules
 out
 *.woff2
 package-lock.json
+
+# Recorded Bhashini responses. Evidence, kept byte for byte as the service
+# answered, so a reformat cannot be mistaken for a change in what it said.
+packages/narrate/src/fixtures/

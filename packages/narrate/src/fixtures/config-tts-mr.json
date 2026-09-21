@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"mr","targetLanguageList":["mr"]}],"pipelineResponseConfig":[{"taskType":"tts","config":[{"serviceId":"ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4","modelId":"636e6103ff7cd87a3f7e0ff6","language":{"sourceLanguage":"mr","sourceScriptCode":"Deva"},"supportedVoices":["male","female"]}]}]}

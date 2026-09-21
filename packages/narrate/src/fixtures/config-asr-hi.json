@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"hi","targetLanguageList":["hi"]}],"pipelineResponseConfig":[{"taskType":"asr","config":[{"serviceId":"ai4bharat/conformer-hi-gpu--t4","modelId":"648025f27cdd753e77f461a9","language":{"sourceLanguage":"hi","sourceScriptCode":"Deva"},"domain":["general"]}]}]}

@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"en","targetLanguageList":["en"]}],"pipelineResponseConfig":[{"taskType":"tts","config":[{"serviceId":"ai4bharat/indic-tts-coqui-misc-gpu--t4","modelId":"63f7384c2ff3ab138f88c64e","language":{"sourceLanguage":"en","sourceScriptCode":"Latn"},"supportedVoices":["male","female"]}]}]}

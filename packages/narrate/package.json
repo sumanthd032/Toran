@@ -1,0 +1,23 @@
+{
+  "name": "@toran/narrate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "translate": "node src/translate.mjs",
+    "narrate": "node src/narrate.mjs",
+    "probe": "node src/probe.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/bhashini.d.ts",
+      "default": "./src/bhashini.mjs"
+    },
+    "./languages": {
+      "types": "./src/languages.d.ts",
+      "default": "./src/languages.mjs"
+    }
+  },
+  "types": "./src/bhashini.d.ts"
+}

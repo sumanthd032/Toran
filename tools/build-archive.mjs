@@ -88,7 +88,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 for (const dir of ['pages', 'sittings', 'articles', 'acts']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
-const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {} };
+const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {}, narration: [] };
 
 for (const work of works) {
   const workPages = pages.filter((p) => p.workId === work.id);
@@ -180,6 +180,27 @@ if (fs.existsSync(TRANSLATIONS)) {
   }
 }
 
+// Narration, where any exists: data/dip/narration/<language>/<id>.<voice>.wav,
+// with an index that carries each clip's citation. The manifest repeats the
+// index so a kiosk learns what it can play in one fetch, and the Audio Booth
+// can say plainly that a passage is not cached rather than failing silently.
+const NARRATION = path.join(DIP, 'narration');
+const narrationIndex = path.join(NARRATION, 'index.json');
+if (fs.existsSync(narrationIndex)) {
+  const { clips } = JSON.parse(fs.readFileSync(narrationIndex, 'utf8'));
+  for (const c of clips) {
+    const from = path.join(NARRATION, c.file);
+    if (!fs.existsSync(from)) continue;
+    const to = path.join(OUT, 'narration', c.file);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(from, to);
+    manifest.narration.push({
+      id: c.id, language: c.language, voice: c.voice, file: c.file,
+      source: c.source, text: c.text, citation: c.citation,
+    });
+  }
+}
+
 write('manifest.json', manifest);
 
 const sections = manifest.works.reduce((n, w) => n + w.sections.length, 0);
@@ -187,7 +208,8 @@ const titled = manifest.works.reduce((n, w) => n + w.sections.filter((s) => s.he
 console.log(
   `archive: ${pages.length} pages in ${sections} sections (${titled} titled), ` +
     `${sittings.length} sittings, ${articles.length} articles, ${acts.length} sections of Acts, ` +
-    `${Object.values(manifest.translations).flat().length} translated pages`,
+    `${Object.values(manifest.translations).flat().length} translated pages, ` +
+    `${manifest.narration.length} narration clips`,
 );
 for (const w of manifest.works) {
   if (w.sections.length === 0) continue;

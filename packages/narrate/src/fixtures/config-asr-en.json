@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"en","targetLanguageList":["en"]}],"pipelineResponseConfig":[{"taskType":"asr","config":[{"serviceId":"ai4bharat/whisper-medium-en--gpu--t4","modelId":"641c0be440abd176d64c3f92","language":{"sourceLanguage":"en","sourceScriptCode":"Latn"},"domain":["general"]}]}]}

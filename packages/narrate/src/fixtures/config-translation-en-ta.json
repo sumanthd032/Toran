@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"en","targetLanguageList":["ta"]}],"pipelineResponseConfig":[{"taskType":"translation","config":[{"serviceId":"ai4bharat/indictrans-v2-all-gpu--t4","modelId":"641d1caa92a6a31751ff1eb6","language":{"sourceLanguage":"en","sourceScriptCode":"Latn","targetLanguage":"ta","targetScriptCode":"Taml"}}]}]}

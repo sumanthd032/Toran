@@ -1,0 +1,1 @@
+{"languages":[{"sourceLanguage":"te","targetLanguageList":["te"]}],"pipelineResponseConfig":[{"taskType":"tts","config":[{"serviceId":"ai4bharat/indic-tts-coqui-dravidian-gpu--t4","modelId":"6348db37fb796d5e100d4ffe","language":{"sourceLanguage":"te","sourceScriptCode":"Telu"},"supportedVoices":["male","female"]}]}]}
