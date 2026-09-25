@@ -6,29 +6,27 @@
  * time, so the low tier falls back to a plain material and relies on the
  * roughness map for its sheen.
  *
- * The second render is of whatever is in the scene, and during the arrival
- * that is the entire campus, drawn again for a floor the camera cannot yet
- * see. So the reflector waits for the hall. From the moment the visitor is
- * inside, which is every frame they spend looking at the floor, it is the
- * same reflector it has always been.
+ * The second render used to pick up the campus, which is why the exterior is
+ * on its own layer now; see scene/outside.tsx. With that in place the
+ * reflector costs what it always cost, so it is built with the hall rather
+ * than deferred to the threshold. Deferring it moved a 916ms stall onto the
+ * exact frame the camera arrives at the door.
  */
 
 import { MeshReflectorMaterial } from '@react-three/drei';
 import { hallCentreZ, hallLength, HALL } from '../layout';
 import { hallMaterials } from '../materials';
 import { useTier } from '../quality';
-import { useTwinState } from '../state';
 
 export function Floor() {
   const tier = useTier();
   const m = hallMaterials();
-  const { entered } = useTwinState();
   const size: [number, number] = [HALL.halfWidth * 2, hallLength];
 
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, hallCentreZ]}>
       <planeGeometry args={size} />
-      {tier === 'high' && entered ? (
+      {tier === 'high' ? (
         <MeshReflectorMaterial
           map={m.floor.map}
           roughnessMap={m.floor.roughnessMap}

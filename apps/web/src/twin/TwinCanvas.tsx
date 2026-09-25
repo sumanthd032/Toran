@@ -13,7 +13,7 @@ import {
   Vignette,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CameraRig } from './camera/CameraRig';
 import { ENTRY } from './camera/director';
@@ -215,6 +215,20 @@ function Scene({
   );
 }
 
+/** True once `on` has been true for `delay` without interruption. */
+function useSettled(on: boolean, delay: number): boolean {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!on) {
+      setSettled(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSettled(true), delay);
+    return () => window.clearTimeout(id);
+  }, [on, delay]);
+  return settled;
+}
+
 export interface TwinCanvasProps {
   tier: Tier;
   pinned: boolean;
@@ -238,6 +252,7 @@ export default function TwinCanvas({
 }: TwinCanvasProps) {
   const start = ENTRY[0];
   const { entered } = useTwinState();
+  const judging = useSettled(entered, 1800);
   return (
     <QualityContext.Provider value={tier}>
       <Canvas
@@ -264,15 +279,23 @@ export default function TwinCanvas({
         }}
       >
         {/*
-          The monitor judges the hall, not the way in. The arrival crosses the
-          whole site and its heaviest frames are far below what the hall holds,
-          which put the frame rate squarely in the monitor's decision band and
-          made it flip tiers mid-flight. Every flip switches bloom, the floor
-          reflector, the particle count and the planting at once, so the screen
-          visibly flickered for a second or two before settling. The tier is a
-          statement about the room a visitor sits in; it is measured there.
+          The monitor judges the hall at rest, and nothing else.
+
+          The tier decides whether there is bloom, whether the floor reflects,
+          how many motes are in the light shafts and how thickly the grounds
+          are planted, so a tier change is a visible change to every one of
+          them at once. It must never be made on a transient.
+
+          Two transients sit either side of the threshold. The arrival crosses
+          the whole site and its heaviest frames are nothing like the hall's.
+          The handover itself then costs a frame or two as the camera controls
+          take over. Judging either one drops the tier on a machine that holds
+          the hall at sixty, and the drop is what the screen shows as a flicker
+          a second or so after the camera lands.
+
+          So it waits for the hall, and then for the hall to settle.
         */}
-        {!pinned && entered && (
+        {!pinned && judging && (
           <PerformanceMonitor
             flipflops={2}
             onDecline={() => onTier('low')}

@@ -104,13 +104,16 @@ function sitePlan(trees: number, lamps: number) {
         i % 4 === 0 ? -13.5 : 13.5,
         plaza.z + plaza.radius + 5 + t * (wall.front - plaza.z - 34),
       ]);
-    } else {
-      const a = (i / lamps) * Math.PI * 2;
-      lit.push([
-        Math.cos(a) * (plaza.radius - 2.5),
-        plaza.z + Math.sin(a) * (plaza.radius - 2.5),
-      ]);
+      continue;
     }
+    const a = (i / lamps) * Math.PI * 2;
+    const x = Math.cos(a) * (plaza.radius - 2.5);
+    const z = plaza.z + Math.sin(a) * (plaza.radius - 2.5);
+    // The ring round the circle closes on the axis right in front of the
+    // entrance, and a lamp standing there is a post through the middle of the
+    // doorway for the last second of the arrival. Nothing on the approach.
+    if (Math.abs(x) < 9 && z < plaza.z) continue;
+    lit.push([x, z]);
   }
 
   return { planted, lit };

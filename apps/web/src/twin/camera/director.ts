@@ -19,6 +19,10 @@
  *
  * The final pose is the one the hall rests at and is not ours to move: the
  * device transitions and the verification both start from it.
+ *
+ * The shot at the arch looks nearly level. Tilted up at the crown it framed
+ * the paving right in front of the camera across the bottom third of the
+ * opening, which reads as the doorway being blocked rather than as ground.
  */
 
 import * as THREE from 'three';
@@ -37,7 +41,7 @@ export const ENTRY: readonly Shot[] = [
   { position: [0, 50, 118], target: [0, 10, 22] },
   { position: [-9, 20, 78], target: [0, 11, 24] },
   { position: [-7, 6.8, 48], target: [0, 9, 20] },
-  { position: [0, 3.4, 26], target: [0, 6.2, 8] },
+  { position: [0, 3.9, 26], target: [0, 5.0, 6] },
   { position: [0, 2.5, 9.0], target: [0, 3.6, -26] },
 ];
 
