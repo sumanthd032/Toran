@@ -657,7 +657,10 @@ export function portrait(): THREE.CanvasTexture {
 export function portraitPlate(image: HTMLImageElement): THREE.CanvasTexture {
   const w = 512;
   const h = 640;
-  const band = 76;
+  // The band is deep enough for the name to be legible from the threshold.
+  // At 2.72m wide the plate is about 150 pixels across from there, so a 56px
+  // face on a 512px canvas arrives as 16, and a 38px one arrived as 11.
+  const band = 104;
   const view = h - band;
   const [c, ctx] = canvas(w, h);
 
@@ -682,12 +685,19 @@ export function portraitPlate(image: HTMLImageElement): THREE.CanvasTexture {
   ctx.fillStyle = '#803d29';
   ctx.fillRect(0, view, w, 3);
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#1a1714';
-  ctx.font = `700 38px ${FONT_READ}`;
-  ctx.fillText('DR. B. R. AMBEDKAR', w / 2, view + 42);
-  ctx.fillStyle = '#56503f';
-  ctx.font = `400 19px ${FONT_MONO}`;
-  ctx.fillText('1891 - 1956', w / 2, view + 66);
+  ctx.fillStyle = '#100e0c';
+  // As large as the band will take. Eighteen characters of Spectral at 56px
+  // run past a 512px plate, and a name clipped to AMBEDKA is worse than a
+  // name two points smaller.
+  let size = 56;
+  do {
+    ctx.font = `800 ${size}px ${FONT_READ}`;
+    size -= 1;
+  } while (ctx.measureText('DR. B. R. AMBEDKAR').width > w - 52 && size > 28);
+  ctx.fillText('DR. B. R. AMBEDKAR', w / 2, view + 58);
+  ctx.fillStyle = '#3a332b';
+  ctx.font = `500 24px ${FONT_MONO}`;
+  ctx.fillText('1891 - 1956', w / 2, view + 88);
 
   ctx.strokeStyle = 'rgba(145,100,44,0.85)';
   ctx.lineWidth = 4;
