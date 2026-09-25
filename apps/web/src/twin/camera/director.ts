@@ -17,8 +17,15 @@
  * parameter, so that spacing is what makes the descent quick and the last
  * approach slow, before the easing is applied on top of it.
  *
- * The final pose is the one the hall rests at and is not ours to move: the
- * device transitions and the verification both start from it.
+ * The flight ends at the threshold rather than five metres inside it, so the
+ * two kiosks either side of the door are in the frame the visitor is handed.
+ * They stand at x = +-5.4, z = 4, and from z = 9 they were outside a 36.7
+ * degree half angle; from z = 12 they are inside it.
+ *
+ * It also rests looking at a point ten metres ahead rather than one thirty
+ * eight metres behind the gallery wall. The view is the same view, but that
+ * point is what the controls orbit and dolly about, and a pivot further away
+ * than the whole hall makes both of them behave strangely.
  *
  * The shot at the arch looks nearly level. Tilted up at the crown it framed
  * the paving right in front of the camera across the bottom third of the
@@ -42,7 +49,7 @@ export const ENTRY: readonly Shot[] = [
   { position: [-9, 20, 78], target: [0, 11, 24] },
   { position: [-7, 6.8, 48], target: [0, 9, 20] },
   { position: [0, 3.9, 26], target: [0, 5.0, 6] },
-  { position: [0, 2.5, 9.0], target: [0, 3.6, -26] },
+  { position: [0, 2.6, 12.0], target: [0, 3.32, 2.0] },
 ];
 
 export const HOME: Shot = ENTRY[ENTRY.length - 1] as Shot;

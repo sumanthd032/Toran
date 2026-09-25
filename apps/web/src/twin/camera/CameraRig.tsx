@@ -19,9 +19,21 @@ import { useTwinState } from '../state';
 import { recordTiming, telemetry } from '../telemetry';
 import { ENTRY, ENTRY_DURATION_MS, Flight, HOME, prefersReducedMotion } from './director';
 
+/**
+ * Where a visitor may stand. The box holds the camera itself, not the point it
+ * is looking at, which is the difference between being kept in the building
+ * and being free to drift out through a wall while still facing into it.
+ *
+ * It is the room, less a margin: the nave walls are at x = +-12.3 and their
+ * inner faces at +-12, so +-10.6 lets someone walk the side aisles behind the
+ * colonnade without putting their eye inside the stone. The floor is at zero
+ * and the ceiling slab at 12, so 1.2 to 8 is standing height up to the sill of
+ * the clerestory. The far end stops short of the dais under the Chaitya arch
+ * at -25, and the near end at the inner face of the facade.
+ */
 const BOUNDARY = new THREE.Box3(
-  new THREE.Vector3(-4, 1.5, -19),
-  new THREE.Vector3(4, 5, 5),
+  new THREE.Vector3(-10.6, 1.2, -23),
+  new THREE.Vector3(10.6, 8, 12.2),
 );
 
 export function CameraRig({
@@ -132,19 +144,37 @@ export function CameraRig({
     const c = controls.current;
     if (c === null) return;
     c.setBoundary(BOUNDARY);
-    c.boundaryEnclosesCamera = false;
+    c.boundaryEnclosesCamera = true;
   }, []);
 
   return (
     <CameraControls
       ref={controls}
       makeDefault
+      /*
+        The hall is 24m across and 43m long, so these are the distances a
+        visitor actually moves through it. The old ceiling of 7m was shorter
+        than the hall and shorter than the distance the camera rests at, which
+        meant the first turn of the wheel snapped the view several metres down
+        the nave before it started zooming.
+      */
       minDistance={1.5}
-      maxDistance={7}
-      minPolarAngle={Math.PI * 0.3}
-      maxPolarAngle={Math.PI * 0.5}
-      smoothTime={0.35}
-      draggingSmoothTime={0.18}
+      maxDistance={24}
+      /*
+        Room to look up at the coffered ceiling and down at the floor inlay.
+        The old range stopped level with the horizon, so the ceiling, which is
+        most of what is above a visitor in this building, could not be seen.
+      */
+      minPolarAngle={Math.PI * 0.16}
+      maxPolarAngle={Math.PI * 0.58}
+      smoothTime={0.26}
+      draggingSmoothTime={0.13}
+      /* Slower than the default, which crosses the whole nave in two notches. */
+      dollySpeed={0.45}
+      truckSpeed={2.4}
+      /* The wheel moves toward whatever is under the pointer, so a visitor
+         goes to the thing they are looking at rather than to the middle. */
+      dollyToCursor
     />
   );
 }
