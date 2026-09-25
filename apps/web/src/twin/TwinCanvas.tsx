@@ -20,13 +20,18 @@ import { ENTRY } from './camera/director';
 import { fixtureHealth } from '@/fleet/devices';
 import { hallMaterials } from './materials';
 import { QualityContext, type Tier } from './quality';
+import { useTwinState } from './state';
 import { Architecture } from './scene/Architecture';
 import { Atmosphere } from './scene/Atmosphere';
+import { Campus } from './scene/Campus';
 import { Devices } from './scene/Devices';
 import { Floor } from './scene/Floor';
 import { Gallery } from './scene/Gallery';
 import { Library } from './scene/Library';
 import { Lights } from './scene/Lights';
+import { Memorial } from './scene/Memorial';
+import { Outdoors } from './scene/Outdoors';
+import { Outside } from './scene/outside';
 import { Shadows } from './scene/Shadows';
 import { Toran } from './scene/Toran';
 import { recordTiming, telemetry } from './telemetry';
@@ -177,6 +182,11 @@ function Scene({
         />
       </Environment>
       <Lights />
+      <Outside>
+        <Outdoors />
+        <Campus />
+        <Memorial />
+      </Outside>
       <Architecture />
       <Toran />
       <Floor />
@@ -227,11 +237,19 @@ export default function TwinCanvas({
   rendering,
 }: TwinCanvasProps) {
   const start = ENTRY[0];
+  const { entered } = useTwinState();
+  // The arrival crosses two hundred and seventy metres of campus, and at the
+  // top of it every surface on the site is on screen at once. That frame is
+  // bound by how many pixels it has to shade, not by how many triangles, so
+  // the flight is drawn at one device pixel per CSS pixel and the hall gets
+  // its full resolution back the moment the camera stops. A camera moving
+  // this fast is the one time nobody can see the difference.
+  const dpr: [number, number] | number = entered && tier === 'high' ? [1, 1.75] : 1;
   return (
     <QualityContext.Provider value={tier}>
       <Canvas
         frameloop={rendering ? 'always' : 'never'}
-        dpr={tier === 'high' ? [1, 1.75] : 1}
+        dpr={dpr}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{
           fov: 50,

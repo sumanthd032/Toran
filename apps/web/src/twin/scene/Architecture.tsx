@@ -1,8 +1,13 @@
 'use client';
 
 /**
- * The building: forecourt, facade and doorway, the nave with its colonnade and
- * coffered beams, clerestory windows, and the Chaitya arch at the far end.
+ * The hall: facade and doorway, the nave with its colonnade and coffered
+ * beams, clerestory windows, and the Chaitya arch at the far end.
+ *
+ * What stands outside it is the memorial's own shell and the campus, in
+ * `Memorial.tsx` and `Campus.tsx`. The facade here is still built in full,
+ * because the drum in front of it is pierced by an arch wider than the
+ * doorway and the reveal a visitor sees through that arch is this wall.
  *
  * The composition is arranged around one sightline. From the doorway, the
  * centre aisle runs clear to the Chaitya arch and the Constitution gallery
@@ -217,18 +222,6 @@ export function Architecture() {
       <mesh geometry={g.dark} material={m.ceiling} />
       <mesh geometry={windows} material={m.window} />
       <mesh geometry={inlay} material={m.inlay} />
-
-      {/* Forecourt, and the paved path from the gate to the door. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 45]} material={m.ground}>
-        <planeGeometry args={[160, 64]} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 30]} material={m.floor}>
-        <planeGeometry args={[9, 34]} />
-      </mesh>
-
-      <mesh material={m.sky} renderOrder={-1}>
-        <sphereGeometry args={[220, 32, 16]} />
-      </mesh>
     </group>
   );
 }

@@ -715,3 +715,193 @@ export async function fontsReady(): Promise<void> {
     document.fonts.load(`400 24px ${FONT_INDIC}`, 'स्वागत'),
   ]);
 }
+
+// ---------- the campus ----------
+
+/**
+ * The page face of the open book: rag paper with the ghost of set type on it.
+ *
+ * Read from the air during the arrival and from nowhere else, so the lines are
+ * suggested rather than set. Tileable, because the fascia courses of both page
+ * blocks sample it through one box projection.
+ */
+export function pageFace(size = 256): THREE.CanvasTexture {
+  const [c, ctx] = canvas(size, size);
+  const img = ctx.createImageData(size, size);
+  const base = [238, 231, 217];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const k = 0.93 + fbm(x / size, y / size, 6, 4, 23) * 0.12;
+      const i = (y * size + x) * 4;
+      img.data[i] = Math.min(255, base[0]! * k);
+      img.data[i + 1] = Math.min(255, base[1]! * k);
+      img.data[i + 2] = Math.min(255, base[2]! * k * 0.99);
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  // Twelve lines of type in two columns, at the weight the eye reads as text
+  // from a hundred metres up.
+  ctx.fillStyle = 'rgba(38,33,28,0.30)';
+  for (let col = 0; col < 2; col++) {
+    const x0 = size * (0.08 + col * 0.47);
+    const w = size * 0.38;
+    for (let line = 0; line < 13; line++) {
+      const last = line % 7 === 6;
+      ctx.fillRect(x0, size * (0.13 + line * 0.062), last ? w * 0.55 : w, 2);
+    }
+  }
+  return toTexture(c, true, true);
+}
+
+/**
+ * The glazed courses between the fascias. Dark glass with a mullion every
+ * bay and a warm smear where the floodlights catch it.
+ */
+export function glazing(size = 256): THREE.CanvasTexture {
+  const [c, ctx] = canvas(size, size);
+  const g = ctx.createLinearGradient(0, 0, 0, size);
+  g.addColorStop(0, '#242019');
+  g.addColorStop(0.42, '#14120f');
+  g.addColorStop(0.6, '#2e251b');
+  g.addColorStop(1, '#100e0c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = 'rgba(200,155,82,0.10)';
+  for (let i = 0; i < 6; i++) {
+    ctx.fillRect(0, size * (0.1 + i * 0.16), size, 2);
+  }
+  ctx.fillStyle = 'rgba(58,51,43,0.9)';
+  for (let i = 0; i < 16; i++) ctx.fillRect(Math.round(size * (i / 16)), 0, 2, size);
+  return toTexture(c, true, true);
+}
+
+/** Cut grass at night: dark, and mottled enough not to read as felt. */
+export function lawn(size = 256): THREE.CanvasTexture {
+  const [c, ctx] = canvas(size, size);
+  const img = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = x / size;
+      const v = y / size;
+      const k = 0.62 + fbm(u, v, 5, 4, 71) * 0.7 + (hash(x, y, 13) - 0.5) * 0.16;
+      // Mowing stripes, which is what makes a lawn read as kept.
+      const stripe = Math.sin(u * Math.PI * 2 * 6) > 0 ? 1.1 : 0.92;
+      const i = (y * size + x) * 4;
+      img.data[i] = Math.min(255, 57 * k * stripe);
+      img.data[i + 1] = Math.min(255, 86 * k * stripe);
+      img.data[i + 2] = Math.min(255, 75 * k * stripe);
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return toTexture(c, true, true);
+}
+
+/**
+ * The ceremonial circle, drawn in one texture rather than in rings of
+ * geometry: concentric bands of stone with the Ashoka chakra at the centre,
+ * after the paving of the real forecourt.
+ */
+export function plazaPaving(size = 1024): THREE.CanvasTexture {
+  const [c, ctx] = canvas(size, size);
+  const mid = size / 2;
+  ctx.fillStyle = '#4a443c';
+  ctx.fillRect(0, 0, size, size);
+
+  // Bands, alternating pale stone and the blue grey of the kerbing.
+  const bands = 26;
+  for (let i = bands; i > 0; i--) {
+    const r = (mid * i) / bands;
+    ctx.fillStyle = i % 2 === 0 ? '#6f675c' : '#575048';
+    ctx.beginPath();
+    ctx.arc(mid, mid, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Radial joints over the whole circle, so the bands read as laid rather than
+  // printed. Once here rather than once per band: the same lines, a fiftieth
+  // of the canvas calls.
+  ctx.strokeStyle = 'rgba(28,25,21,0.45)';
+  ctx.lineWidth = 1.5;
+  const spokes = 48;
+  for (let k = 0; k < spokes; k++) {
+    const a = (k / spokes) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(mid + Math.cos(a) * mid * 0.2, mid + Math.sin(a) * mid * 0.2);
+    ctx.lineTo(mid + Math.cos(a) * mid, mid + Math.sin(a) * mid);
+    ctx.stroke();
+  }
+
+  // The chakra at the centre: a hub, a rim and twenty-four spokes.
+  const R = mid * 0.16;
+  ctx.fillStyle = '#3b4a43';
+  ctx.beginPath();
+  ctx.arc(mid, mid, R * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#c89b52';
+  ctx.lineWidth = Math.max(2, size * 0.004);
+  ctx.beginPath();
+  ctx.arc(mid, mid, R, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let s = 0; s < 24; s++) {
+    const a = (s / 24) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(mid + Math.cos(a) * R * 0.14, mid + Math.sin(a) * R * 0.14);
+    ctx.lineTo(mid + Math.cos(a) * R * 0.94, mid + Math.sin(a) * R * 0.94);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#c89b52';
+  ctx.beginPath();
+  ctx.arc(mid, mid, R * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+  return toTexture(c, true);
+}
+
+/**
+ * The board on the compound wall, after the plaque at 26 Alipur Road:
+ * Devanagari above, English below, the address in small type under both.
+ *
+ * Canvas text needs its faces loaded, and the hall draws its textures at first
+ * frame, which can be before the Devanagari face arrives. So it redraws itself
+ * once and marks the texture dirty, rather than baking a fallback for good.
+ */
+export function memorialSign(): THREE.CanvasTexture {
+  const w = 1024;
+  const h = 200;
+  const [c, ctx] = canvas(w, h);
+
+  const draw = () => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#efe9dc';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#9c4b32';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(10, 10, w - 20, h - 20);
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#6b4921';
+    ctx.font = `600 40px ${FONT_INDIC}`;
+    ctx.fillText('डॉ. अम्बेडकर राष्ट्रीय स्मारक', w / 2, 66);
+
+    ctx.fillStyle = '#1a1714';
+    ctx.font = `700 56px ${FONT_UI}`;
+    ctx.fillText('DR. AMBEDKAR NATIONAL MEMORIAL', w / 2, 130);
+
+    ctx.fillStyle = '#803d29';
+    ctx.fillRect(w / 2 - 150, 148, 300, 2);
+    ctx.fillStyle = '#56503f';
+    ctx.font = `400 24px ${FONT_MONO}`;
+    ctx.fillText('26 ALIPUR ROAD, DELHI', w / 2, 178);
+  };
+
+  draw();
+  const t = toTexture(c, true);
+  if (typeof document !== 'undefined' && 'fonts' in document) {
+    void document.fonts.ready.then(() => {
+      draw();
+      t.needsUpdate = true;
+    });
+  }
+  return t;
+}
