@@ -705,6 +705,74 @@ export function portraitPlate(image: HTMLImageElement): THREE.CanvasTexture {
   return toTexture(c, true);
 }
 
+/**
+ * The lintel over the entrance arch.
+ *
+ * What was there was the end of the spine gutter, a pale bar in page stock
+ * lying flush with the face of the drum. It is a sign now: sandstone ground,
+ * brass rules and brass letters, with a chakra at each end. Brass on red is
+ * what the rest of the building uses for anything meant to be read at a
+ * distance in this light, and a pale bar under two floodlights is not.
+ */
+export function welcomeLintel(): THREE.CanvasTexture {
+  const w = 1024;
+  const h = 224;
+  const [c, ctx] = canvas(w, h);
+  const mid = h / 2;
+
+  const img = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const k = 0.82 + fbm(x / w, y / h, 7, 4, 53) * 0.34;
+      const i = (y * w + x) * 4;
+      img.data[i] = Math.min(255, 128 * k);
+      img.data[i + 1] = Math.min(255, 61 * k);
+      img.data[i + 2] = Math.min(255, 41 * k);
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  ctx.strokeStyle = '#c89b52';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(10, 10, w - 20, h - 20);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(24, 24, w - 48, h - 48);
+
+  // A chakra at each end, the same wheel that is laid into the forecourt.
+  for (const cx of [86, w - 86]) {
+    ctx.strokeStyle = '#c89b52';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, mid, 34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 2.5;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * 6, mid + Math.sin(a) * 6);
+      ctx.lineTo(cx + Math.cos(a) * 31, mid + Math.sin(a) * 31);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#c89b52';
+    ctx.beginPath();
+    ctx.arc(cx, mid, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e0b877';
+  ctx.font = `600 46px ${FONT_INDIC}`;
+  ctx.fillText('स्वागत', w / 2, 84);
+  ctx.fillStyle = '#c89b52';
+  ctx.font = `700 74px ${FONT_READ}`;
+  ctx.fillText('WELCOME', w / 2, 166);
+  ctx.fillStyle = 'rgba(200,155,82,0.75)';
+  ctx.fillRect(w / 2 - 210, 182, 420, 2);
+
+  return toTexture(c, true);
+}
+
 export type ScreenStatus = 'online' | 'idle' | 'offline';
 
 /**

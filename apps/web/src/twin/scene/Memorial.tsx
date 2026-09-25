@@ -218,7 +218,11 @@ export function Memorial() {
     // binding of a book is the same stock as the leaves either side of it. It
     // sits flush with the inner edge of both pages and runs from the drum to
     // the back of the lobes, closing the roof slab under it.
-    const gutterFront = BOOK.apse.front;
+    // Short of the drum's face, not flush with it. Ending the gutter at the
+    // same z as the front of the apse put two faces on one plane, and what
+    // showed over the arch was the end of the gutter in page stock. The drum
+    // is solid at this height, so it closes the end.
+    const gutterFront = BOOK.apse.back + 0.9;
     const gutterBack = BOOK.lobeZ - AZ * 0.72;
     fascia.push({
       geometry: box(BOOK.spineHalf * 2, 0.8, gutterFront - gutterBack),
@@ -268,6 +272,15 @@ export function Memorial() {
 
   return (
     <group>
+      {/*
+        The lintel over the arch. It stands a little proud of the drum's face
+        so it reads as applied rather than printed, and it is high enough to
+        clear the crown of the arch at 10.2 and narrow enough to sit inside
+        the drum, which is 12.2m wide at the top of the panel.
+      */}
+      <mesh position={[0, 12.6, BOOK.apse.front + 0.06]} material={m.welcome}>
+        <planeGeometry args={[11, 2.4]} />
+      </mesh>
       <mesh geometry={g.stone} material={m.sandstone} />
       <mesh geometry={g.fascia} material={m.fascia} />
       <mesh geometry={g.glazing} material={m.glazing} />

@@ -20,6 +20,7 @@ import {
   sandstone,
   shaft,
   sky,
+  welcomeLintel,
 } from './textures';
 
 export interface HallMaterials {
@@ -47,6 +48,8 @@ export interface HallMaterials {
   plaza: THREE.MeshStandardMaterial;
   road: THREE.MeshStandardMaterial;
   sign: THREE.MeshStandardMaterial;
+  /** The lintel over the entrance arch. */
+  welcome: THREE.MeshStandardMaterial;
   bark: THREE.MeshStandardMaterial;
   foliage: THREE.MeshStandardMaterial;
   granite: THREE.MeshStandardMaterial;
@@ -216,6 +219,18 @@ export function hallMaterials(): HallMaterials {
       emissive: new THREE.Color('#ffffff'),
       emissiveIntensity: 0.34,
     }),
+    welcome: (() => {
+      const board = welcomeLintel();
+      return new THREE.MeshStandardMaterial({
+        map: board,
+        roughness: 0.82,
+        // The floodlights at the foot of the drum rake past it rather than
+        // onto it, so the brass carries a little of its own light.
+        emissiveMap: board,
+        emissive: new THREE.Color('#ffffff'),
+        emissiveIntensity: 0.3,
+      });
+    })(),
     bark: new THREE.MeshStandardMaterial({ color: '#2d251d', roughness: 1 }),
     foliage: new THREE.MeshStandardMaterial({
       color: '#39564b',
