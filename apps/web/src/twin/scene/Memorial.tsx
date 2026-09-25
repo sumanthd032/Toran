@@ -21,7 +21,6 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { BOOK, SITE } from '../campus';
 import { box, mergeParts, type Part } from '../geometry';
-import { HALL } from '../layout';
 import { hallMaterials } from '../materials';
 
 /** How finely the elliptical rim is walked. Every course follows the same run. */
@@ -214,12 +213,16 @@ export function Memorial() {
       });
     }
 
-    // The spine: a sandstone strip in the trough, level with the roof slab and
-    // set just inside the pages, so their inner edges cast a line down it.
-    const sx = BOOK.spineHalf - 0.25;
-    stone.push({
-      geometry: box(sx * 2, 0.9, AZ * 1.8),
-      position: [0, HALL.height + 0.7, BOOK.lobeZ],
+    // The gutter, where the two pages meet. It is paper, not sandstone: the
+    // drum at the front of the book is the dark mass, and seen from above the
+    // binding of a book is the same stock as the leaves either side of it. It
+    // sits flush with the inner edge of both pages and runs from the drum to
+    // the back of the lobes, closing the roof slab under it.
+    const gutterFront = BOOK.apse.front;
+    const gutterBack = BOOK.lobeZ - AZ * 0.72;
+    fascia.push({
+      geometry: box(BOOK.spineHalf * 2, 0.8, gutterFront - gutterBack),
+      position: [0, BOOK.spineY - 0.4, (gutterFront + gutterBack) / 2],
     });
 
     // The entrance drum. It is wider than the hall facade behind it, because

@@ -18,13 +18,13 @@
  * without any part of it entering the room.
  */
 export const BOOK = {
-  /** Half width of the spine trough between the two pages. */
-  spineHalf: 6.5,
+  /** Half width of the gutter between the two pages, where they meet. */
+  spineHalf: 3.8,
   /** The pages are elliptical in plan, centred here and this long. */
   lobeZ: -13,
   lobeHalfLength: 30,
-  /** Reach of the page rim, measured out from the spine. */
-  reach: 30,
+  /** Reach of the page rim, measured out from the gutter. */
+  reach: 32,
   /** The page leaves the spine above the hall roof and climbs to its rim. */
   spineY: 13.2,
   crestY: 25,
