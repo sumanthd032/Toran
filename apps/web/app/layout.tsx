@@ -5,7 +5,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Toran',
   description:
-    'Digital heritage archive and institutional twin for the Dr. Ambedkar International Centre.',
+    'Digital heritage archive and institutional twin for the Dr. Ambedkar National Memorial.',
 };
 
 export const viewport: Viewport = {
