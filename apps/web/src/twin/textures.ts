@@ -466,14 +466,16 @@ export function preamble(): THREE.CanvasTexture {
   ctx.font = `400 32px ${FONT_READ}`;
   ctx.fillText('and the unity and integrity of the Nation;', mid, 678);
   ctx.font = `500 32px ${FONT_READ}`;
-  ctx.fillText('IN OUR CONSTITUENT ASSEMBLY this twenty-sixth day of', mid, 736);
-  ctx.fillText('November 1949, do HEREBY ADOPT, ENACT AND GIVE', mid, 776);
-  ctx.fillText('TO OURSELVES THIS CONSTITUTION.', mid, 816);
+  ctx.fillText('IN OUR CONSTITUENT ASSEMBLY this twenty-sixth day of', mid, 722);
+  ctx.fillText('November 1949, do HEREBY ADOPT, ENACT AND GIVE', mid, 760);
+  ctx.fillText('TO OURSELVES THIS CONSTITUTION.', mid, 798);
 
-  ctx.font = `400 22px ${FONT_MONO}`;
+  // The citation sits inside the inner rule at y = h - 42, not across it. A
+  // 20px face on a 840 baseline drops to about 845, which clears it.
+  ctx.font = `400 20px ${FONT_MONO}`;
   ctx.fillStyle = '#56503f';
   ctx.textAlign = 'left';
-  ctx.fillText('Preamble, as adopted 26 November 1949', 62, h - 32);
+  ctx.fillText('Preamble, as adopted 26 November 1949', 64, 840);
   return toTexture(c, true);
 }
 
