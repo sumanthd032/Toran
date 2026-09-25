@@ -1,7 +1,7 @@
 # Toran
 
 Digital heritage archive and institutional twin for the Dr. Ambedkar National Memorial,
-26 Alipur Road, New Delhi.
+26, Alipur Road, New Delhi.
 
 A navigable reconstruction of the Centre in which every screen in the hall is a live
 application, backed by an archive that links Dr. Ambedkar's writings to the Constituent

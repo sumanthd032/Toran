@@ -30,7 +30,7 @@ export const BOOK = {
   crestY: 25,
   /** Courses in the banded skirt that hangs from the rim to the plinth. */
   courses: 12,
-  /** The plinth under the skirt, in sandstone, as at 26 Alipur Road. */
+  /** The plinth under the skirt, in sandstone, as at 26, Alipur Road. */
   plinthY: 2.4,
   /** How far the skirt draws in at the bottom, as a fraction of its reach. */
   skirtFoot: 0.74,

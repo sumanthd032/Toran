@@ -8,7 +8,7 @@
  * that is elliptical in plan, and from that rim a banded skirt hangs to the
  * plinth. From the air the surfaces read as the leaves of a book, which is the
  * form the memorial was designed as; from the ground the skirt reads as the
- * banded glazing of the building at 26 Alipur Road, which is the same shape
+ * banded glazing of the building at 26, Alipur Road, which is the same shape
  * seen from a different place. The entrance is a round arch cut through a
  * sandstone drum at the front of the trough.
  *
