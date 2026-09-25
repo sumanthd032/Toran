@@ -170,11 +170,11 @@ export function CameraRig({
       smoothTime={0.26}
       draggingSmoothTime={0.13}
       /*
-        Above the default of 1. Held back at 0.45 the wheel took a dozen
-        notches to cross the nave, which reads as the control being stuck
-        rather than as the building being large.
+        Twice the default. The hall is 43m deep and a visitor crosses it often,
+        so the wheel is geared for the room rather than for a model on a desk.
+        Held back at 0.45 it took a dozen notches to get anywhere.
       */
-      dollySpeed={1.3}
+      dollySpeed={2}
       truckSpeed={2.4}
       /* The wheel moves toward whatever is under the pointer, so a visitor
          goes to the thing they are looking at rather than to the middle. */
