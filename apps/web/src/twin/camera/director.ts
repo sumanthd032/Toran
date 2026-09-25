@@ -1,15 +1,24 @@
 /**
- * The entry sequence.
+ * The arrival.
  *
- * The camera starts low in the forecourt looking up at the crown of the Toran,
- * rises toward the gate as its gaze drops through the doorway, and settles
- * inside looking down the nave at the Chaitya arch. It is one continuous move
- * rather than a sequence of stops, so position and target run along splines
- * through the keyframes and are driven by a single eased clock.
+ * The camera opens high enough to hold the whole site, drops along the axis of
+ * the road, crosses the gate, runs low past the Ashoka pillar on the ceremonial
+ * circle, and goes in through the arch to settle inside looking down the nave
+ * at the Chaitya arch. It is one continuous move rather than a sequence of
+ * stops, so position and target run along splines through the keyframes and are
+ * driven by a single eased clock.
  *
  * Easing is sine in and out. Of the common curves it has the lowest peak
  * velocity for a given duration, about 1.57 times the average against 3 for a
  * cubic, which is what "architectural pacing, no overshoot" means in numbers.
+ *
+ * Keyframes are spaced so their spacing falls through the flight, 60m, 57m,
+ * 35m, 24m, 17m. A Catmull-Rom curve gives each segment the same share of the
+ * parameter, so that spacing is what makes the descent quick and the last
+ * approach slow, before the easing is applied on top of it.
+ *
+ * The final pose is the one the hall rests at and is not ours to move: the
+ * device transitions and the verification both start from it.
  */
 
 import * as THREE from 'three';
@@ -21,11 +30,14 @@ export interface Shot {
   readonly target: Vec3;
 }
 
-export const ENTRY_DURATION_MS = 3600;
+export const ENTRY_DURATION_MS = 7200;
 
 export const ENTRY: readonly Shot[] = [
-  { position: [0, 1.7, 36], target: [0, 9.6, 17] },
-  { position: [0, 3.1, 21.6], target: [0, 5.2, 0] },
+  { position: [0, 86, 168], target: [0, 14, 26] },
+  { position: [0, 50, 118], target: [0, 10, 22] },
+  { position: [-9, 20, 78], target: [0, 11, 24] },
+  { position: [-7, 6.8, 48], target: [0, 9, 20] },
+  { position: [0, 3.4, 26], target: [0, 6.2, 8] },
   { position: [0, 2.5, 9.0], target: [0, 3.6, -26] },
 ];
 
