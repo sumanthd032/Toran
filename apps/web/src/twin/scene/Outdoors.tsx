@@ -14,6 +14,11 @@
  * hall has always had. Nothing else reads this, and a visitor who skips the
  * arrival lands on the interior values with no transition to run.
  *
+ * It sits well under the campus rather than a hair under it. The depth buffer
+ * resolves a few centimetres at the distances this is seen from, so a plane a
+ * centimetre below the lawn would trade places with it frame by frame and the
+ * ground would shimmer for the whole descent. See Campus.tsx.
+ *
  * The sky dome and the ground under it follow the camera. Both are featureless
  * at the scale they are seen, so moving them is invisible, and it means
  * neither one ever shows an edge however far the camera pulls back.
@@ -75,7 +80,7 @@ export function Outdoors() {
     if (d !== null) d.position.set(camera.position.x, 0, camera.position.z);
     const g = ground.current;
     if (g !== null)
-      g.position.set(camera.position.x, SITE.groundY - 0.04, camera.position.z);
+      g.position.set(camera.position.x, SITE.groundY - 0.35, camera.position.z);
   });
 
   return (

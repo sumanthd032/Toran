@@ -24,7 +24,16 @@ import { mulberry32 } from '../random';
 const GY = SITE.groundY;
 type Vec2 = [number, number];
 
-/** Ground is drawn flat, in layers a centimetre apart so they cannot fight. */
+/**
+ * Ground is drawn flat, in layers far enough apart that they cannot fight.
+ *
+ * Far enough is not a centimetre. With the camera 250m up at the top of the
+ * arrival, a 24 bit depth buffer running from 0.1 to 420 resolves about 3.7cm,
+ * so layers a centimetre apart trade places from frame to frame and the whole
+ * site shimmers until the camera is close enough to separate them. The steps
+ * here are 15cm and up, which is a kerb, and clears the worst of them by
+ * fourfold.
+ */
 function Ground({
   w,
   d,
@@ -312,20 +321,19 @@ export function Campus() {
       <Ground
         w={wall.x * 2}
         d={wall.front - wall.back}
-        y={GY + 0.01}
         z={(wall.front + wall.back) / 2}
         material={m.lawn}
       />
       <Ground
         w={27}
         d={wall.front - plaza.z}
-        y={GY + 0.02}
+        y={GY + 0.16}
         z={(wall.front + plaza.z) / 2}
         material={m.paving}
       />
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, GY + 0.03, plaza.z]}
+        position={[0, GY + 0.3, plaza.z]}
         material={m.plaza}
       >
         <circleGeometry args={[plaza.radius, 64]} />
@@ -333,7 +341,7 @@ export function Campus() {
       <Ground
         w={360}
         d={road.far - road.near}
-        y={GY - 0.02}
+        y={GY - 0.2}
         z={(road.far + road.near) / 2}
         material={m.road}
       />

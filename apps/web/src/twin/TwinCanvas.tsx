@@ -238,18 +238,11 @@ export default function TwinCanvas({
 }: TwinCanvasProps) {
   const start = ENTRY[0];
   const { entered } = useTwinState();
-  // The arrival crosses two hundred and seventy metres of campus, and at the
-  // top of it every surface on the site is on screen at once. That frame is
-  // bound by how many pixels it has to shade, not by how many triangles, so
-  // the flight is drawn at one device pixel per CSS pixel and the hall gets
-  // its full resolution back the moment the camera stops. A camera moving
-  // this fast is the one time nobody can see the difference.
-  const dpr: [number, number] | number = entered && tier === 'high' ? [1, 1.75] : 1;
   return (
     <QualityContext.Provider value={tier}>
       <Canvas
         frameloop={rendering ? 'always' : 'never'}
-        dpr={dpr}
+        dpr={tier === 'high' ? [1, 1.75] : 1}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{
           fov: 50,
@@ -270,7 +263,16 @@ export default function TwinCanvas({
           t.texturesMs = hallMaterials().generatedMs;
         }}
       >
-        {!pinned && (
+        {/*
+          The monitor judges the hall, not the way in. The arrival crosses the
+          whole site and its heaviest frames are far below what the hall holds,
+          which put the frame rate squarely in the monitor's decision band and
+          made it flip tiers mid-flight. Every flip switches bloom, the floor
+          reflector, the particle count and the planting at once, so the screen
+          visibly flickered for a second or two before settling. The tier is a
+          statement about the room a visitor sits in; it is measured there.
+        */}
+        {!pinned && entered && (
           <PerformanceMonitor
             flipflops={2}
             onDecline={() => onTier('low')}
