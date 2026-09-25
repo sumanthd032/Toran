@@ -7,6 +7,15 @@ DECISIONS.md
 CLAUDE.md
 research/
 
+AGENTS.md
+MEMORY.md
+
+# Reference photographs of the memorial. Not ours to redistribute.
+refs/
+
+# Push credentials. Never committed.
+.git-credentials
+
 # Dependencies
 node_modules/
 
