@@ -646,6 +646,55 @@ export function portrait(): THREE.CanvasTexture {
   return toTexture(c, true);
 }
 
+/**
+ * The same plate, made from a photograph instead of drawn.
+ *
+ * The picture is anchored to the top of its area and cropped at the foot, so
+ * the head is never the part that is lost, and the name band is composited
+ * under it rather than over it. The drawn plate above is what hangs if the
+ * file is not on the device.
+ */
+export function portraitPlate(image: HTMLImageElement): THREE.CanvasTexture {
+  const w = 512;
+  const h = 640;
+  const band = 76;
+  const view = h - band;
+  const [c, ctx] = canvas(w, h);
+
+  ctx.fillStyle = '#e6dfd0';
+  ctx.fillRect(0, 0, w, h);
+  const scale = Math.max(w / image.width, view / image.height);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, w, view);
+  ctx.clip();
+  ctx.drawImage(
+    image,
+    (w - image.width * scale) / 2,
+    0,
+    image.width * scale,
+    image.height * scale,
+  );
+  ctx.restore();
+
+  ctx.fillStyle = '#ece6da';
+  ctx.fillRect(0, view, w, band);
+  ctx.fillStyle = '#803d29';
+  ctx.fillRect(0, view, w, 3);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#1a1714';
+  ctx.font = `700 38px ${FONT_READ}`;
+  ctx.fillText('DR. B. R. AMBEDKAR', w / 2, view + 42);
+  ctx.fillStyle = '#56503f';
+  ctx.font = `400 19px ${FONT_MONO}`;
+  ctx.fillText('1891 - 1956', w / 2, view + 66);
+
+  ctx.strokeStyle = 'rgba(145,100,44,0.85)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(14, 14, w - 28, h - 28);
+  return toTexture(c, true);
+}
+
 export type ScreenStatus = 'online' | 'idle' | 'offline';
 
 /**
@@ -1081,7 +1130,7 @@ export function plazaPaving(size = 1024): THREE.CanvasTexture {
 }
 
 /**
- * The board on the compound wall, after the plaque at 26 Alipur Road:
+ * The board on the compound wall, after the plaque at 26, Alipur Road:
  * Devanagari above, English below, the address in small type under both.
  *
  * Canvas text needs its faces loaded, and the hall draws its textures at first

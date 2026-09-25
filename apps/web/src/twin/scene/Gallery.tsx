@@ -18,7 +18,7 @@ import * as THREE from 'three';
 import { box, mergeParts, type Part } from '../geometry';
 import { HALL } from '../layout';
 import { hallMaterials } from '../materials';
-import { portrait, preamble } from '../textures';
+import { portrait, portraitPlate, preamble } from '../textures';
 
 /** The Preamble, low and wide. Its backing board reaches 0.4m past it. */
 const TEXT = { w: 7.0, h: 4.9, y: 3.4 };
@@ -65,6 +65,31 @@ export function Gallery() {
     },
     [plates],
   );
+
+  /**
+   * The photograph, if the device carries it. It is a file on the device, not
+   * a request off it, so the hall still opens with no network; and the drawn
+   * plate is already hanging while it loads, so a device without the file
+   * shows a portrait rather than an empty frame. CLAUDE.md section 10: every
+   * feature degrades.
+   */
+  useEffect(() => {
+    let live = true;
+    const image = new Image();
+    image.onload = () => {
+      if (!live) return;
+      const plate = portraitPlate(image);
+      const old = plates.face.map;
+      plates.face.map = plate;
+      plates.face.emissiveMap = plate;
+      plates.face.needsUpdate = true;
+      old?.dispose();
+    };
+    image.src = 'gallery/ambedkar.jpg';
+    return () => {
+      live = false;
+    };
+  }, [plates]);
 
   const frames = useMemo(
     () =>
