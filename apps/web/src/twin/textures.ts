@@ -363,64 +363,284 @@ const FONT_MONO = '"JetBrains Mono", ui-monospace, monospace';
 const FONT_INDIC = '"Noto Serif Devanagari", Spectral, serif';
 
 /**
- * The Preamble as adopted on 26 November 1949, for the Constitution gallery.
- * This is the text as the Assembly adopted it. The words "socialist",
- * "secular" and "integrity" were added by the Forty-second Amendment in 1976
- * and are deliberately absent, because the gallery is about the making of the
- * Constitution, and the caption says which text it is.
+ * The Preamble, on the wall at the end of the nave.
+ *
+ * It is read from the threshold, 37m away, through an arch that frames it at
+ * about 230 screen pixels wide. Type set at one size for that distance is
+ * unreadable at it: the old plate put 27px of a 768px canvas on the wall,
+ * which arrives as four pixels. So it is set the way a memorial sets an
+ * inscription, in three weights. The title and the four words the Preamble
+ * turns on are cut large enough to read from the door; the text itself is
+ * sized for someone standing at the dais. Nothing is abbreviated, because the
+ * point of the wall is that the whole Preamble is on it.
  */
 export function preamble(): THREE.CanvasTexture {
-  const w = 768;
-  const h = 1152;
+  const w = 1280;
+  const h = 896;
   const [c, ctx] = canvas(w, h);
+  const mid = w / 2;
   ctx.fillStyle = '#f4efe6';
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#9a6a2f';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(34, 34, w - 68, h - 68);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(46, 46, w - 92, h - 92);
 
-  ctx.fillStyle = '#1a1714';
-  ctx.textAlign = 'center';
-  ctx.font = `600 40px ${FONT_READ}`;
-  ctx.fillText('THE CONSTITUTION OF INDIA', w / 2, 140);
-  ctx.fillStyle = '#803d29';
-  ctx.fillRect(w / 2 - 60, 168, 120, 2);
-
-  const lines: [string, string][] = [
-    ['WE, THE PEOPLE OF INDIA, having solemnly', '500 27px'],
-    ['resolved to constitute India into a', '400 27px'],
-    ['SOVEREIGN DEMOCRATIC REPUBLIC', '600 27px'],
-    ['and to secure to all its citizens:', '400 27px'],
-    ['', ''],
-    ['JUSTICE, social, economic and political;', '400 27px'],
-    ['LIBERTY of thought, expression, belief,', '400 27px'],
-    ['faith and worship;', '400 27px'],
-    ['EQUALITY of status and of opportunity;', '400 27px'],
-    ['and to promote among them all', '400 27px'],
-    ['FRATERNITY assuring the dignity of the', '400 27px'],
-    ['individual and the unity of the Nation;', '400 27px'],
-    ['', ''],
-    ['IN OUR CONSTITUENT ASSEMBLY this', '400 27px'],
-    ['twenty-sixth day of November, 1949,', '400 27px'],
-    ['do HEREBY ADOPT, ENACT AND GIVE', '500 27px'],
-    ['TO OURSELVES THIS CONSTITUTION.', '500 27px'],
-  ];
-  let y = 262;
-  ctx.fillStyle = '#1a1714';
-  for (const [text, font] of lines) {
-    if (text === '') {
-      y += 26;
-      continue;
+  // A faint laid grain, so a large pale panel does not read as plastic.
+  const grain = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const k = (hash(x >> 1, y >> 1, 7) - 0.5) * 16;
+      grain.data[i] = 244 + k;
+      grain.data[i + 1] = 239 + k;
+      grain.data[i + 2] = 230 + k;
+      grain.data[i + 3] = 26;
     }
-    ctx.font = `${font} ${FONT_READ}`;
-    ctx.fillText(text, w / 2, y);
-    y += 46;
   }
-  ctx.font = `400 17px ${FONT_MONO}`;
+  ctx.putImageData(grain, 0, 0);
+
+  ctx.strokeStyle = '#9a6a2f';
+  ctx.lineWidth = 5;
+  ctx.strokeRect(26, 26, w - 52, h - 52);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(42, 42, w - 84, h - 84);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#1a1714';
+  ctx.font = `600 48px ${FONT_READ}`;
+  ctx.fillText('THE CONSTITUTION OF INDIA', mid, 100);
+  ctx.fillStyle = '#803d29';
+  ctx.fillRect(mid - 110, 124, 220, 3);
+
+  ctx.fillStyle = '#1a1714';
+  ctx.font = `700 70px ${FONT_READ}`;
+  ctx.fillText('WE, THE PEOPLE OF INDIA', mid, 200);
+
+  const body: [string, string][] = [
+    ['400', 'having solemnly resolved to constitute India into a'],
+    ['600', 'SOVEREIGN SOCIALIST SECULAR DEMOCRATIC REPUBLIC'],
+    ['400', 'and to secure to all its citizens:'],
+  ];
+  let y = 256;
+  for (const [weight, line] of body) {
+    ctx.font = `${weight} 34px ${FONT_READ}`;
+    ctx.fillText(line, mid, y);
+    y += 44;
+  }
+
+  /**
+   * One pillar: the word large in sandstone, its clause beside it in ink, the
+   * pair centred as a unit. The clause is stepped down until the pair fits
+   * inside the border, because "of thought, expression, belief, faith and
+   * worship" is three times the length of "of status and of opportunity" and
+   * a fixed size sets one of them off the edge of the plate.
+   */
+  const pillar = (word: string, clause: string, at: number) => {
+    const limit = w - 140;
+    let size = 30;
+    let wordWidth = 0;
+    let clauseWidth = 0;
+    for (;;) {
+      ctx.font = `700 56px ${FONT_READ}`;
+      wordWidth = ctx.measureText(word).width;
+      ctx.font = `400 ${size}px ${FONT_READ}`;
+      clauseWidth = ctx.measureText(clause).width;
+      if (wordWidth + 18 + clauseWidth <= limit || size <= 18) break;
+      size -= 1;
+    }
+    const left = mid - (wordWidth + 18 + clauseWidth) / 2;
+    ctx.textAlign = 'left';
+    ctx.font = `700 56px ${FONT_READ}`;
+    ctx.fillStyle = '#803d29';
+    ctx.fillText(word, left, at);
+    ctx.font = `400 ${size}px ${FONT_READ}`;
+    ctx.fillStyle = '#1a1714';
+    ctx.fillText(clause, left + wordWidth + 18, at - 3);
+    ctx.textAlign = 'center';
+  };
+
+  y = 400;
+  pillar('JUSTICE', 'social, economic and political;', y);
+  pillar('LIBERTY', 'of thought, expression, belief, faith and worship;', y + 66);
+  pillar('EQUALITY', 'of status and of opportunity;', y + 132);
+  pillar('FRATERNITY', 'assuring the dignity of the individual', y + 198);
+
+  ctx.fillStyle = '#1a1714';
+  ctx.font = `400 32px ${FONT_READ}`;
+  ctx.fillText('and the unity and integrity of the Nation;', mid, 678);
+  ctx.font = `500 32px ${FONT_READ}`;
+  ctx.fillText('IN OUR CONSTITUENT ASSEMBLY this twenty-sixth day of', mid, 736);
+  ctx.fillText('November 1949, do HEREBY ADOPT, ENACT AND GIVE', mid, 776);
+  ctx.fillText('TO OURSELVES THIS CONSTITUTION.', mid, 816);
+
+  ctx.font = `400 22px ${FONT_MONO}`;
   ctx.fillStyle = '#56503f';
-  ctx.fillText('Preamble, as adopted 26 November 1949', w / 2, h - 96);
+  ctx.textAlign = 'left';
+  ctx.fillText('Preamble, as adopted 26 November 1949', 62, h - 32);
+  return toTexture(c, true);
+}
+
+export function portrait(): THREE.CanvasTexture {
+  const w = 512;
+  const h = 640;
+  const [c, ctx] = canvas(w, h);
+  const cx = w / 2;
+  const SKIN = '#c9b294';
+  const HAIR = '#221e1a';
+  const INK = '#1a1714';
+
+  // Ground: vellum, drawn down at the corners the way a studio plate is lit.
+  ctx.fillStyle = '#e6dfd0';
+  ctx.fillRect(0, 0, w, h);
+  const lit = ctx.createRadialGradient(cx, 250, 40, cx, 300, 440);
+  lit.addColorStop(0, 'rgba(246,241,232,0.9)');
+  lit.addColorStop(1, 'rgba(58,50,40,0.5)');
+  ctx.fillStyle = lit;
+  ctx.fillRect(0, 0, w, h);
+
+  // Jacket and shoulders.
+  ctx.fillStyle = '#272320';
+  ctx.beginPath();
+  ctx.moveTo(cx - 54, 404);
+  ctx.bezierCurveTo(cx - 168, 426, cx - 230, 486, cx - 244, h);
+  ctx.lineTo(cx + 244, h);
+  ctx.bezierCurveTo(cx + 230, 486, cx + 168, 426, cx + 54, 404);
+  ctx.closePath();
+  ctx.fill();
+
+  // Collar, shirt and tie.
+  ctx.fillStyle = '#ece6da';
+  ctx.beginPath();
+  ctx.moveTo(cx - 58, 408);
+  ctx.lineTo(cx, 500);
+  ctx.lineTo(cx + 58, 408);
+  ctx.lineTo(cx + 32, 398);
+  ctx.lineTo(cx, 440);
+  ctx.lineTo(cx - 32, 398);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#463a30';
+  ctx.beginPath();
+  ctx.moveTo(cx - 16, 448);
+  ctx.lineTo(cx + 16, 448);
+  ctx.lineTo(cx + 24, h - 92);
+  ctx.lineTo(cx - 24, h - 92);
+  ctx.closePath();
+  ctx.fill();
+
+  // Neck, then the head.
+  ctx.fillStyle = '#ab9679';
+  ctx.fillRect(cx - 42, 330, 84, 86);
+  ctx.fillStyle = SKIN;
+  ctx.beginPath();
+  ctx.ellipse(cx, 236, 104, 128, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * 102, 250, 15, 27, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // The hairline. Hair at the temples and over the ears, a high bare
+  // forehead between them: the second thing after the spectacles that makes
+  // this face his rather than any face in glasses.
+  ctx.fillStyle = HAIR;
+  ctx.beginPath();
+  ctx.ellipse(cx, 182, 106, 78, 0, Math.PI, 0);
+  ctx.fill();
+  // The forehead is cut back out of it, high and wide, which is what leaves a
+  // hairline rather than a cap. The crown keeps only a thin band, and the
+  // weight of the hair sits at the temples and over the ears.
+  ctx.fillStyle = SKIN;
+  ctx.beginPath();
+  ctx.ellipse(cx, 200, 96, 86, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = HAIR;
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * 90, 218, 21, 58, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Grey at the temple, where his is.
+    ctx.fillStyle = 'rgba(190,178,160,0.30)';
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * 94, 232, 12, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = HAIR;
+  }
+
+  // Modelling, clipped to the head so it does not spill onto the ground.
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, 236, 104, 128, 0, 0, Math.PI * 2);
+  ctx.clip();
+  const shade = ctx.createLinearGradient(cx - 104, 0, cx + 104, 0);
+  shade.addColorStop(0, 'rgba(66,54,42,0.34)');
+  shade.addColorStop(0.44, 'rgba(66,54,42,0)');
+  shade.addColorStop(1, 'rgba(66,54,42,0.24)');
+  ctx.fillStyle = shade;
+  ctx.fillRect(cx - 104, 108, 208, 256);
+  ctx.restore();
+
+  // Brows, eyes, nose, mouth. All quiet: the rims carry the face.
+  ctx.fillStyle = '#4a4034';
+  for (const sx of [-1, 1]) ctx.fillRect(cx + sx * 50 - 30, 224, 60, 8);
+  ctx.fillStyle = INK;
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(cx + sx * 48, 258, 10, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(92,76,58,0.55)';
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - 3, 256);
+  ctx.lineTo(cx - 10, 302);
+  ctx.lineTo(cx + 12, 306);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(74,52,44,0.85)';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(cx - 34, 338);
+  ctx.quadraticCurveTo(cx, 348, cx + 34, 338);
+  ctx.stroke();
+
+  // The spectacles: heavy, level, wide. Unmistakable from the far end of the
+  // nave, which is the whole reason this plate reads at all.
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 11;
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.roundRect(cx + sx * 50 - 40, 232, 80, 56, 17);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, 254);
+  ctx.lineTo(cx + 10, 254);
+  ctx.stroke();
+  ctx.lineWidth = 8;
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx * 90, 244);
+    ctx.lineTo(cx + sx * 106, 252);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+
+  // Rules, and the name on a band clear of the plate's edge.
+  ctx.strokeStyle = 'rgba(145,100,44,0.85)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(14, 14, w - 28, h - 28);
+  ctx.fillStyle = 'rgba(232,225,211,0.94)';
+  ctx.fillRect(18, h - 86, w - 36, 68);
+  ctx.fillStyle = '#803d29';
+  ctx.fillRect(18, h - 86, w - 36, 3);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = INK;
+  ctx.font = `700 38px ${FONT_READ}`;
+  ctx.fillText('DR. B. R. AMBEDKAR', cx, h - 48);
+  ctx.fillStyle = '#56503f';
+  ctx.font = `400 19px ${FONT_MONO}`;
+  ctx.fillText('1891 - 1956', cx, h - 26);
+
   return toTexture(c, true);
 }
 
