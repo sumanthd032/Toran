@@ -233,7 +233,11 @@ export function Memorial() {
     // The band recessed inside the arch, which is what gives it its depth.
     const reveal = new THREE.Shape();
     const rh = BOOK.arch.halfWidth + 0.75;
-    archPath(reveal, rh);
+    reveal.moveTo(-rh, SHAPE_FOOT);
+    reveal.lineTo(-rh, BOOK.arch.springY);
+    reveal.absarc(0, BOOK.arch.springY, rh, Math.PI, 0, true);
+    reveal.lineTo(rh, SHAPE_FOOT);
+    reveal.closePath();
     const cut = new THREE.Path();
     archPath(cut, BOOK.arch.halfWidth);
     reveal.holes.push(cut);
@@ -245,12 +249,13 @@ export function Memorial() {
     band.translate(0, 0, BOOK.apse.front);
     stone.push({ geometry: band });
 
-    // Three steps down from the threshold to the paving.
+    // Three steps from the threshold down to the paving. Each tread is at its
+    // own height; they all sat at zero before, which is an apron, not a flight.
     for (let i = 0; i < 3; i++) {
-      const drop = (-SITE.groundY * (i + 1)) / 3;
+      const tread = (SITE.groundY * (i + 1)) / 3;
       stone.push({
-        geometry: box(BOOK.arch.halfWidth * 2 + 7 + i * 2, drop, 1.6),
-        position: [0, -drop / 2, BOOK.apse.front + 0.8 + i * 1.6],
+        geometry: box(BOOK.arch.halfWidth * 2 + 7 + i * 2, 0.9, 1.6),
+        position: [0, tread - 0.45, BOOK.apse.front + 0.8 + i * 1.6],
       });
     }
 
@@ -270,15 +275,29 @@ export function Memorial() {
   );
 }
 
-/** A round arch on short jambs, drawn into a shape or a hole. */
+/**
+ * A round arch on short jambs, drawn into a shape or a hole.
+ *
+ * The foot is below the platform rather than level with it. A hole whose
+ * bottom edge lies exactly on the bottom edge of the shape it is cut from is
+ * degenerate: the two edges are collinear, the triangulator has to choose a
+ * bridge between coincident points, and what it chose here was a sheet of
+ * stone across the lower third of the doorway. Sinking the foot puts the hole
+ * strictly inside the outline and the opening is an opening.
+ */
+const ARCH_FOOT = -0.7;
+
 function archPath(p: THREE.Shape | THREE.Path, halfWidth: number): void {
   const { springY } = BOOK.arch;
-  p.moveTo(-halfWidth, 0);
+  p.moveTo(-halfWidth, ARCH_FOOT);
   p.lineTo(-halfWidth, springY);
   p.absarc(0, springY, halfWidth, Math.PI, 0, true);
-  p.lineTo(halfWidth, 0);
+  p.lineTo(halfWidth, ARCH_FOOT);
   p.closePath();
 }
+
+/** The outline the arch is cut from always reaches below the arch's foot. */
+const SHAPE_FOOT = -1.4;
 
 /** The drum at the front, with the entrance arch cut through it. */
 function apse(): THREE.BufferGeometry {
@@ -288,13 +307,13 @@ function apse(): THREE.BufferGeometry {
   // the profile collapse into a half circle.
   const n = 2 / 2.7;
   const steps = 44;
-  s.moveTo(-a, 0);
+  s.moveTo(-a, SHAPE_FOOT);
   for (let i = 0; i <= steps; i++) {
     const p = Math.PI - (Math.PI * i) / steps;
     const cx = Math.cos(p);
     s.lineTo(a * Math.sign(cx) * Math.abs(cx) ** n, b * Math.abs(Math.sin(p)) ** n);
   }
-  s.lineTo(a, 0);
+  s.lineTo(a, SHAPE_FOOT);
   s.closePath();
 
   const hole = new THREE.Path();
