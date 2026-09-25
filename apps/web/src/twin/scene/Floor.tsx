@@ -5,6 +5,12 @@
  * makes a dark stone floor read as polished; that renders the scene a second
  * time, so the low tier falls back to a plain material and relies on the
  * roughness map for its sheen.
+ *
+ * The second render used to pick up the campus, which is why the exterior is
+ * on its own layer now; see scene/outside.tsx. With that in place the
+ * reflector costs what it always cost, so it is built with the hall rather
+ * than deferred to the threshold. Deferring it moved a 916ms stall onto the
+ * exact frame the camera arrives at the door.
  */
 
 import { MeshReflectorMaterial } from '@react-three/drei';

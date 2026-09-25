@@ -36,8 +36,13 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'entrance',
     form: 'totem',
     defaultLanguage: 'en',
-    position: [-3.6, 0, 9.4],
-    rotationY: 0.35,
+    // The first thing anyone sees, so it stands where the arrival leaves them
+    // looking. From the threshold at z = 12 a 4:3 window shows 5.2m either
+    // side of the axis at this depth; at its old place, 2.6m in and 3.6m
+    // across, it needed to be inside 1.6m and was not, so nobody met it.
+    position: [-4.8, 0, 3.6],
+    // Turned back toward the door rather than square across the aisle.
+    rotationY: 0.52,
     version: 1,
   },
   {
@@ -45,7 +50,8 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'reading',
     form: 'kiosk',
     defaultLanguage: 'en',
-    position: [-5.4, 0, 4.0],
+    // The left hand file moves one place down the nave to seat the totem.
+    position: [-5.4, 0, -2.2],
     rotationY: Q * 0.9,
     version: 1,
   },
@@ -54,7 +60,8 @@ export const DEVICES: readonly HallDevice[] = [
     channel: 'reading',
     form: 'kiosk',
     defaultLanguage: 'mr',
-    position: [-5.4, 0, -1.6],
+    // Clear of the column at z = -6 and of the first Timeline panel at -7.
+    position: [-5.4, 0, -8.6],
     rotationY: Q * 0.9,
     version: 1,
   },

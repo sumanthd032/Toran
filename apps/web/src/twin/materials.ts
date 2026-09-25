@@ -7,7 +7,21 @@
  */
 
 import * as THREE from 'three';
-import { blob, floor, jali, relief, sandstone, shaft, sky } from './textures';
+import {
+  blob,
+  floor,
+  glazing,
+  jali,
+  lawn,
+  memorialSign,
+  pageFace,
+  plazaPaving,
+  relief,
+  sandstone,
+  shaft,
+  sky,
+  welcomeLintel,
+} from './textures';
 
 export interface HallMaterials {
   sandstone: THREE.MeshStandardMaterial;
@@ -24,6 +38,27 @@ export interface HallMaterials {
   sky: THREE.MeshBasicMaterial;
   inlay: THREE.MeshStandardMaterial;
   paper: THREE.MeshStandardMaterial;
+  /** The open book: stone fascias, the glazing between them, the page face. */
+  fascia: THREE.MeshStandardMaterial;
+  glazing: THREE.MeshStandardMaterial;
+  page: THREE.MeshStandardMaterial;
+  /** The campus. */
+  lawn: THREE.MeshStandardMaterial;
+  paving: THREE.MeshStandardMaterial;
+  plaza: THREE.MeshStandardMaterial;
+  road: THREE.MeshStandardMaterial;
+  sign: THREE.MeshStandardMaterial;
+  /** The lintel over the entrance arch. */
+  welcome: THREE.MeshStandardMaterial;
+  bark: THREE.MeshStandardMaterial;
+  foliage: THREE.MeshStandardMaterial;
+  granite: THREE.MeshStandardMaterial;
+  paint: THREE.MeshStandardMaterial;
+  glass: THREE.MeshStandardMaterial;
+  /** The ground beyond the compound. Unlit on purpose: see Outdoors.tsx. */
+  distance: THREE.MeshBasicMaterial;
+  lamp: THREE.MeshBasicMaterial;
+  headlight: THREE.MeshBasicMaterial;
   generatedMs: number;
 }
 
@@ -44,6 +79,18 @@ export function hallMaterials(): HallMaterials {
   tiles.roughness.repeat.set(3, 5.5);
 
   const brassColor = new THREE.Color('#c89b52');
+
+  // The campus. Grass and paving repeat over tens of metres, so they are small
+  // maps tiled hard rather than one large one.
+  const grass = lawn(256);
+  grass.repeat.set(26, 26);
+  const page = pageFace(256);
+  const glass = glazing(256);
+  const board = memorialSign();
+  const circle = plazaPaving(512);
+  const tarmac = floor(256);
+  tarmac.map.repeat.set(2, 24);
+  tarmac.roughness.repeat.set(2, 24);
 
   cached = {
     sandstone: new THREE.MeshStandardMaterial({
@@ -125,6 +172,92 @@ export function hallMaterials(): HallMaterials {
       emissiveIntensity: 0.18,
     }),
     paper: new THREE.MeshStandardMaterial({ color: '#f4efe6', roughness: 0.85 }),
+
+    // The open book. The fascia courses carry the page, so they take the
+    // paper map and the sandstone roughness: stone edge, paper top.
+    fascia: new THREE.MeshStandardMaterial({
+      map: page,
+      roughnessMap: stone.roughness,
+      color: '#bcb2a0',
+      roughness: 0.86,
+      metalness: 0,
+    }),
+    glazing: new THREE.MeshStandardMaterial({
+      map: glass,
+      color: '#8f8578',
+      roughness: 0.22,
+      metalness: 0.55,
+      envMapIntensity: 0.9,
+    }),
+    page: new THREE.MeshStandardMaterial({
+      map: page,
+      roughness: 0.82,
+      metalness: 0,
+    }),
+
+    // The campus.
+    lawn: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
+    paving: new THREE.MeshStandardMaterial({ color: '#4e483f', roughness: 0.94 }),
+    plaza: new THREE.MeshStandardMaterial({
+      map: circle,
+      roughness: 0.7,
+      metalness: 0.05,
+      envMapIntensity: 0.35,
+    }),
+    road: new THREE.MeshStandardMaterial({
+      map: tarmac.map,
+      roughnessMap: tarmac.roughness,
+      color: '#211d19',
+      roughness: 0.8,
+    }),
+    sign: new THREE.MeshStandardMaterial({
+      map: board,
+      roughness: 0.7,
+      // The board is lit from a batten under it, which no light in the hall
+      // can reach, so it carries its own. One canvas serves both slots.
+      emissiveMap: board,
+      emissive: new THREE.Color('#ffffff'),
+      emissiveIntensity: 0.34,
+    }),
+    welcome: (() => {
+      const board = welcomeLintel();
+      return new THREE.MeshStandardMaterial({
+        map: board,
+        roughness: 0.82,
+        // The floodlights at the foot of the drum rake past it rather than
+        // onto it, so the brass carries a little of its own light.
+        emissiveMap: board,
+        emissive: new THREE.Color('#ffffff'),
+        emissiveIntensity: 0.3,
+      });
+    })(),
+    bark: new THREE.MeshStandardMaterial({ color: '#2d251d', roughness: 1 }),
+    foliage: new THREE.MeshStandardMaterial({
+      color: '#39564b',
+      roughness: 1,
+      flatShading: true,
+    }),
+    granite: new THREE.MeshStandardMaterial({
+      color: '#2b2824',
+      roughness: 0.38,
+      metalness: 0.2,
+      envMapIntensity: 0.5,
+    }),
+    paint: new THREE.MeshStandardMaterial({
+      color: '#6e675e',
+      roughness: 0.42,
+      metalness: 0.35,
+      envMapIntensity: 0.7,
+    }),
+    glass: new THREE.MeshStandardMaterial({
+      color: '#15130f',
+      roughness: 0.12,
+      metalness: 0.7,
+      envMapIntensity: 1,
+    }),
+    distance: new THREE.MeshBasicMaterial({ color: '#2a2620' }),
+    lamp: new THREE.MeshBasicMaterial({ color: '#ffd9a0', toneMapped: false }),
+    headlight: new THREE.MeshBasicMaterial({ color: '#fff3dc', toneMapped: false }),
     generatedMs: 0,
   };
   cached.generatedMs = Math.round(performance.now() - started);

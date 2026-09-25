@@ -4,7 +4,7 @@ import { TakeHome } from '@/archive/TakeHome';
 export const metadata: Metadata = {
   title: 'Your reading, Toran',
   description:
-    'Passages kept at the Dr. Ambedkar International Centre, each with its source.',
+    'Passages kept at the Dr. Ambedkar National Memorial, each with its source.',
 };
 
 export default function DossierPage() {

@@ -7,6 +7,19 @@ DECISIONS.md
 CLAUDE.md
 research/
 
+AGENTS.md
+MEMORY.md
+
+# Screenshots dropped in the root to point at something. Local, not ours.
+/*.png
+/*.jpg
+
+# Reference photographs of the memorial. Not ours to redistribute.
+refs/
+
+# Push credentials. Never committed.
+.git-credentials
+
 # Dependencies
 node_modules/
 
