@@ -169,8 +169,12 @@ export function CameraRig({
       maxPolarAngle={Math.PI * 0.58}
       smoothTime={0.26}
       draggingSmoothTime={0.13}
-      /* Slower than the default, which crosses the whole nave in two notches. */
-      dollySpeed={0.45}
+      /*
+        Above the default of 1. Held back at 0.45 the wheel took a dozen
+        notches to cross the nave, which reads as the control being stuck
+        rather than as the building being large.
+      */
+      dollySpeed={1.3}
       truckSpeed={2.4}
       /* The wheel moves toward whatever is under the pointer, so a visitor
          goes to the thing they are looking at rather than to the middle. */
