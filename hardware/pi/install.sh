@@ -92,6 +92,21 @@ if command -v raspi-config >/dev/null 2>&1; then
   raspi-config nonint do_blanking 1
 fi
 
+# The Reading Room's microphone, for the kiosk's own page and nothing else,
+# so no permission prompt ever stands in front of a visitor. Bookworm's
+# chromium-browser and Trixie's chromium read policies from different places.
+for dir in /etc/chromium/policies/managed /etc/chromium-browser/policies/managed; do
+  install -d -m 0755 "$dir"
+  cat > "$dir/toran.json" <<'POLICY'
+{
+  "AudioCaptureAllowedUrls": ["http://127.0.0.1:8080"],
+  "VideoCaptureAllowed": false,
+  "TranslateEnabled": false,
+  "PasswordManagerEnabled": false
+}
+POLICY
+done
+
 install -m 0644 "$HERE/toran-daemon.service" /etc/systemd/system/toran-daemon.service
 install -m 0644 "$HERE/toran-web.service" /etc/systemd/system/toran-web.service
 systemctl daemon-reload
