@@ -31,12 +31,18 @@ const BATCH = 25;
 
 const PLACEHOLDER = /\{(\w+)\}/g;
 
-/** Replaces {name} with a token a translation engine will carry through unchanged. */
+/**
+ * Replaces {name} with a token a translation engine will carry through unchanged.
+ *
+ * The token is [0], [1] and so on. IndicTrans2 splits __0__ into "_ 0 _",
+ * which lost a placeholder in 62 of 298 strings on 26 September 2026. Square brackets came back intact in Hindi and Tamil, and
+ * no English string uses them, so a bracket in the output is always ours.
+ */
 function protect(text) {
   const names = [];
   const masked = text.replace(PLACEHOLDER, (_, name) => {
     names.push(name);
-    return `__${names.length - 1}__`;
+    return `[${names.length - 1}]`;
   });
   return { masked, names };
 }
@@ -45,7 +51,7 @@ function restore(translated, names) {
   let out = translated;
   for (let i = 0; i < names.length; i++) {
     // Engines sometimes space or case the token differently; accept that.
-    const token = new RegExp(`_\\s*_\\s*${i}\\s*_\\s*_`, 'g');
+    const token = new RegExp(`\\[\\s*${i}\\s*\\]`, 'g');
     if (!token.test(out)) return null;
     out = out.replace(token, `{${names[i]}}`);
   }
@@ -62,39 +68,55 @@ function argv() {
   };
 }
 
+/**
+ * The keys a run must send, and what it starts from.
+ *
+ * A catalogue that already exists may hold strings a speaker wrote by hand,
+ * as hi and mr do. Those are better than anything a machine returns, so only
+ * the keys that are absent or still read exactly as the English are sent.
+ * --force discards the file and sends everything.
+ */
+function plan(language, en, force) {
+  const file = path.join(MESSAGES, `${language}.json`);
+  if (force || !fs.existsSync(file)) {
+    return { base: {}, machine: [], keys: Object.keys(en) };
+  }
+  const base = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const keys = Object.keys(en).filter((k) => base[k] === undefined || base[k] === en[k]);
+  return { base, machine: Array.isArray(base['_machine']) ? base['_machine'] : [], keys };
+}
+
 async function main() {
   const opts = argv();
   const languages = opts.only === null ? TARGET_LANGUAGES : [opts.only];
   const en = JSON.parse(fs.readFileSync(path.join(MESSAGES, `${SOURCE_LANGUAGE}.json`), 'utf8'));
-  const keys = Object.keys(en);
-  console.log(`catalogue: ${keys.length} strings into ${languages.join(', ')}`);
+  console.log(`catalogue: ${Object.keys(en).length} strings into ${languages.join(', ')}`);
 
-  const todo = languages.filter(
-    (l) => opts.force || !fs.existsSync(path.join(MESSAGES, `${l}.json`)),
-  );
+  const todo = languages
+    .map((language) => ({ language, ...plan(language, en, opts.force) }))
+    .filter((p) => p.keys.length > 0);
   if (todo.length === 0) {
-    console.log('catalogue: every requested catalogue already exists; pass --force to redo one');
+    console.log('catalogue: every requested catalogue is already translated; pass --force to redo one');
     return;
   }
   if (opts.dryRun) {
-    console.log(`catalogue: would write ${todo.join(', ')}`);
+    for (const p of todo) console.log(`catalogue: would send ${p.keys.length} strings for ${p.language}`);
     return;
   }
   if (!haveCredentials()) {
     console.log(
       'catalogue: no Bhashini credentials, so nothing was written.\n' +
-        `           ${todo.join(', ')} stay unlisted, and the interface offers the\n` +
-        '           languages whose catalogues exist. See DECISIONS.md D-122.',
+        `           ${todo.map((p) => p.language).join(', ')} stay as they are, and the interface\n` +
+        '           offers the languages whose catalogues exist. See DECISIONS.md D-122.',
     );
     return;
   }
 
-  for (const language of todo) {
+  for (const { language, base, machine, keys } of todo) {
     const task = translationTask(SOURCE_LANGUAGE, language);
     const { services, endpoint } = await configure([task]);
     const service = services.get('translation');
-    const out = {};
-    let kept = 0;
+    const filled = {};
     let fellBack = 0;
 
     for (let i = 0; i < keys.length; i += BATCH) {
@@ -109,23 +131,28 @@ async function main() {
         if (restored === null) {
           // A placeholder did not survive. English is wrong but legible; a
           // label reading "Volume __0__" is neither.
-          out[key] = en[key];
           fellBack += 1;
           return;
         }
-        out[key] = restored;
-        kept += 1;
+        filled[key] = restored;
       });
       process.stdout.write(`  ${language}: ${Math.min(i + BATCH, keys.length)}/${keys.length}\n`);
     }
 
-    out['_provenance'] = `Bhashini, ${service.serviceId}, ${new Date().toISOString().slice(0, 10)}. Machine translated, not yet reviewed by a speaker.`;
-    fs.writeFileSync(
-      path.join(MESSAGES, `${language}.json`),
-      `${JSON.stringify(out, null, 2)}\n`,
-    );
+    // Written in the English key order, so a diff against en.json lines up.
+    const out = {};
+    for (const key of Object.keys(en)) out[key] = filled[key] ?? base[key] ?? en[key];
+    const machineKeys = [...new Set([...machine, ...Object.keys(filled)])].filter((k) => k in en);
+    const whole = machineKeys.length === Object.keys(en).length;
+    out['_provenance'] =
+      `Bhashini, ${service.serviceId}, ${new Date().toISOString().slice(0, 10)}. ` +
+      (whole
+        ? 'Machine translated, not yet reviewed by a speaker.'
+        : `Written by hand except the ${machineKeys.length} keys in _machine, which are machine translated and not yet reviewed by a speaker.`);
+    if (!whole) out['_machine'] = machineKeys;
+    fs.writeFileSync(path.join(MESSAGES, `${language}.json`), `${JSON.stringify(out, null, 2)}\n`);
     console.log(
-      `catalogue: ${language} written, ${kept} translated, ` +
+      `catalogue: ${language} written, ${Object.keys(filled).length} translated, ` +
         `${fellBack} left in English because a placeholder did not survive`,
     );
   }
