@@ -26,6 +26,7 @@ import { useAnnounce } from '../../announce';
 import { ICON, Icon } from '../../icons';
 import { useChannelNav } from '../../nav';
 import { ReachTools } from '../../reach';
+import { useSpokenQuery } from '../../speech/useSpokenQuery';
 import { askArchive, engineReady, numberOf, supportOf, type Asked } from './model';
 import styles from './assistant.module.css';
 
@@ -101,6 +102,13 @@ export function ResearchDesk() {
     [announce, asking, t],
   );
 
+  // A question asked aloud, where Core offers it. The words go into the field
+  // first, so a visitor sees what was heard before the answer arrives.
+  const spoken = useSpokenQuery(lang, (words) => {
+    setQuestion(words);
+    void ask(words);
+  });
+
   // What happened, for a visitor who is not reading the screen. The first
   // claim, not "an answer arrived", because the claim is the content.
   useEffect(() => {
@@ -165,6 +173,19 @@ export function ResearchDesk() {
             data-testid="assistant-question"
             onChange={(e) => setQuestion(e.target.value)}
           />
+          {spoken.available && (
+            <Button
+              variant={spoken.state === 'listening' ? 'primary' : 'secondary'}
+              disabled={asking || !ready || spoken.state === 'working'}
+              onClick={spoken.toggle}
+              aria-pressed={spoken.state === 'listening'}
+              icon={<Icon d={spoken.state === 'listening' ? ICON.stop : ICON.mic} />}
+              aria-label={t(
+                spoken.state === 'listening' ? 'speech.stop' : 'speech.speak',
+              )}
+              data-testid="assistant-speak"
+            />
+          )}
           <Button
             type="submit"
             variant="primary"
@@ -176,6 +197,11 @@ export function ResearchDesk() {
             {asking ? t('assistant.thinking') : t('assistant.ask')}
           </Button>
         </form>
+        {spoken.available && spoken.state !== 'idle' && (
+          <p className={styles.speechNote} role="status">
+            {t(`speech.${spoken.state}` as MessageKey)}
+          </p>
+        )}
       </ReachTools>
     </div>
   );

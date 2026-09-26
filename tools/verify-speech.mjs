@@ -167,6 +167,18 @@ try {
       settled,
       `${Date.now() - tapped} ms after Done: ${note === '' ? `searched "${query}"` : note}`,
     );
+    // 6. The Research Assistant's question field listens by the same rule.
+    const desk = await browser.newPage();
+    await desk.setViewport({ width: 1280, height: 800 });
+    await desk.goto(`${WEB}/kiosk/dev-11/?core=${encodeURIComponent(CORE)}&status`, {
+      waitUntil: 'load',
+    });
+    const deskMic = await desk
+      .waitForSelector('[data-testid="assistant-speak"]', { timeout: 120_000 })
+      .then(() => true)
+      .catch(() => false);
+    check('6 the Research Assistant offers the same microphone', deskMic);
+    await desk.close();
     console.log(
       code === 200
         ? '\nBhashini recognised the recording.'
