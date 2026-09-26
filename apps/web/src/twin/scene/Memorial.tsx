@@ -213,18 +213,18 @@ export function Memorial() {
       });
     }
 
-    // The gutter, where the two pages meet. It is paper, not sandstone: the
-    // drum at the front of the book is the dark mass, and seen from above the
-    // binding of a book is the same stock as the leaves either side of it. It
-    // sits flush with the inner edge of both pages and runs from the drum to
-    // the back of the lobes, closing the roof slab under it.
+    // The gutter, where the two pages meet. Sandstone, the same dark stock as
+    // the drum a visitor walks through, so the binding reads as the spine of
+    // the book against the paper of the leaves either side of it. It sits
+    // flush with the inner edge of both pages and runs from the drum to the
+    // back of the lobes, closing the roof slab under it.
     // Short of the drum's face, not flush with it. Ending the gutter at the
     // same z as the front of the apse put two faces on one plane, and what
     // showed over the arch was the end of the gutter in page stock. The drum
     // is solid at this height, so it closes the end.
     const gutterFront = BOOK.apse.back + 0.9;
     const gutterBack = BOOK.lobeZ - AZ * 0.72;
-    fascia.push({
+    stone.push({
       geometry: box(BOOK.spineHalf * 2, 0.8, gutterFront - gutterBack),
       position: [0, BOOK.spineY - 0.4, (gutterFront + gutterBack) / 2],
     });
