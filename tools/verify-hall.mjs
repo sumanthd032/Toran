@@ -8,6 +8,7 @@
  * timings: an empty spell, an arrival, 30 s with one work, then a beat.
  *
  *   npm run build:hall && npm run verify:hall
+ *   HALL_URL=https://hall.example.org npm run verify:hall    a deployed hall
  */
 
 import fs from 'node:fs';
@@ -17,7 +18,9 @@ import { launchBrowser, sleep, startCore } from './lib/stage.mjs';
 
 const ROOT = process.cwd();
 const PORT = Number(process.env.CORE_PORT ?? 8797);
-const ORIGIN = `http://127.0.0.1:${PORT}`;
+// A deployed hall is checked where it stands; otherwise one is started here.
+const DEPLOYED = (process.env.HALL_URL ?? '').replace(/\/+$/, '');
+const ORIGIN = DEPLOYED !== '' ? DEPLOYED : `http://127.0.0.1:${PORT}`;
 const SHOTS = process.env.SHOTS ?? null;
 
 let failures = 0;
@@ -28,11 +31,14 @@ const check = (label, ok, detail = '') => {
 
 const built = fs.readFileSync(path.join(ROOT, 'apps/web/out/index.html'), 'utf8');
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-hall-'));
-const stopCore = await startCore(PORT, {
-  TORAN_CORE_DB: path.join(scratch, 'core.sqlite'),
-  TORAN_WEB_ROOT: 'apps/web/out',
-  TORAN_SIMULATE_HALL: '1',
-});
+const stopCore =
+  DEPLOYED !== ''
+    ? () => undefined
+    : await startCore(PORT, {
+        TORAN_CORE_DB: path.join(scratch, 'core.sqlite'),
+        TORAN_WEB_ROOT: 'apps/web/out',
+        TORAN_SIMULATE_HALL: '1',
+      });
 const { browser, engine } = await launchBrowser();
 
 const sheet = async (page) => {
@@ -45,7 +51,7 @@ const sheet = async (page) => {
 };
 const closeSheet = (page) => page.keyboard.press('Escape');
 
-console.log(`The Twin as deployed, in ${engine}\n`);
+console.log(`The Twin as deployed, at ${ORIGIN}, in ${engine}\n`);
 
 try {
   // 1

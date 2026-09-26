@@ -1,0 +1,28 @@
+# The deployed hall on a plain Linux VM, without Docker: a checkout at
+# /opt/toran with the export built, and Caddy in front for HTTPS.
+[Unit]
+Description=Toran Core, serving the Twin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=toran
+Group=toran
+WorkingDirectory=/opt/toran
+EnvironmentFile=/etc/toran/core.env
+Environment=TORAN_CORE_HOST=127.0.0.1 TORAN_CORE_PORT=8787 TORAN_WEB_ROOT=apps/web/out
+ExecStartPre=/usr/bin/node tools/build-archive.mjs
+ExecStartPre=/usr/bin/node tools/build-graph.mjs
+ExecStartPre=/usr/bin/node tools/build-scans.mjs
+ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning apps/core/src/main.ts
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/toran/data /opt/toran/apps/web/public/archive
+
+[Install]
+WantedBy=multi-user.target

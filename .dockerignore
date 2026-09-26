@@ -1,0 +1,20 @@
+# An allowlist: the image carries what the running hall needs and nothing
+# else. .env.local, the Python virtualenv, node_modules and the build caches
+# stay out whatever else is added to the repository.
+*
+!package.json
+!apps/core/
+!apps/web/src/fleet/devices.ts
+!apps/web/out/
+!apps/web/public/archive/
+!apps/web/public/kiosk/
+!packages/contracts/
+!packages/narrate/package.json
+!packages/narrate/src/
+!tools/
+!pipeline/*.json
+!data/
+!deploy/entrypoint.sh
+**/*.test.ts
+**/*.test.mjs
+**/__pycache__

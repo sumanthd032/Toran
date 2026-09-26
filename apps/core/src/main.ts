@@ -69,7 +69,18 @@ if (web !== undefined && !fs.existsSync(path.join(web, 'index.html'))) {
   process.exit(1);
 }
 
-const server = core.router.listen(port, host, web);
+// The live archive answers /archive/ ahead of the export, so what a curator
+// confirms or corrects is on the served Twin as soon as it is rebuilt.
+const liveArchive = path.join(
+  process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,
+  'apps/web/public/archive',
+);
+const overlays =
+  web !== undefined && fs.existsSync(liveArchive)
+    ? [{ prefix: '/archive/', root: liveArchive }]
+    : [];
+
+const server = core.router.listen(port, host, web, overlays);
 
 // The living hall: a simulated visitor at each device, for a Twin with no
 // kiosks in the building. Off unless asked for, and every beat it sends is

@@ -72,12 +72,43 @@ function cacheControl(pathname: string): string {
     : 'no-cache';
 }
 
-export function serveStatic(
+/**
+ * A directory that answers for part of the site ahead of the export: the live
+ * archive, which the curation builds rewrite, so a confirmed link or a
+ * corrected line is served the moment it is rebuilt rather than at the next
+ * web build. D-160.
+ */
+export interface Overlay {
+  readonly prefix: string;
+  readonly root: string;
+}
+
+export function serveWeb(
   root: string,
+  overlays: readonly Overlay[],
   req: IncomingMessage,
   res: ServerResponse,
 ): void {
   const url = new URL(req.url ?? '/', 'http://core.invalid');
+  for (const overlay of overlays) {
+    if (!url.pathname.startsWith(overlay.prefix)) continue;
+    const rest = `/${url.pathname.slice(overlay.prefix.length)}`;
+    if (resolveStatic(overlay.root, rest) !== null) {
+      serveStatic(overlay.root, req, res, rest);
+      return;
+    }
+  }
+  serveStatic(root, req, res);
+}
+
+export function serveStatic(
+  root: string,
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathname?: string,
+): void {
+  const url = new URL(req.url ?? '/', 'http://core.invalid');
+  if (pathname !== undefined) url.pathname = pathname;
   // A directory route without its slash is sent to it, as the export's links expect.
   if (!url.pathname.endsWith('/') && path.extname(url.pathname) === '') {
     const dir = resolveStatic(root, `${url.pathname}/`);

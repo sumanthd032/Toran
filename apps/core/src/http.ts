@@ -8,7 +8,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { serveStatic } from './web.ts';
+import { serveWeb, type Overlay } from './web.ts';
 
 export interface Reply {
   readonly status: number;
@@ -113,7 +113,12 @@ export class Router {
    * `webRoot`, when given, is the built Twin: every GET outside the API is a
    * file from it. The API keeps its prefix, so the two cannot collide.
    */
-  listen(port: number, host: string, webRoot?: string) {
+  listen(
+    port: number,
+    host: string,
+    webRoot?: string,
+    overlays: readonly Overlay[] = [],
+  ) {
     const server = createServer((req, res) => {
       const api = (req.url ?? '/').startsWith('/v1/') || req.url === '/v1';
       if (
@@ -121,7 +126,7 @@ export class Router {
         webRoot !== undefined &&
         (req.method === 'GET' || req.method === 'HEAD')
       ) {
-        serveStatic(webRoot, req, res);
+        serveWeb(webRoot, overlays, req, res);
         return;
       }
       void this.handle(req, res);

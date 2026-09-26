@@ -80,3 +80,6 @@ pipeline/.venv/
 coverage/
 .vscode/
 .idea/
+
+# The deployed hall's secrets. The .example beside it is the template.
+deploy/toran.env

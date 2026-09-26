@@ -1,0 +1,7 @@
+# HTTPS in front of the hall. Caddy fetches and renews the certificate. A
+# browser only lets a page use the microphone over HTTPS, so without this
+# the spoken queries are not offered to anyone off the machine itself.
+hall.example.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8787
+}

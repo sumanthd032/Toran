@@ -1002,3 +1002,36 @@ test('the simulated hall reports through the fleet, says it is simulated, and gi
   assert.equal(real?.uptimeSeconds, 5, 'no simulated beat overwrote the real one');
   db.close();
 });
+
+test('the live archive answers /archive/ ahead of the export, so a curator decision is served at once', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-web-'));
+  const live = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-live-'));
+  fs.mkdirSync(path.join(root, 'archive'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'index.html'), 'hall');
+  fs.writeFileSync(path.join(root, 'archive/graph.json'), '{"built":"with the export"}');
+  fs.writeFileSync(path.join(root, 'archive/timeline.json'), '{"only":"in the export"}');
+  fs.writeFileSync(
+    path.join(live, 'graph.json'),
+    '{"built":"after a curator confirmed a link"}',
+  );
+  const db = openDb(':memory:');
+  const core = createCore({ db, version: 'test', origins: ['*'], seed: HALL });
+  const server = core.router.listen(0, '127.0.0.1', root, [
+    { prefix: '/archive/', root: live },
+  ]);
+  await new Promise((resolve) => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${String((server.address() as { port: number }).port)}`;
+  try {
+    assert.equal(
+      await (await fetch(`${base}/archive/graph.json`)).text(),
+      '{"built":"after a curator confirmed a link"}',
+    );
+    assert.equal(
+      await (await fetch(`${base}/archive/timeline.json`)).text(),
+      '{"only":"in the export"}',
+    );
+  } finally {
+    server.close();
+    db.close();
+  }
+});
