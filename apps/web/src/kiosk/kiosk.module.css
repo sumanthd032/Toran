@@ -437,27 +437,6 @@
 
 /* ---- channel content ---- */
 
-.pending {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  max-width: 44ch;
-  padding-top: var(--s-4);
-}
-
-.about {
-  margin: 0;
-  font-size: var(--t-heading);
-  line-height: 1.4;
-}
-
-.pendingNote {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-meta);
-  color: var(--text-soft);
-}
-
 /*
   The announcement regions. Off screen rather than display:none, because a
   hidden element is not announced at all. Audio-first mode adds the kiosk's

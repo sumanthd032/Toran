@@ -20,6 +20,8 @@ import {
   citedPassage,
   needsCurator,
   pageLocator,
+  readEdgeReviews,
+  readOcrPages,
   readReply,
   refFor,
   SESSION_TTL_MS,
@@ -27,6 +29,7 @@ import {
   type DeviceConfig,
 } from '@toran/contracts';
 import { ProviderError, type Provider } from './assistant/provider.ts';
+import { listEdges } from './curation/edges.ts';
 import { ArchiveFiles, CurationRefused } from './curation/files.ts';
 import { checkFixity, listIngest, verifyRights } from './curation/ingest.ts';
 import { editMetadata } from './curation/metadata.ts';
@@ -450,6 +453,9 @@ function scratchArchive(): { root: string; files: ArchiveFiles } {
     {
       id: 'riddles-p001',
       sourceId: 'riddles',
+      corpus: 'manuscript',
+      workId: 'riddles',
+      language: 'en',
       title: 'Riddles in Hinduism',
       heading: 'A leaf',
       width: 1000,
@@ -518,7 +524,9 @@ const premisOf = (root: string): Record<string, unknown>[] =>
 
 test('an OCR correction keeps the machine reading and says who changed it', () => {
   const { root, files } = scratchArchive();
-  const [page] = listOcr(files);
+  const [page] = readOcrPages(listOcr(files));
+  // The wire carries what a citation is built from, and the reader builds it.
+  assert.equal(page?.citation.corpus, 'manuscript');
   // Least confident first, because that is where a curator's time is worth most.
   assert.equal(page?.readings[0]?.regions[0]?.id, 'l001');
   assert.deepEqual(page?.readings[0]?.regions[0]?.box, [10, 20, 100, 20]);
@@ -646,4 +654,55 @@ test('a Core with no curator key serves the hall read only', () => {
   const core = createCore({ db, version: 'test', origins: ['*'], seed: HALL });
   assert.equal(core.services.includes('curation'), false);
   db.close();
+});
+
+test('the links Core sends are the links the console reads', () => {
+  const { root, files } = scratchArchive();
+  fs.mkdirSync(path.join(root, 'apps/web/public/archive'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'apps/web/public/archive/graph.json'),
+    JSON.stringify({
+      nodes: [
+        { id: 'draft-11', title: 'Draft Article 11', date: '1948' },
+        { id: 'art-17', title: 'Article 17', date: '1950' },
+      ],
+      edges: [
+        {
+          id: 'draft-11--becomes--art-17',
+          from: 'draft-11',
+          to: 'art-17',
+          assertion: 'becomes',
+          method: 'record',
+          evidence: [
+            {
+              corpus: 'baws',
+              workId: 'baws-v1',
+              pageId: 'baws-v1-p0100',
+              locator: { kind: 'page', volume: 1, part: null, page: 68, observed: true },
+              language: 'en',
+              speaker: null,
+              text: 'Caste is a notion, it is a state of the mind.',
+            },
+          ],
+          digest: 'abc',
+          confirmation: null,
+        },
+        {
+          id: 'no-evidence',
+          from: 'draft-11',
+          to: 'art-17',
+          assertion: 'becomes',
+          method: 'record',
+          evidence: [],
+          digest: 'def',
+          confirmation: null,
+        },
+      ],
+    }),
+  );
+  // Through JSON, as over the wire.
+  const read = readEdgeReviews(JSON.parse(JSON.stringify(listEdges(files))));
+  assert.equal(read.length, 1, 'the link with no evidence is not sent');
+  assert.equal(read[0]?.from.title, 'Draft Article 11');
+  assert.equal(read[0]?.evidence[0]?.citation.pageId, 'baws-v1-p0100');
 });

@@ -8,6 +8,7 @@
  */
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { CuratorDesk } from '@/curator/CuratorDesk';
 import { setFeedbackLevel } from '@/design/feedback/sound';
 import { DEVICES, type HallDevice } from '@/fleet/devices';
 import { I18nProvider, useI18n } from '@/i18n';
@@ -18,7 +19,6 @@ import { ResearchDesk } from './channels/assistant/ResearchDesk';
 import { AudioBooth } from './channels/audio/AudioBooth';
 import { AvArchive } from './channels/av/AvArchive';
 import { Entrance } from './channels/entrance/Entrance';
-import { PendingChannel } from './channels/PendingChannel';
 import { ManuscriptStation } from './channels/manuscript/ManuscriptStation';
 import { ProvenanceRoom } from './channels/provenance/ProvenanceRoom';
 import { ReadingRoom } from './channels/reading/ReadingRoom';
@@ -52,6 +52,12 @@ export interface KioskAppProps {
    * A standalone kiosk is always live.
    */
   live?: boolean;
+  /**
+   * The device as the fleet now has it. The Twin passes Core's view, so a
+   * device a curator switched to another channel opens as that channel.
+   * Standalone, the device finds out for itself by reporting in.
+   */
+  device?: HallDevice | undefined;
 }
 
 function channelFor(device: HallDevice, live: boolean): ReactNode {
@@ -72,14 +78,20 @@ function channelFor(device: HallDevice, live: boolean): ReactNode {
       return <ResearchDesk />;
     case 'av':
       return <AvArchive />;
-    default:
-      return <PendingChannel channel={device.channel} />;
+    case 'curator':
+      return <CuratorDesk />;
   }
 }
 
-function Kiosk({ deviceId, context, onExit, live = true }: KioskAppProps) {
+function Kiosk({
+  deviceId,
+  context,
+  onExit,
+  live = true,
+  device: current,
+}: KioskAppProps) {
   const { t } = useI18n();
-  const shipped = DEVICES.find((d) => d.deviceId === deviceId);
+  const shipped = current ?? DEVICES.find((d) => d.deviceId === deviceId);
   const query = useQuery();
   // A visitor in the Twin has no sensor in front of them, and opening a device
   // is a deliberate act, so it starts engaged. Standalone, the URL decides.
@@ -242,7 +254,7 @@ function KioskRoot({
 }
 
 export function KioskApp(props: KioskAppProps) {
-  const device = DEVICES.find((d) => d.deviceId === props.deviceId);
+  const device = props.device ?? DEVICES.find((d) => d.deviceId === props.deviceId);
   return (
     <I18nProvider
       initial={device?.defaultLanguage ?? 'en'}

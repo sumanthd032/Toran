@@ -6,8 +6,9 @@
  * left wall), y up, z along the nave (positive is the entrance). The centre
  * aisle is kept clear so the view from the doorway reaches the Chaitya arch.
  *
- * The config shape is the shared DeviceConfig contract, so the fleet service in
- * step 10 can replace this list without the scene changing.
+ * The config shape is the shared DeviceConfig contract. Toran Core is seeded
+ * from this list once, and after that its fleet service is the truth for what
+ * each device shows; FleetProvider lays that over this roster.
  */
 
 import type { DeviceChannel, DeviceConfig, DeviceHealth } from '@toran/contracts';
@@ -163,10 +164,11 @@ export const DEVICES: readonly HallDevice[] = [
 /**
  * Health fixture.
  *
- * This is NOT live data. Toran Core's fleet service does not exist until step
- * 10, so health comes from here. The fixture deliberately includes one idle and
- * one offline device, because the renderer has to handle every state a real
- * fleet will report, and a fixture where everything is green tests nothing.
+ * This is NOT live data. It is what the Twin shows when no Toran Core is
+ * connected, and the fleet view says so in words. It deliberately includes one
+ * idle and one offline device, because the renderer has to handle every state
+ * a real fleet will report, and a fixture where everything is green tests
+ * nothing.
  */
 export function fixtureHealth(now: Date = new Date()): ReadonlyMap<string, DeviceHealth> {
   const iso = (minutesAgo: number) =>

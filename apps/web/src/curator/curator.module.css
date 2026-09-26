@@ -1,0 +1,258 @@
+/*
+  The Curator Console. A desk surface, read at arm's length with a mouse, so
+  the queues are denser than a visitor's room and the controls sit with the
+  item they act on rather than in the reach zone. The paper, the rules and
+  the type are the same as everywhere else: a curator is working in the same
+  archive a visitor reads.
+*/
+
+.console {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-inline-end: var(--s-2);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-block-end: var(--s-2);
+  border-block-end: var(--hairline) solid var(--border);
+}
+
+.signedIn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-meta);
+  font-family: var(--font-mono);
+  color: var(--text-soft);
+}
+
+.gate {
+  display: grid;
+  gap: var(--s-3);
+  max-inline-size: 36em;
+}
+
+.heading {
+  font-family: var(--font-read);
+  font-size: var(--t-heading);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.summary {
+  margin: 0 0 var(--s-3);
+  color: var(--text-soft);
+}
+
+.soft {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.failure {
+  margin: 0;
+  color: var(--danger);
+}
+
+.detail {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+/* A decided item recedes, so what still needs a person is what the eye finds. */
+.item {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.item[data-decided='true'] {
+  background: var(--surface-raised);
+}
+
+.itemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.itemTitle {
+  font-family: var(--font-read);
+  font-size: var(--t-body);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.assertion {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  font-weight: 400;
+  color: var(--accent-text);
+}
+
+.evidence {
+  margin: 0;
+  padding-inline-start: var(--s-4);
+  display: grid;
+  gap: var(--s-3);
+}
+
+.passage {
+  margin: 0;
+  font-family: var(--font-read);
+  line-height: var(--leading-read);
+}
+
+.machine,
+.corrected {
+  margin: 0;
+  font-family: var(--font-read);
+  line-height: var(--leading-read);
+}
+
+/* A correction reads as a correction, in the ink of one, never in place of the machine's line. */
+.corrected {
+  color: var(--danger);
+}
+
+.decide {
+  display: grid;
+  gap: var(--s-2);
+  padding-block-start: var(--s-2);
+  border-block-start: var(--hairline) solid var(--border);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(12em, 18em) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+.picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-1);
+  position: sticky;
+  top: 0;
+}
+
+.pickTitle {
+  display: block;
+  text-align: start;
+}
+
+/* Inside a pressed picker the button's own ink, which is the one with the contrast. */
+.pickMeta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: inherit;
+}
+
+.reading {
+  display: grid;
+  gap: var(--s-3);
+  margin-block-start: var(--s-4);
+}
+
+.crop {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 5em;
+  background: var(--surface-sunken);
+  border: var(--hairline) solid var(--border);
+}
+
+.field {
+  display: grid;
+  gap: var(--s-1);
+  padding-block: var(--s-3);
+  border-block-end: var(--hairline) solid var(--border);
+}
+
+.history {
+  margin: 0;
+  padding-inline-start: var(--s-4);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--s-1) var(--s-3);
+  margin: 0;
+}
+
+.facts dt {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .picker {
+    position: static;
+  }
+}

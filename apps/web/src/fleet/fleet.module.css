@@ -1,0 +1,93 @@
+/*
+  The fleet list: one row per device, with what it shows, its language and
+  its state, and the controls to change it unfolding under the row.
+*/
+
+.panel {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.source {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-1);
+}
+
+.device {
+  display: grid;
+  gap: var(--s-2);
+  padding-block: var(--s-2);
+  border-block-end: var(--hairline) solid var(--border);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.name {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  min-inline-size: 10em;
+}
+
+.open {
+  min-inline-size: 10em;
+  justify-content: flex-start;
+}
+
+.id {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+/* No font of its own: the :lang rule in globals.css picks the face for the script. */
+.lang {
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.configure {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--surface-raised);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choices legend {
+  inline-size: 100%;
+  padding: 0 0 var(--s-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}
+
+.note {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}

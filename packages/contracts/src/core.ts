@@ -68,7 +68,13 @@ export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
  * `curation` is served only where a curator key is set, because it is the one
  * service that writes to the archive.
  */
-export const CORE_SERVICES = ['fleet', 'session', 'assistant', 'language', 'curation'] as const;
+export const CORE_SERVICES = [
+  'fleet',
+  'session',
+  'assistant',
+  'language',
+  'curation',
+] as const;
 export type CoreService = (typeof CORE_SERVICES)[number];
 
 export interface CoreStatus {

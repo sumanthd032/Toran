@@ -20,18 +20,26 @@ import { CurationRefused, PATHS, type ArchiveFiles } from './files.ts';
 interface ScanRow {
   id: string;
   sourceId: string;
+  corpus: string;
+  workId: string;
+  language?: string;
   heading?: string | null;
-  title?: string | null;
   width: number;
   height: number;
-  locator: {
-    kind: string;
-    page?: number;
-    folio?: string | number | null;
-    manuscript?: string;
-    printed?: string | null;
-  };
+  /** Passed through as the pipeline wrote it; the console's reader checks it. */
+  locator: unknown;
 }
+
+/**
+ * A page as it goes over the wire. The console builds the citation from the
+ * corpus, work and locator with the contract's own reader, so this side never
+ * formats one.
+ */
+type OcrPageWire = Omit<OcrPage, 'citation'> & {
+  readonly corpus: string;
+  readonly workId: string;
+  readonly locator: unknown;
+};
 
 interface RegionRow {
   id: string;
@@ -68,21 +76,6 @@ function box(polygon: RegionRow['polygon']): RegionBox | null {
   return [x, y, Math.max(...xs) - x, Math.max(...ys) - y];
 }
 
-/** How the page is cited, in the same words the correction tool prints. */
-function cite(scan: ScanRow): string {
-  const l = scan.locator;
-  const title = scan.title ?? scan.heading ?? scan.id;
-  if (l.kind === 'page' && typeof l.page === 'number')
-    return `${title}, page ${String(l.page)}`;
-  if (l.kind === 'folio') {
-    const printed = l.printed ? `; printed at ${l.printed}` : '';
-    return l.folio === null || l.folio === undefined
-      ? `${l.manuscript ?? title}, a leaf${printed}`
-      : `${l.manuscript ?? title}, leaf ${String(l.folio)}${printed}`;
-  }
-  return title;
-}
-
 function scans(files: ArchiveFiles): ScanRow[] {
   return files.json<ScanRow[]>(PATHS.scans, []);
 }
@@ -101,7 +94,7 @@ function corrections(files: ArchiveFiles): CorrectionRow[] {
   return files.log(PATHS.corrections) as CorrectionRow[];
 }
 
-export function listOcr(files: ArchiveFiles): OcrPage[] {
+export function listOcr(files: ArchiveFiles): OcrPageWire[] {
   const latest = new Map<string, CorrectionRow>();
   // The log is in order, so the last correction of a region is the one that counts.
   for (const c of corrections(files))
@@ -110,7 +103,10 @@ export function listOcr(files: ArchiveFiles): OcrPage[] {
   return scans(files).map((scan) => ({
     pageId: scan.id,
     heading: scan.heading ?? '',
-    cite: cite(scan),
+    language: scan.language ?? 'en',
+    corpus: scan.corpus,
+    workId: scan.workId,
+    locator: scan.locator,
     width: scan.width,
     height: scan.height,
     readings: readings(files, scan.id).map((r): OcrReading => ({

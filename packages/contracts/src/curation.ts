@@ -15,8 +15,8 @@
  */
 
 import type { RawChunk } from './ingest.ts';
-import { readChunks } from './ingest.ts';
-import type { CitedPassage } from './citation.ts';
+import { readChunks, readLocator } from './ingest.ts';
+import { citation, isCorpus, type Citation, type CitedPassage } from './citation.ts';
 import { WireError } from './core.ts';
 
 /** Who decided, and why. Required on every write: an archive records its agents. */
@@ -92,8 +92,10 @@ export interface OcrReading {
 export interface OcrPage {
   readonly pageId: string;
   readonly heading: string;
-  /** The page as a citation would print it, with a volume or leaf where one exists. */
-  readonly cite: string;
+  /** The page's language, so its heading and lines are set in their own script. */
+  readonly language: string;
+  /** Every line a curator reads here is a line of this page, cited as the page is. */
+  readonly citation: Citation;
   readonly width: number;
   readonly height: number;
   readonly readings: readonly OcrReading[];
@@ -334,10 +336,19 @@ function readRegion(raw: unknown): OcrRegion {
 
 export function readOcrPage(raw: unknown): OcrPage {
   const p = record(raw, 'ocr page');
+  const corpus = p['corpus'];
+  if (!isCorpus(corpus)) throw new WireError(`unknown corpus: ${String(corpus)}`);
   return {
     pageId: str(p['pageId'], 'pageId'),
     heading: text(p['heading'] ?? '', 'heading'),
-    cite: str(p['cite'], 'cite'),
+    language:
+      typeof p['language'] === 'string' && p['language'] !== '' ? p['language'] : 'en',
+    citation: citation({
+      corpus,
+      workId: str(p['workId'], 'workId'),
+      pageId: str(p['pageId'], 'pageId'),
+      locator: readLocator(p['locator']),
+    }),
     width: num(p['width'], 'width'),
     height: num(p['height'], 'height'),
     readings: list(p['readings'], 'readings').map((raw) => {

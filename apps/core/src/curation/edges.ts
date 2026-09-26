@@ -13,7 +13,6 @@ import {
   readEdgeReview,
   type EdgeConfirmation,
   type EdgeDecisionInput,
-  type EdgeReview,
 } from '@toran/contracts';
 import { CurationRefused, PATHS, type ArchiveFiles } from './files.ts';
 
@@ -45,7 +44,13 @@ function graph(files: ArchiveFiles): Graph {
   return files.json<Graph>(PATHS.graph, { nodes: [], edges: [] });
 }
 
-export function listEdges(files: ArchiveFiles): EdgeReview[] {
+/**
+ * The links as they go over the wire: the graph's own edges, with the node
+ * titles filled in. Each is checked with the console's reader first, and one
+ * the console would refuse is not sent; what is sent is the raw edge, because
+ * the reader on the other end builds the citations itself.
+ */
+export function listEdges(files: ArchiveFiles): unknown[] {
   const g = graph(files);
   const nodes = new Map(g.nodes.map((n) => [n.id, n]));
   const end = (id: string) => {
@@ -53,14 +58,10 @@ export function listEdges(files: ArchiveFiles): EdgeReview[] {
     return { id, title: n?.title ?? id, date: n?.date ?? '' };
   };
   return g.edges.flatMap((e) => {
+    const wire = { ...e, from: end(e.from), to: end(e.to) };
     try {
-      return [
-        readEdgeReview({
-          ...e,
-          from: end(e.from),
-          to: end(e.to),
-        }),
-      ];
+      readEdgeReview(wire);
+      return [wire];
     } catch {
       // An edge with no citable evidence is not shown to a curator, and
       // build-graph would not have drawn it either.
