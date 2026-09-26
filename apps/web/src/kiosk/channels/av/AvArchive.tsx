@@ -203,9 +203,7 @@ export function AvArchive() {
           onTime={setAt}
           onEnded={() => setPlaying(false)}
           onSeek={seek}
-          src={
-            remote.has(recording.id) ? recording.stream : mediaUrl(recording.file)
-          }
+          src={remote.has(recording.id) ? recording.stream : mediaUrl(recording.file)}
           onMissing={() =>
             setRemote((had) => {
               if (had.has(recording.id)) return had;
