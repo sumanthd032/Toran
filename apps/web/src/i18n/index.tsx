@@ -18,9 +18,12 @@ import {
   type ReactNode,
 } from 'react';
 import { DEFAULT_LANGUAGE, language as languageInfo } from '@toran/contracts';
+import bn from './messages/bn.json';
 import en from './messages/en.json';
 import hi from './messages/hi.json';
 import mr from './messages/mr.json';
+import ta from './messages/ta.json';
+import te from './messages/te.json';
 
 /** Keys are derived from the English catalogue, so a typo will not compile. */
 export type MessageKey = keyof typeof en;
@@ -33,9 +36,9 @@ type Catalogue = Record<MessageKey, string>;
  * A language is offered when it has a complete catalogue, not when Bhashini
  * can translate it. Those are different claims: Bhashini covers all 22
  * scheduled languages, and this repository offers the ones it can set in type
- * and label completely. Bengali, Tamil and Telugu have their reading faces
- * vendored and are waiting on `npm run catalogue`, which needs a Bhashini key.
- * See DECISIONS.md D-122.
+ * and label completely. Bengali, Tamil and Telugu are machine translated by
+ * Bhashini and say so in their `_provenance`; hi and mr are hand-written except
+ * the keys each lists in `_machine`. See DECISIONS.md D-122.
  *
  * To add one: generate its catalogue, import it here, add it to this map.
  */
@@ -43,6 +46,9 @@ const CATALOGUES: Readonly<Record<string, Catalogue>> = {
   en: en as Catalogue,
   hi: hi as Catalogue,
   mr: mr as Catalogue,
+  bn: bn as Catalogue,
+  ta: ta as Catalogue,
+  te: te as Catalogue,
 };
 
 export function hasCatalogue(code: string): boolean {
