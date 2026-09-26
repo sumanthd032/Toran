@@ -9,7 +9,7 @@ const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta
 
 const config = [
   // public/ holds vendored runtimes (ONNX Runtime, the model) and fonts.
-  { ignores: ['.next/**', 'out/**', 'public/**', 'next-env.d.ts'] },
+  { ignores: ['.next/**', 'out/**', 'out-web/**', 'public/**', 'next-env.d.ts'] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ];
 
