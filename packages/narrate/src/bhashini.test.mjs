@@ -112,4 +112,5 @@ test('a colon written as visarga is put back, and a real visarga is left alone',
   assert.equal(repunctuate('Reused here', 'यहाँ पुनः उपयोग'), 'यहाँ पुनः उपयोग');
   assert.equal(repunctuate('Dr. Ambedkar: [0]', 'ডঃ আম্বেদকরঃ [0]'), 'ডঃ আম্বেদকরঃ [0]');
   assert.equal(repunctuate('Open: [0]', 'திற: [0]'), 'திற: [0]');
+  assert.equal(repunctuate('stated :-"The situation"', 'कहाः-"स्थिति"'), 'कहा:-"स्थिति"');
 });

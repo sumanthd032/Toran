@@ -73,7 +73,7 @@ export function readTranslations(response, expected) {
 // Visarga in the scripts IndicTrans2 writes: Devanagari, Bengali, Gurmukhi,
 // Gujarati, Oriya, Telugu, Kannada, Malayalam. Tamil's aytham is a letter in
 // ordinary words and is left out on purpose.
-const VISARGA_BEFORE_SPACE = /[\u0903\u0983\u0A03\u0A83\u0B03\u0C03\u0C83\u0D03](?=\s|$)/gu;
+const WORD_FINAL_VISARGA = /[\u0903\u0983\u0A03\u0A83\u0B03\u0C03\u0C83\u0D03](?=[\s\-\u2013\u2014"'\u201c\u201d\u2018\u2019]|$)/gu;
 
 /**
  * Puts back the colons IndicTrans2 writes as visarga.
@@ -88,8 +88,8 @@ const VISARGA_BEFORE_SPACE = /[\u0903\u0983\u0A03\u0A83\u0B03\u0C03\u0C83\u0D03]
 export function repunctuate(source, target) {
   const colons = (source.match(/:/g) ?? []).length;
   if (colons === 0 || target.includes(':')) return target;
-  const visargas = (target.match(VISARGA_BEFORE_SPACE) ?? []).length;
-  return visargas === colons ? target.replace(VISARGA_BEFORE_SPACE, ':') : target;
+  const visargas = (target.match(WORD_FINAL_VISARGA) ?? []).length;
+  return visargas === colons ? target.replace(WORD_FINAL_VISARGA, ':') : target;
 }
 
 /** Narration audio, base64, as the API returns it. */
