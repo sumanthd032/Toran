@@ -392,7 +392,11 @@
   "speech.working": "काय म्हटले गेले ते समजून घ्या",
   "speech.unheard": "ते पार पडले नाही. पुन्हा प्रयत्न करा, किंवा टाइप करा.",
   "speech.no-microphone": "हा किऑस्क त्याचा मायक्रोफोन वापरू शकत नाही. त्याऐवजी तुमचा शोध टाइप करा.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 138 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "device.status.simulated": "{status}, नकली अभ्यागत",
+  "twin.nearby": "जवळचे वाचा: {title}",
+  "fleet.simulated": "सिम्युलेटेड अभ्यागत",
+  "fleet.source.simulatedCount": "यापैकी {count} उपकरणे कियोस्क नव्हे तर तोरान कोअरमधून अनुकरण केलेले अभ्यागत आहेत.",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 142 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -531,6 +535,10 @@
     "speech.listening",
     "speech.working",
     "speech.unheard",
-    "speech.no-microphone"
+    "speech.no-microphone",
+    "device.status.simulated",
+    "twin.nearby",
+    "fleet.simulated",
+    "fleet.source.simulatedCount"
   ]
 }

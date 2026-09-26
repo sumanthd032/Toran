@@ -9,6 +9,8 @@
 }
 
 .source {
+  display: grid;
+  gap: var(--s-1);
   margin: 0;
   font-family: var(--font-mono);
   font-size: var(--t-meta);
@@ -55,6 +57,10 @@
 }
 
 /* No font of its own: the :lang rule in globals.css picks the face for the script. */
+.simNote {
+  color: var(--accent-text);
+}
+
 .lang {
   font-size: var(--t-meta);
   color: var(--text-soft);

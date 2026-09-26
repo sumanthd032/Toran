@@ -206,6 +206,7 @@ function Hall() {
               key={open}
               deviceId={open}
               device={fleet.devices.find((d) => d.deviceId === open)}
+              drift={fleet.drift.get(open) ?? null}
               context="twin"
               onExit={close}
               live={covered}

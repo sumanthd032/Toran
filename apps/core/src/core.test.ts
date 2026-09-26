@@ -38,6 +38,7 @@ import { correctOcr, listOcr } from './curation/ocr.ts';
 import { one, openDb, rows } from './db.ts';
 import { Fleet } from './fleet.ts';
 import type { Transcriber } from './language/transcribe.ts';
+import { HallSimulator, seeded } from './simulate.ts';
 import { RateLimit } from './http.ts';
 import { createCore } from './server.ts';
 import { Sessions } from './session.ts';
@@ -905,7 +906,10 @@ test('Core serves the built Twin from its own origin, and nothing outside it', a
     assert.equal(ranged.status, 206);
     assert.equal(await ranged.text(), '2345');
     // The API is still the API.
-    assert.equal((await (await fetch(`${base}/v1/status`)).json()).service, 'toran-core');
+    const status = (await (await fetch(`${base}/v1/status`)).json()) as {
+      service: string;
+    };
+    assert.equal(status.service, 'toran-core');
     for (const escape of [
       '/../toran-secret.txt',
       '/%2e%2e/toran-secret.txt',
@@ -918,4 +922,83 @@ test('Core serves the built Twin from its own origin, and nothing outside it', a
     server.close();
     db.close();
   }
+});
+
+test('a simulated visit walks the proxemic states and names a work only once it has held', () => {
+  const visit = {
+    implicit: 10_000,
+    subtle: 15_000,
+    personal: 25_000,
+    decaying: 100_000,
+    ambient: 120_000,
+    topic: 'baws-v1',
+  };
+  assert.deepEqual(HallSimulator.phase(visit, 5_000), { state: 'ambient', topic: null });
+  assert.equal(HallSimulator.phase(visit, 12_000).state, 'implicit');
+  assert.equal(HallSimulator.phase(visit, 20_000).state, 'subtle');
+  assert.deepEqual(HallSimulator.phase(visit, 40_000), {
+    state: 'personal',
+    topic: null,
+  });
+  assert.deepEqual(HallSimulator.phase(visit, 56_000), {
+    state: 'personal',
+    topic: 'baws-v1',
+  });
+  assert.equal(HallSimulator.phase(visit, 110_000).state, 'decaying');
+});
+
+test('the simulated hall reports through the fleet, says it is simulated, and gives way to a real kiosk', () => {
+  let clock = 5_000_000;
+  const db = openDb(':memory:');
+  const fleet = new Fleet(db, () => clock);
+  fleet.seed([
+    { ...HALL[0]!, deviceId: 'dev-03', channel: 'provenance', position: [0, 0, 0] },
+    { ...HALL[0]!, deviceId: 'dev-07', channel: 'manuscript', position: [5, 0, 0] },
+    { ...HALL[0]!, deviceId: 'dev-12', channel: 'curator', position: [40, 0, 0] },
+  ]);
+  const hall = new HallSimulator(fleet, ['baws-v17-1'], () => clock, seeded(7));
+  // Twenty minutes of the hall, five seconds at a time.
+  let drifted = false;
+  for (let i = 0; i < 240; i++) {
+    clock += 5000;
+    hall.tick();
+    if (fleet.snapshot().drift.length > 0) drifted = true;
+  }
+  const health = fleet.health();
+  assert.deepEqual(
+    health.map((h) => [h.deviceId, h.simulated]),
+    [
+      ['dev-03', true],
+      ['dev-07', true],
+    ],
+    'every device but the curator desk has a simulated visitor, and says so',
+  );
+  assert.ok(
+    drifted,
+    'in twenty minutes a simulated reader drifts a neighbour at least once',
+  );
+
+  // A pushed config is taken up on the next simulated beat, like a real kiosk.
+  fleet.put('dev-07', { ...fleet.config('dev-07')!, channel: 'timeline' });
+  for (let i = 0; i < 7; i++) {
+    clock += 5000;
+    hall.tick();
+  }
+  assert.equal(fleet.health().find((h) => h.deviceId === 'dev-07')?.configVersion, 2);
+
+  // A real kiosk reports for dev-03; the simulator stops speaking for it.
+  fleet.beat('dev-03', {
+    state: 'ambient',
+    configVersion: 1,
+    uptimeSeconds: 5,
+    topic: null,
+  });
+  for (let i = 0; i < 12; i++) {
+    clock += 5000;
+    hall.tick();
+  }
+  const real = fleet.health().find((h) => h.deviceId === 'dev-03');
+  assert.equal(real?.simulated, false);
+  assert.equal(real?.uptimeSeconds, 5, 'no simulated beat overwrote the real one');
+  db.close();
 });

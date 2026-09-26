@@ -13,6 +13,7 @@
  */
 
 import {
+  BEAT_STALE_MS,
   beatIsFresh,
   driftFor,
   readDeviceConfig,
@@ -45,6 +46,13 @@ interface HealthRow {
 export class Fleet {
   private readonly db: Db;
   private readonly now: () => number;
+  /**
+   * Devices whose last beat came from the hall simulator, and when a real
+   * kiosk last reported for each device. Kept in memory: a restart forgets
+   * both, and the next beats say again which is which.
+   */
+  private readonly simulated = new Set<string>();
+  private readonly realAt = new Map<string, number>();
 
   constructor(db: Db, now: () => number = Date.now) {
     this.db = db;
@@ -146,9 +154,15 @@ export class Fleet {
   beat(
     deviceId: string,
     beat: DeviceBeat,
+    { simulated = false }: { simulated?: boolean } = {},
   ): { config: DeviceConfig; changed: boolean; drift: string | null } {
     const config = this.config(deviceId);
     if (config === null) throw new UnknownDevice(deviceId);
+    if (simulated) this.simulated.add(deviceId);
+    else {
+      this.simulated.delete(deviceId);
+      this.realAt.set(deviceId, this.now());
+    }
     run(
       this.db,
       `insert into device_health
@@ -181,6 +195,21 @@ export class Fleet {
       changed: beat.configVersion !== config.version,
       drift: driftFor(config, this.engaged()),
     };
+  }
+
+  /** Whether a real kiosk has reported for this device recently. */
+  reportedByDevice(deviceId: string): boolean {
+    const at = this.realAt.get(deviceId);
+    return at !== undefined && this.now() - at <= BEAT_STALE_MS;
+  }
+
+  /** The work each device is drifting toward right now, for the Twin to draw. */
+  drifts(): { deviceId: string; work: string }[] {
+    const engaged = this.engaged();
+    return this.configs().flatMap((c) => {
+      const work = driftFor(c, engaged);
+      return work === null ? [] : [{ deviceId: c.deviceId, work }];
+    });
   }
 
   /**
@@ -224,6 +253,7 @@ export class Fleet {
         configVersion: row.config_version,
         state: row.state as DeviceHealth['state'],
         uptimeSeconds: row.uptime_seconds,
+        simulated: this.simulated.has(row.device_id),
       }),
     );
   }
@@ -233,6 +263,7 @@ export class Fleet {
       at: new Date(this.now()).toISOString(),
       devices: this.configs(),
       health: this.health(),
+      drift: this.drifts(),
     };
   }
 }

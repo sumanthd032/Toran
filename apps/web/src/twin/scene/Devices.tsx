@@ -22,6 +22,7 @@ import * as THREE from 'three';
 import type { DeviceHealth } from '@toran/contracts';
 import { useI18n, type MessageKey } from '@/i18n';
 import { DEVICES, statusOf, type HallDevice } from '@/fleet/devices';
+import { useFleet } from '@/fleet/FleetProvider';
 import { mergeParts, type Part } from '../geometry';
 import { hallMaterials } from '../materials';
 import { label as labelTexture, screen as screenTexture } from '../textures';
@@ -69,12 +70,22 @@ function Screen({
   health: DeviceHealth | undefined;
 }) {
   const { t, lang } = useI18n();
+  const { drift, titleOf } = useFleet();
   const status = statusOf(health);
   const title = t(`device.channel.${device.channel}` as MessageKey);
-  const statusLabel =
+  const plain =
     status === 'offline' && health !== undefined
       ? t('device.status.offlineFor', { minutes: minutesSince(health.lastSeen) })
       : t(`device.status.${status}` as MessageKey);
+  // A simulated visitor is said to be one on the screen itself, not only in a list.
+  const statusLabel =
+    health?.simulated === true && status !== 'offline'
+      ? t('device.status.simulated', { status: plain })
+      : plain;
+  // The Honeypot Fleet, drawn where a visitor in the hall can see it.
+  const drifting = drift.get(device.deviceId);
+  const note =
+    drifting === undefined ? null : t('twin.nearby', { title: titleOf(drifting) });
 
   const material = useMemo(() => {
     const map = screenTexture(
@@ -84,12 +95,13 @@ function Screen({
       statusLabel,
       lang,
       spec.portrait ?? false,
+      note,
     );
     const m = new THREE.MeshBasicMaterial({ map, toneMapped: false });
     // Push lit screens past the bloom threshold so they glow in the dim hall.
     m.color.setScalar(status === 'online' ? 1.35 : status === 'idle' ? 0.8 : 1);
     return m;
-  }, [device.channel, title, status, statusLabel, lang, spec.portrait]);
+  }, [device.channel, title, status, statusLabel, lang, spec.portrait, note]);
 
   useEffect(
     () => () => {

@@ -140,12 +140,19 @@ try {
       : `${Math.round((Date.now() - startedReading) / 1000)} s after the visitor began, "${during.nearby}"`,
   );
 
-  // 3. What crossed the wire is a work id and nothing else.
+  // 3. What crossed the wire is a work id and nothing else. The fleet view
+  // says which devices drift and toward what, never which device is being
+  // read, and carries no card at all. D-162.
   const fleet = await (await fetch(`${CORE}/v1/fleet`)).json();
-  const serialised = JSON.stringify(fleet);
+  const { drift, ...rest } = fleet;
+  const readerNamed = drift.some((d) => d.deviceId === 'dev-03');
   check(
-    "3 Core's fleet view carries no topic, token or session: the drift is only in a beat reply",
-    !serialised.includes(WORK) && !serialised.includes('sim-card'),
+    '3 the fleet view names the drifting neighbour, never the device being read, and no card',
+    drift.some((d) => d.deviceId === 'dev-07' && d.work === WORK) &&
+      !readerNamed &&
+      !JSON.stringify(rest).includes(WORK) &&
+      !JSON.stringify(fleet).includes('sim-card'),
+    drift.map((d) => `${d.deviceId} toward ${d.work}`).join(', '),
   );
 
   // 4. The visitor walks away. The drift ends within two beats.

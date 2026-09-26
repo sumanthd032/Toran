@@ -391,5 +391,9 @@
   "speech.listening": "Listening. Tap Done when you have finished, or wait five seconds.",
   "speech.working": "Working out what was said",
   "speech.unheard": "That did not come through. Try again, or type it.",
-  "speech.no-microphone": "This kiosk cannot use its microphone. Type your search instead."
+  "speech.no-microphone": "This kiosk cannot use its microphone. Type your search instead.",
+  "device.status.simulated": "{status}, simulated visitor",
+  "twin.nearby": "Read nearby: {title}",
+  "fleet.simulated": "Simulated visitor",
+  "fleet.source.simulatedCount": "{count} of these devices are simulated visitors from Toran Core, not kiosks."
 }

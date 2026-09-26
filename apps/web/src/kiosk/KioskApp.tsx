@@ -59,6 +59,11 @@ export interface KioskAppProps {
    * Standalone, the device finds out for itself by reporting in.
    */
   device?: HallDevice | undefined;
+  /**
+   * In the Twin, the work Core says this device is drifting toward. A kiosk
+   * in the Twin does not report in, so it is told rather than asking.
+   */
+  drift?: string | null | undefined;
 }
 
 function channelFor(device: HallDevice, live: boolean): ReactNode {
@@ -90,6 +95,7 @@ function Kiosk({
   onExit,
   live = true,
   device: current,
+  drift: told = null,
 }: KioskAppProps) {
   const { t } = useI18n();
   const shipped = current ?? DEVICES.find((d) => d.deviceId === deviceId);
@@ -114,12 +120,13 @@ function Kiosk({
   // pushes something else. Only a standalone kiosk reports in: one opened in
   // the Twin is a view of a device, not the device.
   const engagement = useMemo(() => createEngagementTracker(), []);
-  const { device, drift } = useFleetConfig(
+  const { device, drift: reported } = useFleetConfig(
     shipped,
     proximity.state,
     context === 'standalone',
     engagement,
   );
+  const drift = context === 'twin' ? told : reported;
 
   // Physical calibration. The ambient headline is sized in real millimetres,
   // which only holds if CSS millimetres are real on this panel. A kiosk is

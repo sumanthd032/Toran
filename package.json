@@ -68,6 +68,7 @@
     "verify:curator": "node tools/verify-curator.mjs",
     "verify:honeypot": "node tools/verify-honeypot.mjs",
     "verify:speech": "node tools/verify-speech.mjs",
+    "verify:hall": "node tools/verify-hall.mjs",
     "verify:hardware": "node tools/verify-hardware.mjs && python3 -m unittest discover -s hardware/daemon",
     "soak:kiosk": "node tools/soak-kiosk.mjs",
     "deploy:web": "node tools/deploy-web.mjs"

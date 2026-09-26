@@ -392,7 +392,11 @@
   "speech.working": "যা বলা হয়েছিল তা কার্যকর করুন",
   "speech.unheard": "সেটা আর এগোয়নি। আবার চেষ্টা করুন, অথবা টাইপ করুন।",
   "speech.no-microphone": "এই কিয়স্কটি তার মাইক্রোফোন ব্যবহার করতে পারে না। পরিবর্তে আপনার অনুসন্ধান টাইপ করুন।",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 98 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "device.status.simulated": "{status}, সিমুলেটেড ভিজিটর",
+  "twin.nearby": "কাছাকাছি পড়ুন: {title}",
+  "fleet.simulated": "সিমুলেটেড পরিদর্শক",
+  "fleet.source.simulatedCount": "এই ডিভাইসগুলির মধ্যে {count} টোরান কোর থেকে সিমুলেটেড দর্শক, কিয়স্ক নয়।",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 102 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -491,6 +495,10 @@
     "speech.listening",
     "speech.working",
     "speech.unheard",
-    "speech.no-microphone"
+    "speech.no-microphone",
+    "device.status.simulated",
+    "twin.nearby",
+    "fleet.simulated",
+    "fleet.source.simulatedCount"
   ]
 }

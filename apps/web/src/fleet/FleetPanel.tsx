@@ -144,7 +144,7 @@ function Configure({
 
 export function FleetPanel({ onOpen }: { onOpen?: (deviceId: string) => void }) {
   const { t } = useI18n();
-  const { devices, health, source, at } = useFleet();
+  const { devices, health, source, at, simulated, drift, titleOf } = useFleet();
   const [configuring, setConfiguring] = useState<string | null>(null);
   const ordered = [...devices].sort(
     (a, b) => CHANNEL_ORDER.indexOf(a.channel) - CHANNEL_ORDER.indexOf(b.channel),
@@ -156,6 +156,11 @@ export function FleetPanel({ onOpen }: { onOpen?: (deviceId: string) => void }) 
         {source === 'fleet' && at !== null
           ? t('fleet.source.live', { at: new Date(at).toLocaleTimeString() })
           : t('fleet.source.fixture')}
+        {source === 'fleet' && simulated > 0 && (
+          <span className={styles.simNote}>
+            {t('fleet.source.simulatedCount', { count: simulated })}
+          </span>
+        )}
       </p>
       <ul className={styles.list}>
         {ordered.map((d) => {
@@ -175,6 +180,9 @@ export function FleetPanel({ onOpen }: { onOpen?: (deviceId: string) => void }) 
                   </Button>
                 )}
                 <span className={styles.id}>{d.deviceId}</span>
+                {h?.simulated === true && source === 'fleet' && (
+                  <Badge tone="neutral">{t('fleet.simulated')}</Badge>
+                )}
                 <span className={styles.lang} lang={d.defaultLanguage}>
                   {nativeName(d.defaultLanguage)}
                 </span>
@@ -208,6 +216,11 @@ export function FleetPanel({ onOpen }: { onOpen?: (deviceId: string) => void }) 
                   </Button>
                 )}
               </div>
+              {drift.has(d.deviceId) && (
+                <span className={styles.note} data-testid="fleet-drift">
+                  {t('twin.nearby', { title: titleOf(drift.get(d.deviceId)!) })}
+                </span>
+              )}
               {configuring === d.deviceId && (
                 <OperatorGate>
                   <Configure device={d} health={h} />

@@ -90,6 +90,12 @@ export interface FleetSnapshot {
   readonly at: string;
   readonly devices: readonly DeviceConfig[];
   readonly health: readonly DeviceHealth[];
+  /**
+   * For each device a drift reaches, the work it drifts toward. A work id,
+   * never the device it came from, so the Twin can draw the Honeypot Fleet
+   * without saying where anyone is reading. D-162.
+   */
+  readonly drift: readonly { readonly deviceId: string; readonly work: string }[];
 }
 
 /** What a kiosk posts every BEAT_INTERVAL_MS. */
@@ -231,6 +237,7 @@ export function readDeviceHealth(raw: unknown): DeviceHealth {
     configVersion: whole(h['configVersion'], 'configVersion'),
     state,
     uptimeSeconds: whole(h['uptimeSeconds'], 'uptimeSeconds'),
+    simulated: h['simulated'] === true,
   };
 }
 
@@ -252,10 +259,18 @@ export function readFleetSnapshot(raw: unknown): FleetSnapshot {
   const f = record(raw, 'fleet');
   const devices = Array.isArray(f['devices']) ? f['devices'] : [];
   const health = Array.isArray(f['health']) ? f['health'] : [];
+  const drift = Array.isArray(f['drift']) ? f['drift'] : [];
   return {
     at: str(f['at'], 'at'),
     devices: devices.map(readDeviceConfig),
     health: health.map(readDeviceHealth),
+    drift: drift.flatMap((d: unknown) => {
+      const r = typeof d === 'object' && d !== null ? (d as Record<string, unknown>) : {};
+      const work = readTopic(r['work']);
+      return work === null || typeof r['deviceId'] !== 'string'
+        ? []
+        : [{ deviceId: r['deviceId'], work }];
+    }),
   };
 }
 

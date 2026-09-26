@@ -392,7 +392,11 @@
   "speech.working": "என்ன சொல்லப்பட்டது என்பதைப் புரிந்துகொள்ளுங்கள்",
   "speech.unheard": "அது நிறைவேறவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது தட்டச்சு செய்யவும்.",
   "speech.no-microphone": "இந்த கியோஸ்க் அதன் மைக்ரோஃபோனைப் பயன்படுத்த முடியாது. அதற்கு பதிலாக உங்கள் தேடலை உள்ளிடவும்.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 99 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "device.status.simulated": "{status}, உருவகப்படுத்தப்பட்ட பார்வையாளர்",
+  "twin.nearby": "அருகில் படிக்கவும்: {title}",
+  "fleet.simulated": "உருவகப்படுத்தப்பட்ட பார்வையாளர்",
+  "fleet.source.simulatedCount": "இந்த சாதனங்களில் {count} டோரன் கோரின் உருவகப்படுத்தப்பட்ட பார்வையாளர்கள், கியோஸ்குகள் அல்ல.",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 103 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -492,6 +496,10 @@
     "speech.listening",
     "speech.working",
     "speech.unheard",
-    "speech.no-microphone"
+    "speech.no-microphone",
+    "device.status.simulated",
+    "twin.nearby",
+    "fleet.simulated",
+    "fleet.source.simulatedCount"
   ]
 }

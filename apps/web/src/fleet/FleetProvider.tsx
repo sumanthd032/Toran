@@ -24,6 +24,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { DeviceHealth, FleetSnapshot } from '@toran/contracts';
+import { manifest } from '@/archive/client';
 import { sharedCore } from './core';
 import { DEVICES, fixtureHealth, type HallDevice } from './devices';
 
@@ -36,12 +37,22 @@ export interface FleetView {
   readonly source: 'fleet' | 'fixture';
   /** When Core's view was taken, or null for the fixture. */
   readonly at: string | null;
+  /** The work each device is drifting toward, by device id. D-162. */
+  readonly drift: ReadonlyMap<string, string>;
+  /** A work's title, for a drift drawn on a screen in the hall. */
+  readonly titleOf: (workId: string) => string;
+  /** How many devices are reporting through Core's hall simulator. */
+  readonly simulated: number;
   refresh: () => void;
 }
 
-export function mergeFleet(snapshot: FleetSnapshot): {
+export function mergeFleet(
+  snapshot: FleetSnapshot,
+  { visitors = true }: { visitors?: boolean } = {},
+): {
   devices: HallDevice[];
   health: Map<string, DeviceHealth>;
+  drift: Map<string, string>;
 } {
   const live = new Map(snapshot.devices.map((d) => [d.deviceId, d]));
   const devices = DEVICES.map((shipped) => {
@@ -55,7 +66,19 @@ export function mergeFleet(snapshot: FleetSnapshot): {
           version: config.version,
         };
   });
-  return { devices, health: new Map(snapshot.health.map((h) => [h.deviceId, h])) };
+  // ?visitors=0 shows the hall as its real kiosks report it: a simulated
+  // device is then a device with no report. A drift does not say where it
+  // came from, so while any device is simulated none is trusted to be real.
+  const health = snapshot.health.filter((h) => visitors || !h.simulated);
+  const anySimulated = snapshot.health.some((h) => h.simulated);
+  return {
+    devices,
+    health: new Map(health.map((h) => [h.deviceId, h])),
+    drift:
+      visitors || !anySimulated
+        ? new Map(snapshot.drift.map((d) => [d.deviceId, d.work]))
+        : new Map(),
+  };
 }
 
 const Ctx = createContext<FleetView | null>(null);
@@ -64,6 +87,17 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<FleetSnapshot | null>(null);
   const [fixture] = useState(() => fixtureHealth());
   const [tick, setTick] = useState(0);
+  const [titles, setTitles] = useState<ReadonlyMap<string, string>>(new Map());
+  const [visitors, setVisitors] = useState(true);
+
+  // Read after mount, so the first render matches the static export.
+  useEffect(() => {
+    setVisitors(new URLSearchParams(window.location.search).get('visitors') !== '0');
+    manifest().then(
+      (m) => setTitles(new Map(m.works.map((w) => [w.id, w.title]))),
+      () => undefined,
+    );
+  }, []);
 
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
@@ -86,12 +120,32 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   }, [tick]);
 
   const value = useMemo<FleetView>(() => {
+    const titleOf = (workId: string) => titles.get(workId) ?? workId;
     if (snapshot === null) {
-      return { devices: DEVICES, health: fixture, source: 'fixture', at: null, refresh };
+      return {
+        devices: DEVICES,
+        health: fixture,
+        source: 'fixture',
+        at: null,
+        drift: new Map(),
+        titleOf,
+        simulated: 0,
+        refresh,
+      };
     }
-    const { devices, health } = mergeFleet(snapshot);
-    return { devices, health, source: 'fleet', at: snapshot.at, refresh };
-  }, [snapshot, fixture, refresh]);
+    const { devices, health, drift } = mergeFleet(snapshot, { visitors });
+    const simulated = [...health.values()].filter((h) => h.simulated).length;
+    return {
+      devices,
+      health,
+      source: 'fleet',
+      at: snapshot.at,
+      drift,
+      titleOf,
+      simulated,
+      refresh,
+    };
+  }, [snapshot, fixture, refresh, titles, visitors]);
 
   useEffect(() => {
     if (window.__toranTwin !== undefined) window.__toranTwin.statusSource = value.source;

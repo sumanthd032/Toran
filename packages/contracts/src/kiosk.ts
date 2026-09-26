@@ -76,6 +76,11 @@ export interface DeviceHealth {
   readonly configVersion: number;
   readonly state: ProxemicState;
   readonly uptimeSeconds: number;
+  /**
+   * True when no kiosk sent this: Core's hall simulator, or the fixture the
+   * Twin shows with no Core. Carried to the screen, never dropped. D-161.
+   */
+  readonly simulated: boolean;
 }
 
 /**

@@ -392,7 +392,11 @@
   "speech.working": "ఏం చెప్పారో తెలుసుకోండి",
   "speech.unheard": "అది కార్యరూపం దాల్చలేదు. మళ్ళీ ప్రయత్నించండి, లేదా టైప్ చేయండి.",
   "speech.no-microphone": "ఈ కియోస్క్ దాని మైక్రోఫోన్ను ఉపయోగించదు. బదులుగా మీ శోధనను టైప్ చేయండి.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 99 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "device.status.simulated": "{status}, అనుకరణ సందర్శకులు",
+  "twin.nearby": "సమీపంలో చదవండి: {title}",
+  "fleet.simulated": "అనుకరణ సందర్శకులు",
+  "fleet.source.simulatedCount": "ఈ పరికరాలలో {count} టోరాన్ కోర్ నుండి అనుకరణ సందర్శకులు, కియోస్క్లు కాదు.",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 103 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -492,6 +496,10 @@
     "speech.listening",
     "speech.working",
     "speech.unheard",
-    "speech.no-microphone"
+    "speech.no-microphone",
+    "device.status.simulated",
+    "twin.nearby",
+    "fleet.simulated",
+    "fleet.source.simulatedCount"
   ]
 }

@@ -787,6 +787,7 @@ export function screen(
   statusLabel: string,
   lang: string,
   portrait = false,
+  note: string | null = null,
 ): THREE.CanvasTexture {
   const w = portrait ? 320 : 512;
   const h = portrait ? 576 : 320;
@@ -1021,6 +1022,22 @@ export function screen(
   ctx.fillStyle = '#a99e8c';
   ctx.textAlign = 'right';
   ctx.fillText(statusLabel, w - 48, h - 21);
+
+  // The Honeypot Fleet's line, over the channel's picture and above the
+  // status, in brass: something related is being read nearby.
+  if (note !== null) {
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(20,18,16,0.88)';
+    ctx.fillRect(0, h - 78, w, 34);
+    ctx.fillStyle = '#c89b52';
+    ctx.fillRect(0, h - 78, 3, 34);
+    ctx.font = `500 14px ${indic ? FONT_INDIC : FONT_MONO}`;
+    ctx.textAlign = 'left';
+    let text = note;
+    while (text.length > 4 && ctx.measureText(text).width > w - 40)
+      text = `${text.slice(0, -2)}…`;
+    ctx.fillText(text, 16, h - 56);
+  }
   return toTexture(c, true);
 }
 

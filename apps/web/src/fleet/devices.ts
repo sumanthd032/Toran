@@ -184,6 +184,7 @@ export function fixtureHealth(now: Date = new Date()): ReadonlyMap<string, Devic
       configVersion: d.version,
       state: idle ? 'ambient' : 'subtle',
       uptimeSeconds: offline ? 0 : 6 * 3600 + d.deviceId.charCodeAt(5) * 97,
+      simulated: true,
     });
   }
   return map;

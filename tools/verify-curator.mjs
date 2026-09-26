@@ -152,10 +152,27 @@ try {
   await page.setViewport({ width: 1440, height: 1000 });
 
   // 1
+  // A hall build (npm run build:hall) looks for Core at its own origin, so
+  // with nothing named it offers the sign in; any other build says it has
+  // no Core. Here the export is served without a Core, so either is right,
+  // and the one thing that must not happen is a queue appearing. D-160.
   await page.goto(`${WEB}/curator/`, { waitUntil: 'load' });
+  const selfBuild = fs
+    .readdirSync(path.join(OUT, '_next/static/chunks'), { recursive: true })
+    .some(
+      (f) =>
+        String(f).endsWith('.js') &&
+        fs
+          .readFileSync(path.join(OUT, '_next/static/chunks', String(f)), 'utf8')
+          .includes('"self"'),
+    );
   check(
-    '1 with no Core named, the console says so and asks for nothing',
-    await sees(page, 'not pointed at a Toran Core'),
+    '1 with no Core named, the console asks for nothing it cannot reach',
+    selfBuild
+      ? (await sees(page, 'Sign in to change the archive')) &&
+          !(await sees(page, 'objects need a curator', 1500))
+      : await sees(page, 'not pointed at a Toran Core'),
+    selfBuild ? 'hall build: Core is looked for at this origin' : 'plain build',
   );
 
   // 2

@@ -15,6 +15,7 @@ import { haveCredentials } from '@toran/narrate/credentials';
 import { groqProvider } from './assistant/provider.ts';
 import { openDb } from './db.ts';
 import { bhashiniTranscriber } from './language/transcribe.ts';
+import { HallSimulator } from './simulate.ts';
 import { createCore } from './server.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -70,8 +71,27 @@ if (web !== undefined && !fs.existsSync(path.join(web, 'index.html'))) {
 
 const server = core.router.listen(port, host, web);
 
+// The living hall: a simulated visitor at each device, for a Twin with no
+// kiosks in the building. Off unless asked for, and every beat it sends is
+// marked simulated. D-161.
+const archiveRoot = process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT;
+const worksFile = path.join(archiveRoot, 'data/dip/works.json');
+const works: string[] = fs.existsSync(worksFile)
+  ? (JSON.parse(fs.readFileSync(worksFile, 'utf8')) as { id: string }[]).map((w) => w.id)
+  : [];
+const hall =
+  process.env['TORAN_SIMULATE_HALL'] === '1'
+    ? new HallSimulator(core.fleet, works)
+    : null;
+hall?.start();
+
 console.log(`Toran Core on http://${host}:${String(port)}${'/v1/status'}`);
 console.log(`  store     ${path.relative(ROOT, file)}`);
+if (hall !== null) {
+  console.log(
+    `  hall      simulated visitors at every device, over ${String(works.length)} works`,
+  );
+}
 if (web !== undefined)
   console.log(
     `  twin      ${path.relative(ROOT, web)}, at http://${host}:${String(port)}/`,
@@ -97,6 +117,7 @@ if (origins.includes('*')) {
 
 const stop = (signal: string) => {
   console.log(`\ncore: ${signal}, closing`);
+  hall?.stop();
   server.close(() => {
     db.close();
     process.exit(0);
