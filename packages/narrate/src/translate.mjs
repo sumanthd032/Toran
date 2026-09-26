@@ -27,8 +27,15 @@ import { BhashiniError, configure, compute } from './bhashini.mjs';
 import { haveCredentials, MissingCredentials, ROOT } from './credentials.mjs';
 import { SOURCE_LANGUAGE, TARGET_LANGUAGES } from './languages.mjs';
 import { readTranslations, translationTask, withService } from './tasks.mjs';
-import { selectedPages } from './selection.mjs';
-import { inlineNumbers, maskNumbers, numberFault, restoreNumbers, withFootnote } from './numbers.mjs';
+import {
+  blockOf,
+  cachedPassageTranslation,
+  passageTranslation,
+  selectedPages,
+  selectedPassages,
+} from './selection.mjs';
+import { faithfulTranslation } from './faithful.mjs';
+import { maskNumbers } from './numbers.mjs';
 
 const DIP = path.join(ROOT, 'data/dip');
 const OUT = path.join(DIP, 'translations');
@@ -63,21 +70,6 @@ function pagesById() {
 
 const target = (language, pageId) => path.join(OUT, language, `${pageId}.json`);
 
-// ICU's sentence breaker splits after every "Dr." and every initial, which
-// would send "B." to the engine as a sentence. A segment ending in one is
-// joined to the next.
-const ABBREVIATION = /(?:\b(?:Dr|Mr|Mrs|Messrs|Sir|St|No|Nos|Vol|Rs|Hon|Ltd)|\b[A-Z]|\b(?:[A-Za-z]\.){2,})\.\s*$/;
-const SEGMENTER = new Intl.Segmenter('en', { granularity: 'sentence' });
-
-function sentences(text) {
-  const out = [];
-  for (const { segment } of SEGMENTER.segment(text)) {
-    if (out.length > 0 && ABBREVIATION.test(out[out.length - 1])) out[out.length - 1] += segment;
-    else out.push(segment);
-  }
-  return out.map((s) => s.trim()).filter((s) => s !== '');
-}
-
 async function main() {
   const opts = argv();
   const languages = opts.only === null ? TARGET_LANGUAGES : [opts.only];
@@ -95,15 +87,30 @@ async function main() {
     }
   }
 
+  // Excerpts the page translations cannot supply, for the Audio Booth. A cached
+  // one is redone when the excerpt it translated has since changed.
+  const excerpts = selectedPassages().filter((p) => blockOf(p, pages.get(p.citation.pageId)) === -1);
+  const excerptTodo = [];
+  for (const language of languages) {
+    for (const passage of excerpts) {
+      if (!opts.force && cachedPassageTranslation(language, passage) !== null) continue;
+      excerptTodo.push({ language, passage });
+    }
+  }
+
   const blocks = selected.reduce((n, s) => n + pages.get(s.pageId).blocks.length, 0);
   console.log(
     `translate: ${selected.length} pages (${blocks} blocks) into ${languages.join(', ')}; ` +
       `${todo.length} page translations to fetch, ` +
       `${selected.length * languages.length - todo.length} already cached`,
   );
+  console.log(
+    `translate: ${excerpts.length} excerpts for narration; ${excerptTodo.length} to fetch, ` +
+      `${excerpts.length * languages.length - excerptTodo.length} already cached`,
+  );
 
-  if (opts.dryRun || todo.length === 0) {
-    if (todo.length === 0) console.log('translate: nothing to do');
+  if (opts.dryRun || todo.length + excerptTodo.length === 0) {
+    if (todo.length + excerptTodo.length === 0) console.log('translate: nothing to do');
     return;
   }
   if (!haveCredentials()) {
@@ -119,50 +126,52 @@ async function main() {
 
   let written = 0;
   let failed = 0;
-  let retried = 0;
+  const tally = { retries: 0 };
+  let excerptsWritten = 0;
   for (const language of languages) {
     const wanted = todo.filter((t) => t.language === language);
-    if (wanted.length === 0) continue;
+    const wantedExcerpts = excerptTodo.filter((t) => t.language === language);
+    if (wanted.length + wantedExcerpts.length === 0) continue;
     const task = translationTask(SOURCE_LANGUAGE, language);
     const { services, endpoint } = await configure([task]);
     const service = services.get('translation');
     const source = `Bhashini, ${service.serviceId}`;
     console.log(`  ${language}: ${service.serviceId}`);
     fs.mkdirSync(path.join(OUT, language), { recursive: true });
+    const run = (inputs) =>
+      compute(endpoint, [withService(task, services)], { input: inputs.map((t) => ({ source: t })) }).then(
+        (response) => readTranslations(response, inputs.length),
+      );
+
+    for (const { passage } of wantedExcerpts) {
+      const file = passageTranslation(language, passage.id);
+      try {
+        const text = await faithfulTranslation(run, passage.text, language, { tally });
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        const record = { language, source, english: passage.text, text, citation: passage.citation };
+        fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+        excerptsWritten += 1;
+      } catch (error) {
+        failed += 1;
+        fs.rmSync(file, { force: true });
+        const why = error instanceof BhashiniError ? error.message : String(error);
+        process.stdout.write(`    excerpt ${passage.id} FAILED: ${why}\n`);
+      }
+    }
 
     for (const { pageId } of wanted) {
       const raw = pages.get(pageId);
       const texts = raw.blocks.map((b) => b.text);
       const masks = texts.map((text) => maskNumbers(text, language));
-      const run = (inputs) =>
-        compute(endpoint, [withService(task, services)], { input: inputs.map((t) => ({ source: t })) }).then(
-          (response) => readTranslations(response, inputs.length),
-        );
       try {
         const first = await run(masks.map((m) => m.masked));
         const translated = [];
         for (let i = 0; i < texts.length; i++) {
-          const mask = masks[i];
-          let restored = restoreNumbers(first[i], mask);
-          let fault = numberFault(texts[i], language, restored);
-          // A block the engine got wrong is tried again in the shapes that
-          // kept a dropped figure when tested: a sentence at a time, then with
-          // each figure written inline already in the target language, which
-          // the engine copies through where it drops an opaque token.
-          const inline = inlineNumbers(mask);
-          const retries = [
-            () => run(sentences(mask.masked)).then((t) => restoreNumbers(t.join(' '), mask)),
-            () => run([inline]).then(([t]) => withFootnote(t, mask)),
-            () => run(sentences(inline)).then((t) => withFootnote(t.join(' '), mask)),
-          ];
-          for (const retry of retries) {
-            if (fault === null) break;
-            retried += 1;
-            restored = await retry();
-            fault = numberFault(texts[i], language, restored);
+          try {
+            translated.push(await faithfulTranslation(run, texts[i], language, { first: first[i], tally }));
+          } catch (error) {
+            throw new BhashiniError(`block ${i}: ${error.message}`);
           }
-          if (fault !== null) throw new BhashiniError(`block ${i}: ${fault}`);
-          translated.push(restored);
         }
         const file = { language, source, blocks: translated.map((text) => ({ text })) };
         // The contract, not a convention: this is the same reader the kiosk uses.
@@ -180,7 +189,10 @@ async function main() {
       }
     }
   }
-  console.log(`translate: ${written} pages written, ${failed} failed, ${retried} retries`);
+  console.log(
+    `translate: ${written} pages and ${excerptsWritten} excerpts written, ` +
+      `${failed} failed, ${tally.retries} retries`,
+  );
   if (failed > 0) process.exitCode = 1;
 }
 

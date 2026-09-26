@@ -30,7 +30,7 @@ import { BhashiniError, configure, compute } from './bhashini.mjs';
 import { haveCredentials, MissingCredentials, ROOT } from './credentials.mjs';
 import { NARRATION_LANGUAGES, SOURCE_LANGUAGE, VOICES } from './languages.mjs';
 import { readAudio, ttsTask, withService } from './tasks.mjs';
-import { selectedPassages } from './selection.mjs';
+import { blockOf, cachedPassageTranslation, selectedPassages } from './selection.mjs';
 
 const DIP = path.join(ROOT, 'data/dip');
 const OUT = path.join(DIP, 'narration');
@@ -87,20 +87,23 @@ function pagesById() {
  * The words to read aloud, in one language.
  *
  * English is the corpus, so it is read as printed. Any other language reads
- * the cached translation of the block this passage came from, and returns null
- * when no translation has been fetched yet, which is why `translate` runs first.
+ * the page translation when the passage is a whole block, and the excerpt's
+ * own translation otherwise. Null when neither has been fetched, which is why
+ * `translate` runs first.
  */
 function wordsIn(passage, language) {
   if (language === SOURCE_LANGUAGE) return passage.text;
+  const page = pagesById().get(passage.citation.pageId);
+  const index = blockOf(passage, page);
+  if (index === -1) {
+    // An excerpt is read from its own translation, and only if that
+    // translation is of the excerpt as it reads now.
+    return cachedPassageTranslation(language, passage)?.text ?? null;
+  }
   const file = path.join(DIP, 'translations', language, `${passage.citation.pageId}.json`);
   if (!fs.existsSync(file)) return null;
-  const page = pagesById().get(passage.citation.pageId);
-  if (page === undefined) return null;
   const translation = readTranslation(readPage(page), JSON.parse(fs.readFileSync(file, 'utf8')));
-  // Match on the printed text, so a re-ordered page cannot shift a clip onto
-  // the wrong block.
-  const index = page.blocks.findIndex((b) => b.text.trim() === passage.text.trim());
-  return index === -1 ? null : translation.blocks[index].text;
+  return translation.blocks[index].text;
 }
 
 const clip = (language, voice, id) => path.join(OUT, language, `${id}.${voice}.wav`);

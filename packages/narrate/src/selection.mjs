@@ -97,3 +97,38 @@ export function selectedPassages() {
   }
   return out;
 }
+
+/**
+ * The block of `page` a passage reproduces whole, or -1 when the passage is an
+ * excerpt or its page is unknown. Matched on the printed text, so a re-ordered
+ * page cannot shift a clip onto the wrong block.
+ */
+export function blockOf(passage, page) {
+  if (page === undefined) return -1;
+  return page.blocks.findIndex((b) => b.text.trim() === passage.text.trim());
+}
+
+/**
+ * Where an excerpt's own translation is cached. Kept out of translations/,
+ * which the archive build ships to the kiosk file by file as page translations.
+ * These feed narration only.
+ */
+export function passageTranslation(language, passageId) {
+  return path.join(ROOT, 'data/dip/passage-translations', language, `${passageId}.json`);
+}
+
+/**
+ * An excerpt's cached translation, or null when there is none of the excerpt
+ * as it reads now. An empty or half-written file counts as none, so an
+ * interrupted run is redone rather than stopping the next one.
+ */
+export function cachedPassageTranslation(language, passage) {
+  const file = passageTranslation(language, passage.id);
+  if (!fs.existsSync(file)) return null;
+  try {
+    const cached = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return cached.english === passage.text ? cached : null;
+  } catch {
+    return null;
+  }
+}
