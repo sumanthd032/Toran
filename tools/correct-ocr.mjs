@@ -15,16 +15,21 @@
  * from it rather than in place of it. That is the difference between an
  * archive and a database, and it is why the event log exists.
  *
- * Editing inside the kiosk belongs to the Curator Console in step 10. A
- * kiosk has no server to write to and a visitor is not a curator. D-118.
+ * The Curator Console makes the same correction through Toran Core, with the
+ * same writer. A visitor's kiosk never can: it holds no curator key. D-118.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import readline from 'node:readline/promises';
+import { ArchiveFiles } from '../apps/core/src/curation/files.ts';
+import { correctOcr } from '../apps/core/src/curation/ocr.ts';
 
 const DIP = 'data/dip';
 const LOG = 'data/curation/corrections.jsonl';
 const PREMIS = 'data/aip/premis.jsonl';
+// The same writer the Curator Console uses, so a correction made here and one
+// made there are the same record with the same PREMIS event.
+const files = new ArchiveFiles(process.cwd());
 
 const args = process.argv.slice(2);
 const flag = (name) => {
@@ -38,7 +43,11 @@ if (!fs.existsSync(`${DIP}/scans.json`)) {
 }
 const scans = JSON.parse(fs.readFileSync(`${DIP}/scans.json`, 'utf8'));
 const corrections = fs.existsSync(LOG)
-  ? fs.readFileSync(LOG, 'utf8').split('\n').filter((l) => l.trim() !== '').map((l) => JSON.parse(l))
+  ? fs
+      .readFileSync(LOG, 'utf8')
+      .split('\n')
+      .filter((l) => l.trim() !== '')
+      .map((l) => JSON.parse(l))
   : [];
 
 if (args.includes('--list')) {
@@ -46,8 +55,10 @@ if (args.includes('--list')) {
     console.log('No corrections yet.');
   }
   for (const c of corrections) {
-    console.log(`${c.pageId}  ${c.regionId.padEnd(6)} ${c.corrects.padEnd(6)} `
-      + `${c.by}, ${c.at.slice(0, 10)}`);
+    console.log(
+      `${c.pageId}  ${c.regionId.padEnd(6)} ${c.corrects.padEnd(6)} ` +
+        `${c.by}, ${c.at.slice(0, 10)}`,
+    );
     console.log(`   was: ${c.was}`);
     console.log(`   now: ${c.text}`);
   }
@@ -57,8 +68,10 @@ if (args.includes('--list')) {
 const pageId = flag('page');
 const by = flag('by');
 if (pageId === undefined || by === undefined || by === '' || by.startsWith('--')) {
-  console.error('Say which page and who is correcting:\n'
-    + '  node tools/correct-ocr.mjs --page samvidhan-1957-en-p007 --by "Your name"');
+  console.error(
+    'Say which page and who is correcting:\n' +
+      '  node tools/correct-ocr.mjs --page samvidhan-1957-en-p007 --by "Your name"',
+  );
   process.exit(1);
 }
 const scan = scans.find((s) => s.id === pageId);
@@ -96,12 +109,14 @@ const cite = (s) => {
 const interactive = process.stdin.isTTY === true;
 const queued = interactive
   ? []
-  : (await new Promise((resolve) => {
-      let input = '';
-      process.stdin.setEncoding('utf8');
-      process.stdin.on('data', (chunk) => (input += chunk));
-      process.stdin.on('end', () => resolve(input));
-    })).split('\n');
+  : (
+      await new Promise((resolve) => {
+        let input = '';
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', (chunk) => (input += chunk));
+        process.stdin.on('end', () => resolve(input));
+      })
+    ).split('\n');
 const rl = interactive
   ? readline.createInterface({ input: process.stdin, output: process.stdout })
   : null;
@@ -112,7 +127,6 @@ const ask = async (prompt) => {
   return answer;
 };
 
-fs.mkdirSync('data/curation', { recursive: true });
 let made = 0;
 
 console.log(`\n${scan.heading}`);
@@ -120,7 +134,8 @@ console.log(`${cite(scan)}\n`);
 
 for (const reading of readings) {
   const already = new Set(
-    corrections.filter((c) => c.pageId === pageId && c.corrects === reading.pipeline)
+    corrections
+      .filter((c) => c.pageId === pageId && c.corrects === reading.pipeline)
       .map((c) => c.regionId),
   );
   // Lowest confidence first: the machine has already said where to look.
@@ -128,14 +143,19 @@ for (const reading of readings) {
     .filter((r) => !already.has(r.id))
     .sort((a, b) => a.confidence - b.confidence);
   console.log(`\n${reading.model}`);
-  console.log(`confidence here means: ${reading.confidenceIs ?? "the model's own probability"}`);
+  console.log(
+    `confidence here means: ${reading.confidenceIs ?? "the model's own probability"}`,
+  );
   console.log(`${queue.length} region(s) not yet corrected, least confident first.\n`);
 
   for (const [i, region] of queue.entries()) {
-    console.log(`[${i + 1}/${queue.length}] ${region.id}  confidence ${region.confidence.toFixed(3)}`);
+    console.log(
+      `[${i + 1}/${queue.length}] ${region.id}  confidence ${region.confidence.toFixed(3)}`,
+    );
     console.log(`   ${region.text}`);
     const answer = (await ask('\n  [Enter] it is right  [e] correct it  [q] stop: '))
-      .trim().toLowerCase();
+      .trim()
+      .toLowerCase();
     if (answer === 'q') break;
     if (answer !== 'e') continue;
     const text = (await ask('  What it actually says: ')).trim();
@@ -144,29 +164,14 @@ for (const reading of readings) {
       continue;
     }
     const note = (await ask('  A note, if any: ')).trim();
-    const record = {
+    correctOcr(files, {
       pageId,
       regionId: region.id,
-      corrects: reading.pipeline,
-      was: region.text,
+      pipeline: reading.pipeline,
       text,
       by,
-      at: new Date().toISOString(),
       note: note === '' ? null : note,
-    };
-    fs.appendFileSync(LOG, `${JSON.stringify(record)}\n`);
-    // The machine's output is untouched. This says what changed and who
-    // changed it, which is the record an archive has to keep.
-    fs.appendFileSync(PREMIS, `${JSON.stringify({
-      eventType: 'modification',
-      eventDateTime: record.at,
-      eventOutcome: 'success',
-      eventOutcomeDetail:
-        `${pageId} ${region.id}: ${reading.pipeline} read ${JSON.stringify(region.text)}, `
-        + `corrected to ${JSON.stringify(text)}. The machine output is unchanged.`,
-      linkingAgentIdentifier: by,
-      linkingObjectIdentifier: [`manuscripts/${scan.sourceId}`],
-    })}\n`);
+    });
     made++;
     console.log('  recorded.\n');
   }
@@ -174,7 +179,9 @@ for (const reading of readings) {
 rl?.close();
 
 if (made > 0) {
-  console.log(`\n${made} correction(s) in ${LOG}, ${made} event(s) in ${PREMIS}. Republishing.`);
+  console.log(
+    `\n${made} correction(s) in ${LOG}, ${made} event(s) in ${PREMIS}. Republishing.`,
+  );
   const r = spawnSync('node', ['tools/build-scans.mjs'], { stdio: 'inherit' });
   process.exit(r.status ?? 1);
 }

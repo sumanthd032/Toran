@@ -35,6 +35,11 @@ const origins = (process.env['TORAN_CORE_ORIGINS'] ?? '*')
 // kiosks answer from their cache rather than calling a route that cannot work.
 const groqKey = (process.env['GROQ_API_KEY'] ?? '').trim();
 
+// Without a curator key the hall runs and nothing in it can be changed. A
+// short key is treated as none, because ten guesses a minute would find it.
+const curatorKey = (process.env['TORAN_CURATOR_KEY'] ?? '').trim();
+const curatorKeyUsable = curatorKey.length >= 16;
+
 fs.mkdirSync(path.dirname(file), { recursive: true });
 const db = openDb(file);
 const core = createCore({
@@ -43,6 +48,10 @@ const core = createCore({
   origins,
   seed: DEVICES,
   assistant: groqKey === '' ? undefined : groqProvider(groqKey),
+  curatorKey: curatorKeyUsable ? curatorKey : undefined,
+  // The repository by default. A check points it at a copy, so a test
+  // decision never lands in the real curation log.
+  archiveRoot: process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,
 });
 
 const server = core.router.listen(port, host);
@@ -54,6 +63,13 @@ console.log(`  sessions  ${String(core.sessions.count())} live`);
 console.log(`  services  ${core.services.join(', ')}`);
 if (groqKey === '') {
   console.log('  assistant no GROQ_API_KEY, so kiosks will answer from their cache');
+}
+if (!curatorKeyUsable) {
+  console.log(
+    curatorKey === ''
+      ? '  curation no TORAN_CURATOR_KEY, so the fleet and the archive are read only'
+      : '  curation TORAN_CURATOR_KEY is shorter than 16 characters and was ignored',
+  );
 }
 if (origins.includes('*')) {
   console.log('  origins   any. Set TORAN_CORE_ORIGINS before facing the public.');

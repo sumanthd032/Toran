@@ -27,6 +27,22 @@ const lines = (file) =>
     .map((l) => JSON.parse(l));
 
 const works = JSON.parse(fs.readFileSync(path.join(DIP, 'works.json'), 'utf8'));
+
+// A curator's edits to a work's title or creator, from the Curator Console.
+// The log is in order, so the last edit of a field is the one that counts. The
+// submitted Dublin Core record is not touched; this is the published copy.
+const EDITS = 'data/curation/metadata.jsonl';
+if (fs.existsSync(EDITS)) {
+  const byId = new Map(works.map((w) => [w.id, w]));
+  for (const line of fs.readFileSync(EDITS, 'utf8').split('\n')) {
+    if (line.trim() === '') continue;
+    const edit = JSON.parse(line);
+    const work = byId.get(edit.workId);
+    if (work !== undefined && (edit.field === 'title' || edit.field === 'creator')) {
+      work[edit.field] = edit.value;
+    }
+  }
+}
 const pages = lines('pages.jsonl');
 const sittings = lines('sittings.jsonl');
 const articles = lines('articles.jsonl');
@@ -36,7 +52,8 @@ const acts = lines('acts.jsonl');
 // a signature. Chapter titles are words.
 const opensChapter = (page) => {
   const first = page.blocks[0];
-  if (first === undefined || first.kind !== 'heading' || first.align === 'right') return false;
+  if (first === undefined || first.kind !== 'heading' || first.align === 'right')
+    return false;
   const text = first.text.replace(/[^A-Za-z ]/g, '').trim();
   return text.length >= 8 && !/^[IVXLCDM ]+$/.test(text);
 };
@@ -89,12 +106,32 @@ function sectionsOf(workPages) {
 // other builds, one of them from Groq, so clearing the whole directory here
 // deleted them. The Curator Console republishes through this build after a
 // metadata edit, so it has to leave the rest alone.
-const OWNED = ['pages', 'sittings', 'articles', 'acts', 'translations', 'narration', 'manifest.json'];
-for (const owned of OWNED) fs.rmSync(path.join(OUT, owned), { recursive: true, force: true });
-for (const dir of ['pages', 'sittings', 'articles', 'acts']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
-const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
+const OWNED = [
+  'pages',
+  'sittings',
+  'articles',
+  'acts',
+  'translations',
+  'narration',
+  'manifest.json',
+];
+for (const owned of OWNED)
+  fs.rmSync(path.join(OUT, owned), { recursive: true, force: true });
+for (const dir of ['pages', 'sittings', 'articles', 'acts'])
+  fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+const write = (rel, value) =>
+  fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
-const manifest = { works: [], sittings: [], sittingOf: {}, articles: [], actSections: [], translations: {}, narration: [], spokenUi: [] };
+const manifest = {
+  works: [],
+  sittings: [],
+  sittingOf: {},
+  articles: [],
+  actSections: [],
+  translations: {},
+  narration: [],
+  spokenUi: [],
+};
 
 for (const work of works) {
   const workPages = pages.filter((p) => p.workId === work.id);
@@ -114,17 +151,19 @@ for (const work of works) {
     // A plate is not part of the text around it. The frontispiece stands
     // before the first chapter and has no section, and so no abstract.
     for (const page of workPages) page.section = null;
-    sectionsOf(workPages.filter((p) => p.locator.kind !== 'plate')).forEach((section, i) => {
-      const id = `${work.id}-s${String(i + 1).padStart(2, '0')}`;
-      entry.sections.push({
-        id,
-        head: section.head,
-        first: section.pages[0].pageId,
-        last: section.pages[section.pages.length - 1].pageId,
-        pages: section.pages.length,
-      });
-      for (const page of section.pages) page.section = id;
-    });
+    sectionsOf(workPages.filter((p) => p.locator.kind !== 'plate')).forEach(
+      (section, i) => {
+        const id = `${work.id}-s${String(i + 1).padStart(2, '0')}`;
+        entry.sections.push({
+          id,
+          head: section.head,
+          first: section.pages[0].pageId,
+          last: section.pages[section.pages.length - 1].pageId,
+          pages: section.pages.length,
+        });
+        for (const page of section.pages) page.section = id;
+      },
+    );
     workPages.forEach((page, i) => {
       write(`pages/${page.pageId}.json`, {
         ...page,
@@ -180,7 +219,10 @@ if (fs.existsSync(TRANSLATIONS)) {
     fs.mkdirSync(path.join(OUT, 'translations', language), { recursive: true });
     manifest.translations[language] = [];
     for (const file of fs.readdirSync(path.join(TRANSLATIONS, language))) {
-      fs.copyFileSync(path.join(TRANSLATIONS, language, file), path.join(OUT, 'translations', language, file));
+      fs.copyFileSync(
+        path.join(TRANSLATIONS, language, file),
+        path.join(OUT, 'translations', language, file),
+      );
       manifest.translations[language].push(file.replace(/\.json$/, ''));
     }
   }
@@ -201,8 +243,13 @@ if (fs.existsSync(narrationIndex)) {
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.copyFileSync(from, to);
     manifest.narration.push({
-      id: c.id, language: c.language, voice: c.voice, file: c.file,
-      source: c.source, text: c.text, citation: c.citation,
+      id: c.id,
+      language: c.language,
+      voice: c.voice,
+      file: c.file,
+      source: c.source,
+      text: c.text,
+      citation: c.citation,
     });
   }
 }
@@ -219,8 +266,12 @@ if (fs.existsSync(uiIndex)) {
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.copyFileSync(from, to);
     manifest.spokenUi.push({
-      key: c.key, language: c.language, voice: c.voice,
-      file: c.file, source: c.source, text: c.text,
+      key: c.key,
+      language: c.language,
+      voice: c.voice,
+      file: c.file,
+      source: c.source,
+      text: c.text,
     });
   }
 }
@@ -228,7 +279,10 @@ if (fs.existsSync(uiIndex)) {
 write('manifest.json', manifest);
 
 const sections = manifest.works.reduce((n, w) => n + w.sections.length, 0);
-const titled = manifest.works.reduce((n, w) => n + w.sections.filter((s) => s.head !== null).length, 0);
+const titled = manifest.works.reduce(
+  (n, w) => n + w.sections.filter((s) => s.head !== null).length,
+  0,
+);
 console.log(
   `archive: ${pages.length} pages in ${sections} sections (${titled} titled), ` +
     `${sittings.length} sittings, ${articles.length} articles, ${acts.length} sections of Acts, ` +
@@ -239,5 +293,8 @@ console.log(
 for (const w of manifest.works) {
   if (w.sections.length === 0) continue;
   console.log(`  ${w.id}`);
-  for (const s of w.sections) console.log(`    ${s.id}  ${String(s.pages).padStart(3)} pp  ${s.head ?? '(untitled)'}`);
+  for (const s of w.sections)
+    console.log(
+      `    ${s.id}  ${String(s.pages).padStart(3)} pp  ${s.head ?? '(untitled)'}`,
+    );
 }

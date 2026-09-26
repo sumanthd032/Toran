@@ -10,10 +10,15 @@
  */
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import {
   citation,
   citedPassage,
+  needsCurator,
   pageLocator,
   readReply,
   refFor,
@@ -22,6 +27,10 @@ import {
   type DeviceConfig,
 } from '@toran/contracts';
 import { ProviderError, type Provider } from './assistant/provider.ts';
+import { ArchiveFiles, CurationRefused } from './curation/files.ts';
+import { checkFixity, listIngest, verifyRights } from './curation/ingest.ts';
+import { editMetadata } from './curation/metadata.ts';
+import { correctOcr, listOcr } from './curation/ocr.ts';
 import { one, openDb, rows } from './db.ts';
 import { Fleet } from './fleet.ts';
 import { RateLimit } from './http.ts';
@@ -422,4 +431,219 @@ test('a question that is not a question never reaches the provider', async () =>
   } finally {
     core.close();
   }
+});
+
+/**
+ * A scratch archive: one scan with one machine reading, one work with its
+ * Dublin Core record, one photograph with the digest it arrived with.
+ */
+function scratchArchive(): { root: string; files: ArchiveFiles } {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-curation-'));
+  const put = (rel: string, value: unknown) => {
+    fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, rel),
+      typeof value === 'string' ? value : JSON.stringify(value),
+    );
+  };
+  put('data/dip/scans.json', [
+    {
+      id: 'riddles-p001',
+      sourceId: 'riddles',
+      title: 'Riddles in Hinduism',
+      heading: 'A leaf',
+      width: 1000,
+      height: 1400,
+      locator: {
+        kind: 'folio',
+        manuscript: 'Riddles in Hinduism',
+        folio: null,
+        printed: null,
+      },
+    },
+  ]);
+  put('data/dip/ocr/riddles-p001.vlm.json', {
+    pageId: 'riddles-p001',
+    pipeline: 'vlm',
+    model: 'a vision model',
+    confidenceIs: 'agreement between three readings',
+    regions: [
+      { id: 'l000', text: 'What is most ridiculous is', confidence: 1, polygon: null },
+      {
+        id: 'l001',
+        text: 'the Brahmin theorv',
+        confidence: 0.4,
+        polygon: [
+          [10, 20],
+          [110, 20],
+          [110, 40],
+          [10, 40],
+        ],
+      },
+    ],
+  });
+  put('data/dip/works.json', [
+    { id: 'baws-v1', title: 'Volume 1', creator: 'Ambedkar, B. R.' },
+  ]);
+  put('data/aip/baws-v1/dublin-core.json', {
+    title: 'Volume 1',
+    creator: 'Ambedkar, B. R.',
+    publisher: 'Dr. Ambedkar Foundation',
+    rights: 'As stated by the ministry',
+  });
+  put('data/sip/photos/yeola/original.jpg', 'a photograph');
+  put('data/sip/photos/yeola/submission.json', {
+    rights: 'Public domain',
+    rightsVerified: false,
+  });
+  put('data/aip/photos/yeola/dublin-core.json', { title: 'Yeola, 1935' });
+  put('pipeline/photos.json', {
+    commons: [{ id: 'yeola', title: 'Yeola, 1935' }],
+    plates: [],
+  });
+  put('data/fixity.json', {
+    'photos/yeola/original.jpg': createHash('sha256')
+      .update('a photograph')
+      .digest('hex'),
+  });
+  return { root, files: new ArchiveFiles(root) };
+}
+
+const premisOf = (root: string): Record<string, unknown>[] =>
+  fs
+    .readFileSync(path.join(root, 'data/aip/premis.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((l) => JSON.parse(l) as Record<string, unknown>);
+
+test('an OCR correction keeps the machine reading and says who changed it', () => {
+  const { root, files } = scratchArchive();
+  const [page] = listOcr(files);
+  // Least confident first, because that is where a curator's time is worth most.
+  assert.equal(page?.readings[0]?.regions[0]?.id, 'l001');
+  assert.deepEqual(page?.readings[0]?.regions[0]?.box, [10, 20, 100, 20]);
+
+  correctOcr(files, {
+    pageId: 'riddles-p001',
+    regionId: 'l001',
+    pipeline: 'vlm',
+    text: 'the Brahmin theory',
+    by: 'A Curator',
+    note: null,
+  });
+  const region = listOcr(files)[0]?.readings[0]?.regions[0];
+  assert.equal(region?.text, 'the Brahmin theorv', 'the machine text is unchanged');
+  assert.equal(region?.correction?.text, 'the Brahmin theory');
+  const [event] = premisOf(root);
+  assert.equal(event?.['eventType'], 'modification');
+  assert.equal(event?.['linkingAgentIdentifier'], 'A Curator');
+
+  assert.throws(
+    () =>
+      correctOcr(files, {
+        pageId: 'riddles-p001',
+        regionId: 'l001',
+        pipeline: 'vlm',
+        text: 'the Brahmin theory',
+        by: 'A Curator',
+        note: null,
+      }),
+    CurationRefused,
+    'correcting a line to what it already reads is refused',
+  );
+});
+
+test('a metadata edit changes the record and keeps what was submitted', () => {
+  const { root, files } = scratchArchive();
+  const work = editMetadata(files, {
+    workId: 'baws-v1',
+    field: 'title',
+    value: 'Writings and Speeches, Volume 1',
+    by: 'A Curator',
+    note: 'the title page',
+  });
+  assert.equal(work.fields.title, 'Writings and Speeches, Volume 1');
+  assert.equal(work.submitted.title, 'Volume 1');
+  assert.equal(work.edits[0]?.was, 'Volume 1');
+  assert.equal(
+    JSON.parse(
+      fs.readFileSync(path.join(root, 'data/aip/baws-v1/dublin-core.json'), 'utf8'),
+    ).title,
+    'Volume 1',
+    'the AIP record is not rewritten',
+  );
+  assert.equal(premisOf(root)[0]?.['eventType'], 'metadata modification');
+  assert.throws(
+    () =>
+      editMetadata(files, {
+        workId: 'baws-v9',
+        field: 'title',
+        value: 'x',
+        by: 'A',
+        note: null,
+      }),
+    CurationRefused,
+  );
+});
+
+test('a package leaves the queue only when it is intact and a person checked its rights', async () => {
+  const { root, files } = scratchArchive();
+  const [first] = listIngest(files);
+  assert.equal(first?.id, 'photos/yeola');
+  assert.equal(first?.stage, 'archived');
+  assert.equal(first?.rightsRecorded, 'not verified');
+  assert.equal(needsCurator(first!), true);
+
+  assert.equal((await checkFixity(files, 'photos/yeola', 'A Curator')).fixity, 'intact');
+  verifyRights(files, { id: 'photos/yeola', by: 'A Curator', note: 'Commons page read' });
+  const done = listIngest(files)[0]!;
+  assert.equal(done.fixity, 'intact');
+  assert.equal(done.rightsDecision?.by, 'A Curator');
+  assert.equal(needsCurator(done), false);
+
+  fs.appendFileSync(path.join(root, 'data/sip/photos/yeola/original.jpg'), '!');
+  assert.equal((await checkFixity(files, 'photos/yeola', 'A Curator')).fixity, 'changed');
+  assert.equal(needsCurator(listIngest(files)[0]!), true, 'a changed file puts it back');
+});
+
+test('the fleet and the archive refuse a change without the curator key', async () => {
+  const db = openDb(':memory:');
+  const { root } = scratchArchive();
+  const core = createCore({
+    db,
+    version: 'test',
+    origins: ['*'],
+    seed: HALL,
+    curatorKey: 'a-curator-key-for-tests',
+    archiveRoot: root,
+  });
+  const server = core.router.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const port = (server.address() as { port: number }).port;
+  const put = (key: string | null) =>
+    fetch(`http://127.0.0.1:${String(port)}/v1/fleet/dev-01`, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        ...(key === null ? {} : { authorization: `Bearer ${key}` }),
+      },
+      body: JSON.stringify({ ...HALL[0], channel: 'timeline' }),
+    }).then((r) => r.status);
+  try {
+    assert.ok(core.services.includes('curation'));
+    assert.equal(await put(null), 401);
+    assert.equal(await put('wrong'), 401);
+    assert.equal(await put('a-curator-key-for-tests'), 200);
+    assert.equal(core.fleet.config('dev-01')?.channel, 'timeline');
+  } finally {
+    server.close();
+    db.close();
+  }
+});
+
+test('a Core with no curator key serves the hall read only', () => {
+  const db = openDb(':memory:');
+  const core = createCore({ db, version: 'test', origins: ['*'], seed: HALL });
+  assert.equal(core.services.includes('curation'), false);
+  db.close();
 });

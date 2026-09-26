@@ -65,8 +65,10 @@ export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
  * What a deployment actually serves. A Core on a laptop with no Groq key still
  * runs the fleet and the sessions, and says plainly that it does not answer
  * questions, rather than failing one call at a time in front of a visitor.
+ * `curation` is served only where a curator key is set, because it is the one
+ * service that writes to the archive.
  */
-export const CORE_SERVICES = ['fleet', 'session', 'assistant', 'language'] as const;
+export const CORE_SERVICES = ['fleet', 'session', 'assistant', 'language', 'curation'] as const;
 export type CoreService = (typeof CORE_SERVICES)[number];
 
 export interface CoreStatus {

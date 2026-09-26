@@ -1,5 +1,5 @@
 /**
- * The smallest router that serves Core's twelve routes.
+ * The smallest router that serves Core's routes.
  *
  * No framework. Core has to run three ways without change: on a workstation
  * inside DAIC, on a laptop at a demo, and on a Pi beside the kiosks. Every
@@ -25,6 +25,8 @@ export interface Ctx {
   readonly from: string;
   /** Parsed JSON body, or null for a request that carried none. */
   readonly body: unknown;
+  /** The Authorization header, for the operator routes. Null when absent. */
+  readonly authorization: string | null;
 }
 
 export type Handler = (ctx: Ctx) => Reply | Promise<Reply>;
@@ -124,7 +126,7 @@ export class Router {
     };
     if (allowed !== null) {
       headers['access-control-allow-origin'] = allowed;
-      headers['access-control-allow-headers'] = 'content-type';
+      headers['access-control-allow-headers'] = 'content-type, authorization';
       headers['access-control-allow-methods'] = 'GET, PUT, POST, DELETE, OPTIONS';
       headers['vary'] = 'origin';
     }
@@ -149,6 +151,10 @@ export class Router {
           query: url.searchParams,
           from: req.socket.remoteAddress ?? 'unknown',
           body: await readBody(req),
+          authorization:
+            typeof req.headers.authorization === 'string'
+              ? req.headers.authorization
+              : null,
         });
       }
     } catch (error) {
@@ -177,6 +183,10 @@ export class NotFound extends Error {
   public override readonly name = 'NotFound';
 }
 
+export class Unauthorized extends Error {
+  public override readonly name = 'Unauthorized';
+}
+
 export class TooMany extends Error {
   public override readonly name = 'TooMany';
 }
@@ -194,6 +204,7 @@ function errorReply(error: unknown): Reply {
   if (error instanceof MethodNotAllowed) return fail(405, 'method not allowed');
   if (error instanceof BadRequest) return fail(400, error.message);
   if (error instanceof NotFound) return fail(404, error.message);
+  if (error instanceof Unauthorized) return fail(401, error.message);
   if (error instanceof TooMany) return fail(429, error.message);
   if (error instanceof Unavailable) return fail(503, error.message);
   // A WireError or CitationError from the contract means the caller sent
@@ -256,6 +267,12 @@ export class RateLimit {
     if (found.count >= this.limit) return false;
     found.count++;
     return true;
+  }
+
+  /** Whether this key has used its window, without counting a use. */
+  exhausted(key: string): boolean {
+    const found = this.windows.get(key);
+    return found !== undefined && this.now() < found.until && found.count >= this.limit;
   }
 
   /** Seconds until this key is allowed again. */

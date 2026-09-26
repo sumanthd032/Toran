@@ -34,6 +34,24 @@ const PORT = Number(process.env.CORE_PORT ?? 8788);
 const BASE = `http://127.0.0.1:${PORT}/v1`;
 const store_dir = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-core-'));
 const DB = path.join(store_dir, 'core.sqlite');
+const KEY = 'verify-core-curator-key';
+
+// A copy of the parts of the archive a curator changes, so the decisions this
+// check makes are written to a scratch log and not to data/curation.
+const ARCHIVE = path.join(store_dir, 'archive');
+for (const file of [
+  'apps/web/public/archive/graph.json',
+  'data/dip/works.json',
+  'data/fixity.json',
+]) {
+  fs.mkdirSync(path.dirname(path.join(ARCHIVE, file)), { recursive: true });
+  fs.copyFileSync(file, path.join(ARCHIVE, file));
+}
+fs.mkdirSync(path.join(ARCHIVE, 'data/sip/photos/yeola'), { recursive: true });
+fs.copyFileSync(
+  'data/sip/photos/yeola/original.jpg',
+  path.join(ARCHIVE, 'data/sip/photos/yeola/original.jpg'),
+);
 
 let failures = 0;
 const check = (label, ok, detail = '') => {
@@ -50,6 +68,8 @@ const child = spawn(
       TORAN_CORE_PORT: String(PORT),
       TORAN_CORE_DB: DB,
       TORAN_CORE_ORIGINS: 'http://127.0.0.1:4173',
+      TORAN_CURATOR_KEY: KEY,
+      TORAN_ARCHIVE_ROOT: ARCHIVE,
     },
     stdio: ['ignore', 'pipe', 'inherit'],
   },
@@ -74,10 +94,13 @@ async function waitForCore() {
 }
 
 /** A kiosk's call: JSON in, status and JSON out, nothing thrown for a 4xx. */
-async function call(method, path, body, origin = 'http://127.0.0.1:4173') {
+async function call(method, path, body, origin = 'http://127.0.0.1:4173', key = null) {
+  const headers =
+    body === undefined ? { origin } : { origin, 'content-type': 'application/json' };
+  if (key !== null) headers.authorization = `Bearer ${key}`;
   const r = await fetch(`${BASE}${path}`, {
     method,
-    headers: body === undefined ? { origin } : { origin, 'content-type': 'application/json' },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await r.text();
@@ -135,13 +158,27 @@ try {
   );
 
   // 5
-  const pushed = await call('PUT', '/fleet/dev-01', {
+  const change = {
     channel: 'timeline',
     defaultLanguage: 'mr',
     position: [-5.4, 0, 4],
     rotationY: 0.7,
     version: 999,
-  });
+  };
+  const anonymous = await call('PUT', '/fleet/dev-01', change);
+  const wrong = await call(
+    'PUT',
+    '/fleet/dev-01',
+    change,
+    undefined,
+    'not-the-curator-key',
+  );
+  check(
+    '5a nobody without the curator key can reconfigure a device',
+    anonymous.status === 401 && wrong.status === 401,
+    `${String(anonymous.status)} with none, ${String(wrong.status)} with a wrong one`,
+  );
+  const pushed = await call('PUT', '/fleet/dev-01', change, undefined, KEY);
   check(
     '5 Core sets the version, not the caller',
     pushed.status === 200 && pushed.json.version === 2,
@@ -164,12 +201,18 @@ try {
     `v${String(behind.config.version)} ${behind.config.channel}`,
   );
   // Put it back, so a store kept between runs is not left reconfigured.
-  await call('PUT', '/fleet/dev-01', {
-    channel: 'reading',
-    defaultLanguage: 'en',
-    position: [-5.4, 0, 4],
-    rotationY: 0.7068583470577035,
-  });
+  await call(
+    'PUT',
+    '/fleet/dev-01',
+    {
+      channel: 'reading',
+      defaultLanguage: 'en',
+      position: [-5.4, 0, 4],
+      rotationY: 0.7068583470577035,
+    },
+    undefined,
+    KEY,
+  );
 
   // 7
   const unknown = await call('POST', '/fleet/dev-99/beat', {
@@ -259,7 +302,9 @@ try {
   );
 
   // 15
-  const foreign = await fetch(`${BASE}/fleet`, { headers: { origin: 'https://example.invalid' } });
+  const foreign = await fetch(`${BASE}/fleet`, {
+    headers: { origin: 'https://example.invalid' },
+  });
   check(
     '15 an origin that was not allowed gets no CORS header',
     foreign.headers.get('access-control-allow-origin') === null,
@@ -276,7 +321,9 @@ try {
         where m.type = 'table'`,
     )
     .all();
-  const sessionSide = columns.filter((c) => c.tbl === 'session' || c.tbl === 'dossier_item');
+  const sessionSide = columns.filter(
+    (c) => c.tbl === 'session' || c.tbl === 'dossier_item',
+  );
   const leaks = sessionSide.filter((c) =>
     /device|kiosk|query|search|seen|visit|read_at|opened/i.test(c.col),
   );
@@ -288,7 +335,10 @@ try {
   check(
     '17 the session store keeps one time, the issue, and no other',
     sessionSide.filter((c) => /_at$|time|stamp/i.test(c.col)).length === 1,
-    sessionSide.filter((c) => /_at$|time|stamp/i.test(c.col)).map((c) => c.col).join(' '),
+    sessionSide
+      .filter((c) => /_at$|time|stamp/i.test(c.col))
+      .map((c) => c.col)
+      .join(' '),
   );
   db.close();
 
@@ -297,6 +347,109 @@ try {
     '18 Core prints where it stores and what it serves, and warns about an open origin',
     banner.includes('Toran Core on') && banner.includes('services  fleet, session'),
     banner.trim().split('\n').at(-1) ?? '',
+  );
+
+  console.log('\nCuration\n');
+
+  // 18a
+  const closed = await call('GET', '/curation/edges');
+  const edges = await call('GET', '/curation/edges', undefined, undefined, KEY);
+  check(
+    '18a the curation queue is closed without the key and open with it',
+    closed.status === 401 && edges.status === 200 && edges.json.length > 0,
+    `${String(closed.status)}, then ${String(edges.json?.length)} links`,
+  );
+
+  // 18b
+  const link = edges.json[0];
+  const stale = await call(
+    'POST',
+    '/curation/edges',
+    {
+      edge: link.id,
+      digest: '0'.repeat(64),
+      decision: 'rejected',
+      by: 'Verify Core',
+      note: null,
+    },
+    undefined,
+    KEY,
+  );
+  check(
+    '18b a decision on evidence the curator was not shown is refused',
+    stale.status === 409,
+    String(stale.json?.error ?? stale.status),
+  );
+
+  // 18c
+  const decided = await call(
+    'POST',
+    '/curation/edges',
+    {
+      edge: link.id,
+      digest: link.digest,
+      decision: 'confirmed',
+      by: 'Verify Core',
+      note: 'checked by verify:core',
+    },
+    undefined,
+    KEY,
+  );
+  const logged = fs
+    .readFileSync(path.join(ARCHIVE, 'data/curation/edges.jsonl'), 'utf8')
+    .trim()
+    .split('\n');
+  const premis = fs
+    .readFileSync(path.join(ARCHIVE, 'data/aip/premis.jsonl'), 'utf8')
+    .trim()
+    .split('\n');
+  const event = JSON.parse(premis.at(-1));
+  check(
+    '18c a decision is appended to the log and to PREMIS, with its agent',
+    decided.status === 200 &&
+      logged.length === 1 &&
+      event.linkingAgentIdentifier === 'Verify Core',
+    `${event.eventType}, ${event.linkingObjectIdentifier.join(' ')}`,
+  );
+
+  // 18d
+  const fixity = await call(
+    'POST',
+    '/curation/fixity',
+    { id: 'photos/yeola', by: 'Verify Core' },
+    undefined,
+    KEY,
+  );
+  check(
+    '18d a fixity check hashes the file again and finds it as it arrived',
+    fixity.status === 200 && fixity.json.result.fixity === 'intact',
+    String(fixity.json?.result?.fixity ?? fixity.status),
+  );
+  fs.appendFileSync(path.join(ARCHIVE, 'data/sip/photos/yeola/original.jpg'), 'x');
+  const tampered = await call(
+    'POST',
+    '/curation/fixity',
+    { id: 'photos/yeola', by: 'Verify Core' },
+    undefined,
+    KEY,
+  );
+  check(
+    '18e one byte added to the file is found',
+    tampered.json?.result?.fixity === 'changed',
+    String(tampered.json?.result?.fixity),
+  );
+
+  // 18f
+  const brute = [];
+  for (let i = 0; i < 12; i++)
+    brute.push(
+      (await call('GET', '/curation', undefined, undefined, `guess-${i}`)).status,
+    );
+  const afterGuessing = await call('GET', '/curation', undefined, undefined, KEY);
+  check(
+    '18f a caller that keeps guessing keys is made to wait, even with the right one',
+    brute.at(-1) === 429 && afterGuessing.status === 429,
+    `${brute.filter((s) => s === 401).length} refused, then ${String(afterGuessing.status)}`,
   );
 
   console.log(
@@ -332,7 +485,11 @@ try {
     page.on('request', (r) => {
       const url = r.url();
       if (url.startsWith(CORE_ORIGIN)) reachedCore.push(url.slice(CORE_ORIGIN.length));
-      else if (!url.startsWith(WEB) && !url.startsWith('data:') && !url.startsWith('blob:')) {
+      else if (
+        !url.startsWith(WEB) &&
+        !url.startsWith('data:') &&
+        !url.startsWith('blob:')
+      ) {
         leaked.push(url);
         void r.abort();
         return;
@@ -418,7 +575,7 @@ try {
     { timeout: 15000 },
   );
   check(
-    '23 the same card at a second machine switches it to the visitor\'s language',
+    "23 the same card at a second machine switches it to the visitor's language",
     before === 'en' && (await langOf(second.page)) === 'mr',
     `${String(before)} before the tap, ${String(await langOf(second.page))} after`,
   );

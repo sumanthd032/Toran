@@ -10,9 +10,15 @@
  * inside a static export.
  */
 
+import { createHash, timingSafeEqual } from 'node:crypto';
 import {
   CORE_API,
   readBeat,
+  readCuratorName,
+  readEdgeDecisionInput,
+  readMetadataEditInput,
+  readOcrCorrectionInput,
+  readRightsInput,
   writeReply,
   type CoreService,
   type DeviceConfig,
@@ -21,8 +27,25 @@ import {
 import { ask } from './assistant/ask.ts';
 import type { Provider } from './assistant/provider.ts';
 import type { Db } from './db.ts';
+import { decideEdge, listEdges } from './curation/edges.ts';
+import { ArchiveFiles, CurationRefused, Rebuilder } from './curation/files.ts';
+import { checkFixity, listIngest, verifyRights } from './curation/ingest.ts';
+import { editMetadata, listWorks } from './curation/metadata.ts';
+import { correctOcr, listOcr } from './curation/ocr.ts';
 import { Fleet, UnknownDevice } from './fleet.ts';
-import { BadRequest, fail, NotFound, ok, RateLimit, Router, TooMany } from './http.ts';
+import {
+  BadRequest,
+  fail,
+  NotFound,
+  ok,
+  RateLimit,
+  Router,
+  TooMany,
+  Unauthorized,
+  Unavailable,
+  type Ctx,
+  type Reply,
+} from './http.ts';
 import { Sessions } from './session.ts';
 
 export interface CoreOptions {
@@ -33,6 +56,14 @@ export interface CoreOptions {
   readonly seed: readonly DeviceConfig[];
   /** Absent when no key was configured, and the status then says so. */
   readonly assistant?: Provider | undefined;
+  /**
+   * The key a curator presents to change the hall or the archive. Absent means
+   * this Core changes neither: the fleet is read only and curation is not
+   * served. A kiosk never holds it. D-151.
+   */
+  readonly curatorKey?: string | undefined;
+  /** The repository the archive lives in. Required for curation. */
+  readonly archiveRoot?: string | undefined;
   readonly now?: () => number;
 }
 
@@ -46,6 +77,14 @@ export interface CoreOptions {
  * 429 stops the hall from spending its day. D-134.
  */
 const ASK_PER_MINUTE = 4;
+
+/**
+ * Wrong curator keys allowed per caller per minute before the caller is made
+ * to wait. A key of 16 characters or more is not guessed at ten a minute.
+ */
+const BAD_KEYS_PER_MINUTE = 10;
+
+const digest = (value: string) => createHash('sha256').update(value).digest();
 
 export interface Core {
   readonly router: Router;
@@ -66,12 +105,67 @@ export function createCore(options: CoreOptions): Core {
   // What this deployment actually serves. A Core with no Groq key still runs
   // the hall; saying so in the status is how a kiosk knows to answer from its
   // cache rather than making a call that fails in front of a visitor.
+  const curating = options.curatorKey !== undefined && options.archiveRoot !== undefined;
   const services: readonly CoreService[] = [
     'fleet',
     'session',
     ...(options.assistant === undefined ? [] : (['assistant'] as const)),
+    ...(curating ? (['curation'] as const) : []),
   ];
   const asking = new RateLimit(ASK_PER_MINUTE, 60_000, now);
+  const guessing = new RateLimit(BAD_KEYS_PER_MINUTE, 60_000, now);
+  const files =
+    options.archiveRoot === undefined ? null : new ArchiveFiles(options.archiveRoot);
+  const rebuild =
+    options.archiveRoot === undefined ? null : new Rebuilder(options.archiveRoot);
+
+  /**
+   * The operator check, for every route that changes the hall or the archive.
+   *
+   * Compared as digests with a constant-time comparison, so the time a wrong
+   * key takes to refuse says nothing about how much of it was right. A caller
+   * who has spent its wrong guesses for the minute is refused before the
+   * comparison, so a right guess after that does not get through either.
+   */
+  const operator = (ctx: Ctx): void => {
+    const key = options.curatorKey;
+    if (key === undefined) {
+      throw new Unavailable(
+        'this Core has no curator key, so the hall and the archive are read only',
+      );
+    }
+    if (guessing.exhausted(ctx.from)) {
+      throw new TooMany(`wait ${String(guessing.retryAfter(ctx.from))} seconds`);
+    }
+    const given = /^Bearer (.+)$/.exec(ctx.authorization ?? '')?.[1] ?? '';
+    if (!timingSafeEqual(digest(given), digest(key))) {
+      guessing.take(ctx.from);
+      throw new Unauthorized('this needs a curator key');
+    }
+  };
+
+  /** A curation route: the operator check, then the archive, then a refusal the curator can read. */
+  const curation =
+    (
+      handler: (
+        ctx: Ctx,
+        files: ArchiveFiles,
+        rebuild: Rebuilder,
+      ) => Reply | Promise<Reply>,
+    ) =>
+    async (ctx: Ctx): Promise<Reply> => {
+      operator(ctx);
+      if (files === null || rebuild === null) {
+        throw new Unavailable('this Core was started without the archive beside it');
+      }
+      try {
+        return await handler(ctx, files, rebuild);
+      } catch (error) {
+        // A refusal is a curator's to act on: reload, or pick another value.
+        if (error instanceof CurationRefused) return fail(409, error.message);
+        throw error;
+      }
+    };
 
   const router = new Router(options.origins);
 
@@ -92,10 +186,98 @@ export function createCore(options: CoreOptions): Core {
     return ok(config);
   });
 
-  router.put(`${CORE_API}/fleet/:deviceId`, ({ params, body }) => {
-    if (body === null) throw new BadRequest('a config change needs a body');
-    return ok(fleet.put(params['deviceId'] ?? '', body));
+  router.put(`${CORE_API}/fleet/:deviceId`, (ctx) => {
+    operator(ctx);
+    if (ctx.body === null) throw new BadRequest('a config change needs a body');
+    // A config for a device the hall does not have would put a machine on the
+    // Twin that nobody can walk up to.
+    if (fleet.config(ctx.params['deviceId'] ?? '') === null) {
+      throw new NotFound(`no device ${ctx.params['deviceId'] ?? ''} in this hall`);
+    }
+    return ok(fleet.put(ctx.params['deviceId'] ?? '', ctx.body));
   });
+
+  // The console asks this first, so a wrong key is found out before a curator
+  // has written a correction they then cannot save.
+  router.get(
+    `${CORE_API}/curation`,
+    curation(() => ok({ curation: true })),
+  );
+
+  router.get(
+    `${CORE_API}/curation/edges`,
+    curation((_, files) => ok(listEdges(files))),
+  );
+
+  router.post(
+    `${CORE_API}/curation/edges`,
+    curation(async ({ body }, files, rebuild) => {
+      const decided = decideEdge(files, readEdgeDecisionInput(body), now);
+      // Rebuilt at once, so the link is drawn as decided on the next load.
+      const built = await rebuild.run('tools/build-graph.mjs');
+      return ok({ decided, rebuilt: built.ok, edges: listEdges(files) });
+    }),
+  );
+
+  router.get(
+    `${CORE_API}/curation/ocr`,
+    curation((_, files) => ok(listOcr(files))),
+  );
+
+  router.post(
+    `${CORE_API}/curation/ocr`,
+    curation(async ({ body }, files, rebuild) => {
+      const corrected = correctOcr(files, readOcrCorrectionInput(body), now);
+      const built = await rebuild.run('tools/build-scans.mjs');
+      return ok({ corrected, rebuilt: built.ok, pages: listOcr(files) });
+    }),
+  );
+
+  router.get(
+    `${CORE_API}/curation/metadata`,
+    curation((_, files) => ok(listWorks(files))),
+  );
+
+  router.post(
+    `${CORE_API}/curation/metadata`,
+    curation(async ({ body }, files, rebuild) => {
+      const work = editMetadata(files, readMetadataEditInput(body), now);
+      const built = await rebuild.run('tools/build-archive.mjs');
+      return ok({ work, rebuilt: built.ok, works: listWorks(files) });
+    }),
+  );
+
+  router.get(
+    `${CORE_API}/curation/ingest`,
+    curation((_, files) => ok(listIngest(files))),
+  );
+
+  router.post(
+    `${CORE_API}/curation/fixity`,
+    curation(async ({ body }, files) => {
+      const input =
+        typeof body === 'object' && body !== null
+          ? (body as Record<string, unknown>)
+          : {};
+      if (typeof input['id'] !== 'string')
+        throw new BadRequest('say which package to check');
+      const result = await checkFixity(
+        files,
+        input['id'],
+        readCuratorName(input['by']),
+        now,
+      );
+      return ok({ result, items: listIngest(files) });
+    }),
+  );
+
+  router.post(
+    `${CORE_API}/curation/rights`,
+    curation(({ body }, files) => {
+      const decision = verifyRights(files, readRightsInput(body), now);
+      return ok({ decision, items: listIngest(files) });
+    }),
+  );
 
   router.post(`${CORE_API}/fleet/:deviceId/beat`, ({ params, body }) => {
     try {
