@@ -20,6 +20,7 @@ import {
   INTERFACE_LANGUAGES, NARRATION_LANGUAGES, SOURCE_LANGUAGE, TARGET_LANGUAGES,
 } from '../packages/narrate/src/languages.mjs';
 import { selectedPages, selectedPassages } from '../packages/narrate/src/selection.mjs';
+import { numberFault } from '../packages/narrate/src/numbers.mjs';
 
 const FIXTURES = 'packages/narrate/src/fixtures';
 const ARCHIVE = 'apps/web/public/archive';
@@ -100,6 +101,29 @@ check('the manifest has a translation index', manifest.translations !== undefine
 check('the manifest has a narration index', Array.isArray(manifest.narration));
 const cached = Object.values(manifest.translations ?? {}).flat().length;
 const clips = (manifest.narration ?? []).length;
+// A cached translation is read against its printed page again, because a file
+// written before the number gate existed, or edited by hand, would otherwise
+// be trusted for having been written once.
+const DIP = 'data/dip';
+const printed = new Map(
+  fs.readFileSync(`${DIP}/pages.jsonl`, 'utf8').split('\n').filter(Boolean)
+    .map((line) => JSON.parse(line)).map((p) => [p.pageId, p]),
+);
+const numberFaults = [];
+for (const language of TARGET_LANGUAGES) {
+  const dir = `${DIP}/translations/${language}`;
+  if (!fs.existsSync(dir)) continue;
+  for (const name of fs.readdirSync(dir)) {
+    const pageId = name.replace(/\.json$/, '');
+    const blocks = readJson(`${dir}/${name}`).blocks;
+    printed.get(pageId)?.blocks.forEach((b, i) => {
+      const fault = numberFault(b.text, language, blocks[i]?.text ?? null);
+      if (fault !== null) numberFaults.push(`${language}/${pageId} block ${i}: ${fault}`);
+    });
+  }
+}
+check('every cached translation keeps the figures its page prints', numberFaults.length === 0,
+  numberFaults.length === 0 ? '' : numberFaults.slice(0, 5).join('; '));
 check('every cached narration clip names its citation and its engine',
   (manifest.narration ?? []).every((c) => c.citation?.pageId && typeof c.source === 'string'),
   `${clips} clips`);

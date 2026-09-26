@@ -9,6 +9,9 @@
  * written at all. A page with a missing block is a page whose translation would
  * sit under the wrong citation, and that is the one thing this archive cannot do.
  *
+ * Numbers never reach the engine. See numbers.mjs for what it did to them, and
+ * why a page whose figures do not survive is left untranslated.
+ *
  * Every file written here is served offline afterwards. A passage is therefore
  * translated once, ever, which is what keeps the free tier sufficient.
  *
@@ -25,6 +28,7 @@ import { haveCredentials, MissingCredentials, ROOT } from './credentials.mjs';
 import { SOURCE_LANGUAGE, TARGET_LANGUAGES } from './languages.mjs';
 import { readTranslations, translationTask, withService } from './tasks.mjs';
 import { selectedPages } from './selection.mjs';
+import { inlineNumbers, maskNumbers, numberFault, restoreNumbers, withFootnote } from './numbers.mjs';
 
 const DIP = path.join(ROOT, 'data/dip');
 const OUT = path.join(DIP, 'translations');
@@ -58,6 +62,21 @@ function pagesById() {
 }
 
 const target = (language, pageId) => path.join(OUT, language, `${pageId}.json`);
+
+// ICU's sentence breaker splits after every "Dr." and every initial, which
+// would send "B." to the engine as a sentence. A segment ending in one is
+// joined to the next.
+const ABBREVIATION = /(?:\b(?:Dr|Mr|Mrs|Messrs|Sir|St|No|Nos|Vol|Rs|Hon|Ltd)|\b[A-Z]|\b(?:[A-Za-z]\.){2,})\.\s*$/;
+const SEGMENTER = new Intl.Segmenter('en', { granularity: 'sentence' });
+
+function sentences(text) {
+  const out = [];
+  for (const { segment } of SEGMENTER.segment(text)) {
+    if (out.length > 0 && ABBREVIATION.test(out[out.length - 1])) out[out.length - 1] += segment;
+    else out.push(segment);
+  }
+  return out.map((s) => s.trim()).filter((s) => s !== '');
+}
 
 async function main() {
   const opts = argv();
@@ -100,6 +119,7 @@ async function main() {
 
   let written = 0;
   let failed = 0;
+  let retried = 0;
   for (const language of languages) {
     const wanted = todo.filter((t) => t.language === language);
     if (wanted.length === 0) continue;
@@ -113,11 +133,37 @@ async function main() {
     for (const { pageId } of wanted) {
       const raw = pages.get(pageId);
       const texts = raw.blocks.map((b) => b.text);
+      const masks = texts.map((text) => maskNumbers(text, language));
+      const run = (inputs) =>
+        compute(endpoint, [withService(task, services)], { input: inputs.map((t) => ({ source: t })) }).then(
+          (response) => readTranslations(response, inputs.length),
+        );
       try {
-        const response = await compute(endpoint, [withService(task, services)], {
-          input: texts.map((text) => ({ source: text })),
-        });
-        const translated = readTranslations(response, texts.length);
+        const first = await run(masks.map((m) => m.masked));
+        const translated = [];
+        for (let i = 0; i < texts.length; i++) {
+          const mask = masks[i];
+          let restored = restoreNumbers(first[i], mask);
+          let fault = numberFault(texts[i], language, restored);
+          // A block the engine got wrong is tried again in the shapes that
+          // kept a dropped figure when tested: a sentence at a time, then with
+          // each figure written inline already in the target language, which
+          // the engine copies through where it drops an opaque token.
+          const inline = inlineNumbers(mask);
+          const retries = [
+            () => run(sentences(mask.masked)).then((t) => restoreNumbers(t.join(' '), mask)),
+            () => run([inline]).then(([t]) => withFootnote(t, mask)),
+            () => run(sentences(inline)).then((t) => withFootnote(t.join(' '), mask)),
+          ];
+          for (const retry of retries) {
+            if (fault === null) break;
+            retried += 1;
+            restored = await retry();
+            fault = numberFault(texts[i], language, restored);
+          }
+          if (fault !== null) throw new BhashiniError(`block ${i}: ${fault}`);
+          translated.push(restored);
+        }
         const file = { language, source, blocks: translated.map((text) => ({ text })) };
         // The contract, not a convention: this is the same reader the kiosk uses.
         readTranslation(readPage(raw), file);
@@ -126,12 +172,15 @@ async function main() {
         process.stdout.write(`    ${pageId} (${texts.length} blocks)\n`);
       } catch (error) {
         failed += 1;
+        // A file from an earlier run would otherwise be served as if it had
+        // passed this run's checks. No translation is better than that one.
+        fs.rmSync(target(language, pageId), { force: true });
         const why = error instanceof BhashiniError ? error.message : String(error);
         process.stdout.write(`    ${pageId} FAILED: ${why}\n`);
       }
     }
   }
-  console.log(`translate: ${written} pages written, ${failed} failed`);
+  console.log(`translate: ${written} pages written, ${failed} failed, ${retried} retries`);
   if (failed > 0) process.exitCode = 1;
 }
 
