@@ -386,7 +386,13 @@
   "fleet.applied": "சாதனம் பதிப்பு {version} இல் இயங்குகிறது.",
   "fleet.behind": "ஓடும் வி {running}, வி {wanted} ஆக இருக்க வேண்டும்",
   "kiosk.nearby": "அருகில் என்ன படிக்கப்படுகிறது என்பது தொடர்பானது",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 93 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "speech.speak": "பேசுங்கள்",
+  "speech.stop": "முடிந்தது",
+  "speech.listening": "கேட்பது. நீங்கள் முடித்ததும் முடிந்தது என்பதைத் தட்டவும் அல்லது ஐந்து விநாடிகள் காத்திருக்கவும்.",
+  "speech.working": "என்ன சொல்லப்பட்டது என்பதைப் புரிந்துகொள்ளுங்கள்",
+  "speech.unheard": "அது நிறைவேறவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது தட்டச்சு செய்யவும்.",
+  "speech.no-microphone": "இந்த கியோஸ்க் அதன் மைக்ரோஃபோனைப் பயன்படுத்த முடியாது. அதற்கு பதிலாக உங்கள் தேடலை உள்ளிடவும்.",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 99 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -480,6 +486,12 @@
     "fleet.waitingOffline",
     "fleet.applied",
     "fleet.behind",
-    "kiosk.nearby"
+    "kiosk.nearby",
+    "speech.speak",
+    "speech.stop",
+    "speech.listening",
+    "speech.working",
+    "speech.unheard",
+    "speech.no-microphone"
   ]
 }

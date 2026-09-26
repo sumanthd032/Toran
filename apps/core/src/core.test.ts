@@ -22,6 +22,7 @@ import {
   pageLocator,
   readEdgeReviews,
   readOcrPages,
+  readTranscript,
   readReply,
   refFor,
   SESSION_TTL_MS,
@@ -36,6 +37,7 @@ import { editMetadata } from './curation/metadata.ts';
 import { correctOcr, listOcr } from './curation/ocr.ts';
 import { one, openDb, rows } from './db.ts';
 import { Fleet } from './fleet.ts';
+import type { Transcriber } from './language/transcribe.ts';
 import { RateLimit } from './http.ts';
 import { createCore } from './server.ts';
 import { Sessions } from './session.ts';
@@ -766,4 +768,114 @@ test('a work read deeply at one device drifts to its neighbour, and only while i
     ['device_id', 'topic'],
   );
   db.close();
+});
+
+/** Two seconds of silence as the kiosk would send it: 16 kHz mono 16-bit WAV, base64. */
+function silence(seconds: number): string {
+  const samples = 16_000 * seconds;
+  const bytes = Buffer.alloc(44 + samples * 2);
+  bytes.write('RIFF', 0);
+  bytes.writeUInt32LE(36 + samples * 2, 4);
+  bytes.write('WAVE', 8);
+  bytes.write('fmt ', 12);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(16_000, 24);
+  bytes.writeUInt32LE(32_000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write('data', 36);
+  bytes.writeUInt32LE(samples * 2, 40);
+  return bytes.toString('base64');
+}
+
+async function speaking(transcriber: Transcriber | undefined) {
+  const core = createCore({
+    db: openDb(':memory:'),
+    version: 'test',
+    origins: ['*'],
+    seed: HALL,
+    ...(transcriber === undefined ? {} : { transcriber }),
+  });
+  const server = core.router.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const { port } = server.address() as { port: number };
+  const say = async (body: unknown) => {
+    const r = await fetch(`http://127.0.0.1:${String(port)}/v1/language/transcribe`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return { status: r.status, json: (await r.json()) as Record<string, unknown> };
+  };
+  return { core, say, close: () => server.close() };
+}
+
+test('a spoken query comes back as words, and Core says it serves them', async () => {
+  const heard: string[] = [];
+  const { core, say, close } = await speaking({
+    transcribe: async (language) => {
+      heard.push(language);
+      return ' mahad satyagraha ';
+    },
+  });
+  try {
+    assert.ok(core.services.includes('language'));
+    const { status, json } = await say({ language: 'hi', audio: silence(2) });
+    assert.equal(status, 200);
+    assert.equal(readTranscript(json).text, 'mahad satyagraha');
+    assert.deepEqual(heard, ['hi']);
+    // Not a WAV, and not asked of the recogniser at all.
+    assert.equal(
+      (
+        await say({
+          language: 'hi',
+          audio: Buffer.from('x'.repeat(9000)).toString('base64'),
+        })
+      ).status,
+      400,
+    );
+    assert.deepEqual(heard, ['hi']);
+  } finally {
+    close();
+  }
+});
+
+test('a recogniser that fails or stalls is a 503 the kiosk can act on, never a hang', async () => {
+  let asked = 0;
+  const { say, close } = await speaking({
+    transcribe: () => {
+      asked++;
+      return Promise.reject(new Error('upstream 500'));
+    },
+  });
+  try {
+    const { status, json } = await say({ language: 'en', audio: silence(1) });
+    assert.equal(status, 503);
+    assert.match(String(json['error']), /not answering/);
+    // The next visitor is told at once, not made to wait out the same failure.
+    assert.equal((await say({ language: 'en', audio: silence(1) })).status, 503);
+    assert.equal(asked, 1);
+  } finally {
+    close();
+  }
+  const none = await speaking(undefined);
+  try {
+    assert.equal(none.core.services.includes('language'), false);
+    assert.equal((await none.say({ language: 'en', audio: silence(1) })).status, 503);
+  } finally {
+    none.close();
+  }
+});
+
+test("one kiosk cannot spend the hall's speech recognition in a minute", async () => {
+  const { say, close } = await speaking({ transcribe: async () => 'x' });
+  try {
+    for (let i = 0; i < 6; i++)
+      assert.equal((await say({ language: 'en', audio: silence(1) })).status, 200);
+    assert.equal((await say({ language: 'en', audio: silence(1) })).status, 429);
+  } finally {
+    close();
+  }
 });

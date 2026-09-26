@@ -358,3 +358,79 @@ export function beatIsFresh(lastSeen: string, now: number): boolean {
   const at = Date.parse(lastSeen);
   return Number.isFinite(at) && now - at <= BEAT_STALE_MS;
 }
+
+/**
+ * A spoken query, for Core to hand to Bhashini's speech recognition. D-129,
+ * D-158.
+ *
+ * The audio is what the recogniser asks for: 16 kHz, mono, 16-bit PCM in a
+ * WAV, base64 in JSON. Five seconds is a search, not a speech, and keeps the
+ * body under Core's 256 KB limit with room to spare.
+ */
+export const SPEECH_SAMPLE_RATE = 16_000;
+export const SPEECH_MAX_SECONDS = 5;
+
+/** A spoken query may take this long to come back. The kiosk says it is working meanwhile. */
+export const SPEECH_TIMEOUT_MS = 8000;
+
+export interface TranscribeRequest {
+  readonly language: string;
+  /** Base64 of a WAV file: 16 kHz, mono, 16-bit PCM. */
+  readonly audio: string;
+}
+
+export interface Transcript {
+  readonly text: string;
+}
+
+const WAV_HEADER_BYTES = 44;
+const MAX_AUDIO_BYTES = WAV_HEADER_BYTES + SPEECH_SAMPLE_RATE * 2 * SPEECH_MAX_SECONDS;
+
+function wavHeader(base64: string): DataView {
+  // 60 base64 characters are 45 bytes, which covers the 44-byte header.
+  const head = atob(base64.slice(0, 60));
+  const bytes = new Uint8Array(head.length);
+  for (let i = 0; i < head.length; i++) bytes[i] = head.charCodeAt(i);
+  return new DataView(bytes.buffer);
+}
+
+export function readTranscribeRequest(raw: unknown): TranscribeRequest {
+  const r = record(raw, 'transcribe request');
+  const language = readLanguage(r['language']);
+  const audio = str(r['audio'], 'audio');
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(audio)) throw new WireError('audio must be base64');
+  const bytes = Math.floor((audio.length * 3) / 4);
+  if (bytes > MAX_AUDIO_BYTES) {
+    throw new WireError(
+      `a spoken query is at most ${String(SPEECH_MAX_SECONDS)} seconds`,
+    );
+  }
+  if (bytes < WAV_HEADER_BYTES + SPEECH_SAMPLE_RATE / 5) {
+    throw new WireError('a spoken query is at least a fifth of a second');
+  }
+  const h = wavHeader(audio);
+  const tag = (at: number) =>
+    String.fromCharCode(
+      h.getUint8(at),
+      h.getUint8(at + 1),
+      h.getUint8(at + 2),
+      h.getUint8(at + 3),
+    );
+  if (tag(0) !== 'RIFF' || tag(8) !== 'WAVE' || tag(12) !== 'fmt ')
+    throw new WireError('audio is not a WAV file');
+  if (h.getUint16(20, true) !== 1 || h.getUint16(22, true) !== 1) {
+    throw new WireError('audio must be mono PCM');
+  }
+  if (h.getUint32(24, true) !== SPEECH_SAMPLE_RATE || h.getUint16(34, true) !== 16) {
+    throw new WireError(`audio must be ${String(SPEECH_SAMPLE_RATE)} Hz, 16-bit`);
+  }
+  return { language, audio };
+}
+
+export function readTranscript(raw: unknown): Transcript {
+  const t = record(raw, 'transcript');
+  const text = typeof t['text'] === 'string' ? t['text'].trim() : '';
+  if (text.length > 400)
+    throw new WireError('a transcript of five seconds is under 400 characters');
+  return { text };
+}

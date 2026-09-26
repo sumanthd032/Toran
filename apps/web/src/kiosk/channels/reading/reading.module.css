@@ -520,3 +520,11 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* What the microphone is doing, said in words beside it: listening, working, or not heard. */
+.speechNote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text-soft);
+}

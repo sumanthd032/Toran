@@ -386,7 +386,13 @@
   "fleet.applied": "उपकरण संस्करण {version} चला रहा है।",
   "fleet.behind": "चल रहा v {running}, v {wanted} होना चाहिए",
   "kiosk.nearby": "जो पास में पढ़ा जा रहा है उससे संबंधित",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 132 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "speech.speak": "बोलो",
+  "speech.stop": "हो गया",
+  "speech.listening": "सुन रही हैं। जब आप पूरा कर लें तो 'डन' दबाएँ, या पाँच सेकंड प्रतीक्षा करें।",
+  "speech.working": "जो कहा गया उस पर काम करें",
+  "speech.unheard": "यह बात पूरी नहीं हुई। पुनः प्रयास करें, या इसे टाइप करें।",
+  "speech.no-microphone": "यह कियोस्क अपने माइक्रोफोन का उपयोग नहीं कर सकता है। इसके बजाय अपनी खोज टाइप करें।",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 138 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -519,6 +525,12 @@
     "fleet.waitingOffline",
     "fleet.applied",
     "fleet.behind",
-    "kiosk.nearby"
+    "kiosk.nearby",
+    "speech.speak",
+    "speech.stop",
+    "speech.listening",
+    "speech.working",
+    "speech.unheard",
+    "speech.no-microphone"
   ]
 }

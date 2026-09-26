@@ -8,6 +8,7 @@
     "start": "node --no-warnings=ExperimentalWarning src/main.ts"
   },
   "dependencies": {
-    "@toran/contracts": "*"
+    "@toran/contracts": "*",
+    "@toran/narrate": "*"
   }
 }

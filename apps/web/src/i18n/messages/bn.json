@@ -386,7 +386,13 @@
   "fleet.applied": "যন্ত্রটি চলমান সংস্করণ {version}।",
   "fleet.behind": "চলমান ভি {running}, হওয়া উচিত ভি {wanted}",
   "kiosk.nearby": "কাছাকাছি যা পড়া হচ্ছে তার সঙ্গে সম্পর্কিত",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 92 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "speech.speak": "কথা বলুন",
+  "speech.stop": "সম্পন্ন হয়েছে",
+  "speech.listening": "শ্রবণ করিয়। কাজ শেষ হলে 'সম্পন্ন'-এ ট্যাপ করুন, অথবা পাঁচ সেকেন্ড অপেক্ষা করুন।",
+  "speech.working": "যা বলা হয়েছিল তা কার্যকর করুন",
+  "speech.unheard": "সেটা আর এগোয়নি। আবার চেষ্টা করুন, অথবা টাইপ করুন।",
+  "speech.no-microphone": "এই কিয়স্কটি তার মাইক্রোফোন ব্যবহার করতে পারে না। পরিবর্তে আপনার অনুসন্ধান টাইপ করুন।",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 98 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -479,6 +485,12 @@
     "fleet.waitingOffline",
     "fleet.applied",
     "fleet.behind",
-    "kiosk.nearby"
+    "kiosk.nearby",
+    "speech.speak",
+    "speech.stop",
+    "speech.listening",
+    "speech.working",
+    "speech.unheard",
+    "speech.no-microphone"
   ]
 }

@@ -38,6 +38,8 @@ export const ICON = {
   pageNext: 'M13 4H4v16h9M9 12h11M17 9l3 3-3 3',
   remove: 'M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13',
   search: 'M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13M15.5 15.5L20 20',
+  mic: 'M9 4a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0zM5 11a7 7 0 0 0 14 0M12 18v3M8 21h8',
+  stop: 'M7 7h10v10H7z',
   close: 'M6 6l12 12M18 6L6 18',
   plan: 'M4 5l5-2 6 2 5-2v16l-5 2-6-2-5 2zM9 3v16M15 5v16',
   walk: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5M12 8v4l3 2',

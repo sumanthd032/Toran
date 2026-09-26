@@ -11,8 +11,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEVICES } from '../../web/src/fleet/devices.ts';
+import { haveCredentials } from '@toran/narrate/credentials';
 import { groqProvider } from './assistant/provider.ts';
 import { openDb } from './db.ts';
+import { bhashiniTranscriber } from './language/transcribe.ts';
 import { createCore } from './server.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -49,6 +51,7 @@ const core = createCore({
   seed: DEVICES,
   assistant: groqKey === '' ? undefined : groqProvider(groqKey),
   curatorKey: curatorKeyUsable ? curatorKey : undefined,
+  transcriber: haveCredentials() ? bhashiniTranscriber() : undefined,
   // The repository by default. A check points it at a copy, so a test
   // decision never lands in the real curation log.
   archiveRoot: process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,

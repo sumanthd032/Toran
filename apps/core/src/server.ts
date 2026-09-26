@@ -19,6 +19,8 @@ import {
   readMetadataEditInput,
   readOcrCorrectionInput,
   readRightsInput,
+  readTranscribeRequest,
+  SPEECH_TIMEOUT_MS,
   writeReply,
   type CoreService,
   type DeviceConfig,
@@ -27,6 +29,7 @@ import {
 import { ask } from './assistant/ask.ts';
 import type { Provider } from './assistant/provider.ts';
 import type { Db } from './db.ts';
+import type { Transcriber } from './language/transcribe.ts';
 import { decideEdge, listEdges } from './curation/edges.ts';
 import { ArchiveFiles, CurationRefused, Rebuilder } from './curation/files.ts';
 import { checkFixity, listIngest, verifyRights } from './curation/ingest.ts';
@@ -62,6 +65,8 @@ export interface CoreOptions {
    * served. A kiosk never holds it. D-151.
    */
   readonly curatorKey?: string | undefined;
+  /** Speech recognition for spoken queries. Absent when there are no Bhashini credentials. */
+  readonly transcriber?: Transcriber | undefined;
   /** The repository the archive lives in. Required for curation. */
   readonly archiveRoot?: string | undefined;
   readonly now?: () => number;
@@ -85,6 +90,20 @@ const ASK_PER_MINUTE = 4;
 const BAD_KEYS_PER_MINUTE = 10;
 
 const digest = (value: string) => createHash('sha256').update(value).digest();
+
+/**
+ * Spoken queries per caller per minute. A visitor searches by voice a few
+ * times at most; more than this from one kiosk is a stuck button, and each
+ * one costs a call to a service the whole hall shares.
+ */
+const SPEAK_PER_MINUTE = 6;
+
+/**
+ * After the recogniser fails, Core says so at once for this long instead of
+ * making the next visitor wait out the same failure. Measured on 2026-09-26,
+ * when Bhashini's pipeline configuration answered 500 after about 30 s.
+ */
+const SPEECH_RESTING_MS = 60_000;
 
 export interface Core {
   readonly router: Router;
@@ -110,10 +129,13 @@ export function createCore(options: CoreOptions): Core {
     'fleet',
     'session',
     ...(options.assistant === undefined ? [] : (['assistant'] as const)),
+    ...(options.transcriber === undefined ? [] : (['language'] as const)),
     ...(curating ? (['curation'] as const) : []),
   ];
   const asking = new RateLimit(ASK_PER_MINUTE, 60_000, now);
   const guessing = new RateLimit(BAD_KEYS_PER_MINUTE, 60_000, now);
+  const speaking = new RateLimit(SPEAK_PER_MINUTE, 60_000, now);
+  let speechFailedAt = Number.NEGATIVE_INFINITY;
   const files =
     options.archiveRoot === undefined ? null : new ArchiveFiles(options.archiveRoot);
   const rebuild =
@@ -357,6 +379,49 @@ export function createCore(options: CoreOptions): Core {
         (result.reply.kind === 'refusal' ? ` ${result.reply.because}` : ''),
     );
     return ok(writeReply(result.reply));
+  });
+
+  /**
+   * A spoken query: five seconds of audio in, the words out. Nothing is kept,
+   * and the log line has the timing, never the words.
+   */
+  router.post(`${CORE_API}/language/transcribe`, async ({ body, from }) => {
+    const transcriber = options.transcriber;
+    if (transcriber === undefined)
+      return fail(503, 'this Core serves no speech recognition');
+    const request = readTranscribeRequest(body);
+    if (now() - speechFailedAt < SPEECH_RESTING_MS) {
+      throw new Unavailable('speech recognition is not answering');
+    }
+    if (!speaking.take(from)) {
+      throw new TooMany(`wait ${String(speaking.retryAfter(from))} seconds`);
+    }
+    const started = Date.now();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const text = await Promise.race([
+        transcriber.transcribe(request.language, request.audio),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Unavailable('speech recognition did not answer in time')),
+            SPEECH_TIMEOUT_MS - 500,
+          );
+        }),
+      ]);
+      console.log(
+        `core: transcribe ${request.language} ${String(Date.now() - started)}ms`,
+      );
+      return ok({ text });
+    } catch (error) {
+      speechFailedAt = now();
+      console.log(
+        `core: transcribe ${request.language} failed after ${String(Date.now() - started)}ms`,
+      );
+      if (error instanceof Unavailable) throw error;
+      throw new Unavailable('speech recognition is not answering');
+    } finally {
+      clearTimeout(timer);
+    }
   });
 
   return { router, fleet, sessions, services, startedAt };

@@ -18,6 +18,14 @@
     "./languages": {
       "types": "./src/languages.d.ts",
       "default": "./src/languages.mjs"
+    },
+    "./tasks": {
+      "types": "./src/tasks.d.ts",
+      "default": "./src/tasks.mjs"
+    },
+    "./credentials": {
+      "types": "./src/credentials.d.ts",
+      "default": "./src/credentials.mjs"
     }
   },
   "types": "./src/bhashini.d.ts"

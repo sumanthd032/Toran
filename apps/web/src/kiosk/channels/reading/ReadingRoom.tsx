@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Abstract, Citation as CitationData, Translation } from '@toran/contracts';
 import { Button } from '@/design/primitives';
-import { useI18n } from '@/i18n';
+import { useI18n, type MessageKey } from '@/i18n';
 import {
   abstractOf,
   openCitation,
@@ -37,6 +37,7 @@ import { DossierView } from './DossierView';
 import { SearchView } from './SearchView';
 import styles from './reading.module.css';
 import { useReportTopic } from '../../engagement';
+import { useSpokenQuery } from '../../speech/useSpokenQuery';
 
 /** What opening a document needs: its id and the kind of thing it is. */
 interface Target {
@@ -150,6 +151,12 @@ export function ReadingRoom({ live }: { live: boolean }) {
     if (trimmed === '' || trimmed === query) return;
     push({ kind: 'search', query: trimmed });
   };
+
+  // A search asked aloud, in the interface's language, where Core offers it.
+  const spoken = useSpokenQuery(lang, (words) => {
+    setDraft(words);
+    search(words);
+  });
 
   // The document on screen, with its section, abstract and translation.
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -300,6 +307,23 @@ export function ReadingRoom({ live }: { live: boolean }) {
               disabled={!ready}
               data-testid="reading-query"
             />
+            {spoken.available && (
+              <Button
+                variant={spoken.state === 'listening' ? 'primary' : 'secondary'}
+                disabled={!ready || spoken.state === 'working'}
+                onClick={spoken.toggle}
+                aria-pressed={spoken.state === 'listening'}
+                icon={<Icon d={spoken.state === 'listening' ? ICON.stop : ICON.mic} />}
+                aria-label={t(
+                  spoken.state === 'listening' ? 'speech.stop' : 'speech.speak',
+                )}
+                data-testid="reading-speak"
+              >
+                <span className={styles.label}>
+                  {t(spoken.state === 'listening' ? 'speech.stop' : 'speech.speak')}
+                </span>
+              </Button>
+            )}
             <Button
               type="submit"
               variant="primary"
@@ -310,6 +334,11 @@ export function ReadingRoom({ live }: { live: boolean }) {
               <span className={styles.label}>{t('action.search')}</span>
             </Button>
           </form>
+        )}
+        {view.kind === 'search' && spoken.available && spoken.state !== 'idle' && (
+          <p className={styles.speechNote} role="status" data-testid="reading-speech">
+            {t(`speech.${spoken.state}` as MessageKey)}
+          </p>
         )}
         {view.kind === 'document' && page !== null && (
           <>

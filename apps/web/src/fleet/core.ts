@@ -25,6 +25,8 @@ import {
   readDeviceConfig,
   readFleetSnapshot,
   readSessionRecord,
+  readTranscript,
+  SPEECH_TIMEOUT_MS,
   type BeatReply,
   type CoreService,
   type CoreStatus,
@@ -97,6 +99,8 @@ export interface CoreClient {
   session: (token: string) => Promise<SessionRecord | null>;
   saveSession: (token: string, record: unknown) => Promise<SessionRecord | null>;
   forgetSession: (token: string) => Promise<boolean>;
+  /** A spoken query's words, or null. Waits up to SPEECH_TIMEOUT_MS, and the kiosk says it is working. */
+  transcribe: (language: string, audio: string) => Promise<string | null>;
   /** Called whenever reachability changes, for a surface that shows it. */
   watch: (listener: (reach: Reach) => void) => () => void;
 }
@@ -153,12 +157,13 @@ class Client implements CoreClient {
     path: string,
     body: unknown,
     read: (raw: unknown) => T,
+    timeout: number = CORE_TIMEOUT_MS,
   ): Promise<T | null> {
     if (this.base === null || this.resting()) return null;
     try {
       const init: RequestInit = {
         method,
-        signal: AbortSignal.timeout(CORE_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeout),
         // A visitor's card is not a thing to keep in a browser cache.
         cache: 'no-store',
       };
@@ -231,6 +236,17 @@ class Client implements CoreClient {
       record,
       (raw) => readSessionRecord(raw).record,
     );
+  }
+
+  async transcribe(language: string, audio: string): Promise<string | null> {
+    const found = await this.call(
+      'POST',
+      '/language/transcribe',
+      { language, audio },
+      readTranscript,
+      SPEECH_TIMEOUT_MS,
+    );
+    return found === null || found.text === '' ? null : found.text;
   }
 
   async forgetSession(token: string): Promise<boolean> {

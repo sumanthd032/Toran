@@ -385,5 +385,11 @@
   "fleet.waitingOffline": "Stored as version {version}. The device is not reporting, and takes it when it next does.",
   "fleet.applied": "The device is running version {version}.",
   "fleet.behind": "Running v{running}, should be v{wanted}",
-  "kiosk.nearby": "Related to what is being read nearby"
+  "kiosk.nearby": "Related to what is being read nearby",
+  "speech.speak": "Speak",
+  "speech.stop": "Done",
+  "speech.listening": "Listening. Tap Done when you have finished, or wait five seconds.",
+  "speech.working": "Working out what was said",
+  "speech.unheard": "That did not come through. Try again, or type it.",
+  "speech.no-microphone": "This kiosk cannot use its microphone. Type your search instead."
 }
