@@ -1,0 +1,25 @@
+# The kiosk hardware daemon: the HC-SR04 and the PN532, on ws://127.0.0.1:8765.
+# Restarts on its own; the kiosk page reconnects with backoff up to 8 s.
+[Unit]
+Description=Toran kiosk hardware daemon
+After=local-fs.target
+
+[Service]
+Type=simple
+User=toran
+Group=toran
+SupplementaryGroups=gpio dialout
+# lgpio, under gpiozero on a Pi 5, writes its notification pipes into the
+# working directory, and ProtectSystem=strict leaves only this one writable.
+StateDirectory=toran
+WorkingDirectory=/var/lib/toran
+ExecStart=/usr/bin/python3 /opt/toran/hardware/daemon/toran_daemon.py
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

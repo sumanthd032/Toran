@@ -1,0 +1,20 @@
+# The static export, served to this kiosk's own browser on loopback. The
+# kiosk reads its archive from this disk, so it works with the network down.
+[Unit]
+Description=Toran static export for the kiosk browser
+After=local-fs.target
+
+[Service]
+Type=simple
+User=toran
+Group=toran
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1 --directory /opt/toran/web
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
