@@ -66,8 +66,30 @@ export function readTranslations(response, expected) {
     if (typeof target !== 'string' || target.trim() === '') {
       throw new BhashiniError(`translation ${i} came back empty`);
     }
-    return target;
+    return typeof o.source === 'string' ? repunctuate(o.source, target) : target;
   });
+}
+
+// Visarga in the scripts IndicTrans2 writes: Devanagari, Bengali, Gurmukhi,
+// Gujarati, Oriya, Telugu, Kannada, Malayalam. Tamil's aytham is a letter in
+// ordinary words and is left out on purpose.
+const VISARGA_BEFORE_SPACE = /[\u0903\u0983\u0A03\u0A83\u0B03\u0C03\u0C83\u0D03](?=\s|$)/gu;
+
+/**
+ * Puts back the colons IndicTrans2 writes as visarga.
+ *
+ * "Also here: {title}" came back as "यहाँ भीः" in Hindi and the same in Bengali
+ * and Telugu, 26 of 298 interface strings on 26 September 2026. Visarga is also
+ * a real sign ("पुनः", Bengali "ডঃ" for Dr.), so it is replaced only when the
+ * source has colons, the translation has none, and the count of word-final
+ * visargas equals the count of colons. Anything less certain is left as the
+ * engine wrote it.
+ */
+export function repunctuate(source, target) {
+  const colons = (source.match(/:/g) ?? []).length;
+  if (colons === 0 || target.includes(':')) return target;
+  const visargas = (target.match(VISARGA_BEFORE_SPACE) ?? []).length;
+  return visargas === colons ? target.replace(VISARGA_BEFORE_SPACE, ':') : target;
 }
 
 /** Narration audio, base64, as the API returns it. */

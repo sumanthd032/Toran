@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BhashiniError, readConfig } from './bhashini.mjs';
 import {
-  asrTask, readAudio, readTranscript, readTranslations, translationTask, ttsTask, withService,
+  asrTask, readAudio, readTranscript, readTranslations, repunctuate, translationTask, ttsTask, withService,
 } from './tasks.mjs';
 import { TARGET_LANGUAGES, TTS_FAMILY } from './languages.mjs';
 
@@ -101,4 +101,15 @@ test('audio and transcripts are read from their own keys', () => {
 
 test('a response for a different task is refused', () => {
   assert.throws(() => readAudio([{ taskType: 'translation', output: [] }]), BhashiniError);
+});
+
+test('a colon written as visarga is put back, and a real visarga is left alone', () => {
+  assert.equal(repunctuate('Also here: [0]', 'यहाँ भीः [0]'), 'यहाँ भी: [0]');
+  assert.equal(
+    repunctuate('Documents: [0]. Links: [1].', 'নথিঃ [0]। লিঙ্কঃ [1]।'),
+    'নথি: [0]। লিঙ্ক: [1]।',
+  );
+  assert.equal(repunctuate('Reused here', 'यहाँ पुनः उपयोग'), 'यहाँ पुनः उपयोग');
+  assert.equal(repunctuate('Dr. Ambedkar: [0]', 'ডঃ আম্বেদকরঃ [0]'), 'ডঃ আম্বেদকরঃ [0]');
+  assert.equal(repunctuate('Open: [0]', 'திற: [0]'), 'திற: [0]');
 });
