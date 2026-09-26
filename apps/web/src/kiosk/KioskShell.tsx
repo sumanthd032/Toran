@@ -41,6 +41,8 @@ export interface KioskShellProps {
   driverKind: DriverKind;
   driverStatus: DriverStatus;
   passages: readonly CitedPassage[];
+  /** The passages are what is being read nearby, and the loop says so. */
+  nearby: boolean;
   showStatus: boolean;
   bootedAt: number;
   onBack: () => void;
@@ -59,6 +61,7 @@ export function KioskShell({
   driverKind,
   driverStatus,
   passages,
+  nearby,
   showStatus,
   bootedAt,
   onBack,
@@ -75,12 +78,15 @@ export function KioskShell({
   // Neighbouring kiosks start at different pages so the hall is not in unison.
   const offset = Number.parseInt(device.deviceId.slice(-2), 10) || 0;
   const [turn, setTurn] = useState(0);
+  // A drift starts at its first passage, so the hall sees it arrive.
+  useEffect(() => setTurn(0), [nearby]);
   useEffect(() => {
     if (!attracting || passages.length < 2) return;
     const id = window.setInterval(() => setTurn((n) => n + 1), PASSAGE_HOLD_MS);
     return () => window.clearInterval(id);
   }, [attracting, passages.length]);
-  const current = passages.length > 0 ? (offset + turn) % passages.length : -1;
+  const current =
+    passages.length > 0 ? ((nearby ? 0 : offset) + turn) % passages.length : -1;
 
   const [now, setNow] = useState(0);
   useEffect(() => {
@@ -163,6 +169,13 @@ export function KioskShell({
               data-shown={i === current}
               lang={p.language}
             >
+              {/* Over each passage rather than over the figure, which is as tall
+                  as the longest passage and would leave the line stranded. */}
+              {nearby && (
+                <span className={styles.nearby} lang={lang} data-testid="kiosk-nearby">
+                  {t('kiosk.nearby')}
+                </span>
+              )}
               <p style={{ margin: 0 }}>{p.text}</p>
               {p.speaker !== null && (
                 <span className={styles.passageSpeaker}>{p.speaker}</span>

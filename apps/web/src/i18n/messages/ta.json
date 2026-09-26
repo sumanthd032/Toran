@@ -385,7 +385,8 @@
   "fleet.waitingOffline": "பதிப்பாக சேமிக்கப்படுகிறது {version}. சாதனம் புகாரளிக்கவில்லை, அது அடுத்ததாக இருக்கும்போது அதை எடுத்துக்கொள்கிறது.",
   "fleet.applied": "சாதனம் பதிப்பு {version} இல் இயங்குகிறது.",
   "fleet.behind": "ஓடும் வி {running}, வி {wanted} ஆக இருக்க வேண்டும்",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 92 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "kiosk.nearby": "அருகில் என்ன படிக்கப்படுகிறது என்பது தொடர்பானது",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 93 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -478,6 +479,7 @@
     "fleet.waiting",
     "fleet.waitingOffline",
     "fleet.applied",
-    "fleet.behind"
+    "fleet.behind",
+    "kiosk.nearby"
   ]
 }

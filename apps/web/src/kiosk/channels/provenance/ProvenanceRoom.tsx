@@ -27,6 +27,7 @@ import { GraphCanvas } from './GraphCanvas';
 import { layout, walkBack } from './model';
 import { Panel, type PanelView } from './Panel';
 import styles from './provenance.module.css';
+import { useReportTopic } from '../../engagement';
 
 /** How long a walk holds each hop, long enough to read the sentence and see the line. */
 export const WALK_STEP_MS = 3200;
@@ -89,6 +90,13 @@ export function ProvenanceRoom() {
     forward: () => false,
     canForward: false,
   });
+
+  // The work behind the node being traced, for the Honeypot Fleet.
+  useReportTopic(
+    graph === null || selected === null
+      ? null
+      : (graph.nodes.find((n) => n.id === selected)?.anchor[0].citation.workId ?? null),
+  );
 
   if (failed) return <p className={styles.status}>{t('provenance.failed')}</p>;
   if (graph === null || placed === null) {

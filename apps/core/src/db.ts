@@ -37,6 +37,14 @@ create table if not exists device_health (
   uptime_seconds integer not null
 );
 
+-- What a device's visitor is reading, for the Honeypot Fleet: one work id per
+-- device, replaced on every beat and removed when the reader leaves. No time,
+-- no token, no history: it says what is being read, not by whom or since when.
+create table if not exists device_topic (
+  device_id text primary key,
+  topic     text not null
+);
+
 create table if not exists session (
   token           text primary key,
   language        text not null,

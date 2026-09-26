@@ -385,7 +385,8 @@
   "fleet.waitingOffline": "आवृत्ती {version} म्हणून साठवले. डिव्हाइस अहवाल देत नाही आणि पुढच्या वेळी ते घेते.",
   "fleet.applied": "उपकरण चालू आवृत्ती आहे {version}.",
   "fleet.behind": "चालणारे v {running}, हे v {wanted} असावे",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 131 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "kiosk.nearby": "जवळ जे वाचले जात आहे त्याच्याशी संबंधित",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 132 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -517,6 +518,7 @@
     "fleet.waiting",
     "fleet.waitingOffline",
     "fleet.applied",
-    "fleet.behind"
+    "fleet.behind",
+    "kiosk.nearby"
   ]
 }

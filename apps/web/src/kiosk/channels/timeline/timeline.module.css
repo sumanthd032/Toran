@@ -626,3 +626,11 @@
 [data-type-scale='largest'] .hint {
   display: none;
 }
+
+/* The Honeypot Fleet's line over a drifted story. It names the content, and nobody. */
+.nearby {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+}

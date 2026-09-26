@@ -384,5 +384,6 @@
   "fleet.waiting": "Stored as version {version}. Waiting for the device to take it.",
   "fleet.waitingOffline": "Stored as version {version}. The device is not reporting, and takes it when it next does.",
   "fleet.applied": "The device is running version {version}.",
-  "fleet.behind": "Running v{running}, should be v{wanted}"
+  "fleet.behind": "Running v{running}, should be v{wanted}",
+  "kiosk.nearby": "Related to what is being read nearby"
 }

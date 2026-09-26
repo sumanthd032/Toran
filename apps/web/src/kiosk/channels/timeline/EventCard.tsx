@@ -34,6 +34,8 @@ export interface EventCardProps {
   readonly onClose?: () => void;
   /** Card: any touch keeps it open. */
   readonly onTouch?: () => void;
+  /** Ambient: the story drifted here because this is being read nearby. */
+  readonly nearby?: boolean;
 }
 
 function iso(event: TimelineEvent): string {
@@ -88,6 +90,7 @@ export function EventCard({
   onStep,
   onClose,
   onTouch,
+  nearby = false,
 }: EventCardProps) {
   const { t, lang } = useI18n();
   const feedback = useTouchFeedback('light');
@@ -127,6 +130,11 @@ export function EventCard({
           </figure>
         )}
         <div className={styles.text}>
+          {nearby && (
+            <p className={styles.nearby} data-testid="timeline-nearby">
+              {t('kiosk.nearby')}
+            </p>
+          )}
           <p className={styles.date}>
             <time dateTime={iso(event)}>{formatDate(event.date, lang)}</time>
           </p>

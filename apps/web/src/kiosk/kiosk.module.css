@@ -438,6 +438,18 @@
 /* ---- channel content ---- */
 
 /*
+  The Honeypot Fleet's line over a drifted passage. It names the content, and
+  nobody: it says a nearby reader's work is here, not who or where.
+*/
+.nearby {
+  display: block;
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--accent-text);
+}
+
+/*
   The announcement regions. Off screen rather than display:none, because a
   hidden element is not announced at all. Audio-first mode adds the kiosk's
   own voice beside these; these carry the words either way.

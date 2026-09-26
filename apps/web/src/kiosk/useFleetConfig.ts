@@ -21,16 +21,28 @@ import { useEffect, useRef, useState } from 'react';
 import { BEAT_INTERVAL_MS, type ProxemicState } from '@toran/contracts';
 import { sharedCore } from '@/fleet/core';
 import type { HallDevice } from '@/fleet/devices';
+import type { EngagementTracker } from './engagement';
 
 /** Seconds this page has been up. For a browser kiosk that is the device's uptime. */
 const uptime = (): number => Math.floor(performance.now() / 1000);
+
+/**
+ * The Honeypot Fleet rides on the same beat. A kiosk tells Core which work its
+ * visitor has stayed with, and Core answers with the work being read at the
+ * nearest engaged neighbour, which the attract loop drifts toward. Only a
+ * visitor who is there counts: a kiosk sinking into its ambient state has
+ * nobody reading, whatever is still on the screen.
+ */
+const PRESENT: readonly ProxemicState[] = ['subtle', 'personal'];
 
 export function useFleetConfig(
   shipped: HallDevice | undefined,
   state: ProxemicState,
   enabled: boolean,
-): HallDevice | undefined {
+  engagement: EngagementTracker,
+): { device: HallDevice | undefined; drift: string | null } {
   const [pushed, setPushed] = useState<HallDevice | null>(null);
+  const [drift, setDrift] = useState<string | null>(null);
 
   // What a beat reports is read at the moment it is sent. Both of these change
   // several times a minute, and putting either in the effect's dependencies
@@ -53,8 +65,11 @@ export function useFleetConfig(
         state: now.current.state,
         configVersion: now.current.version,
         uptimeSeconds: uptime(),
+        topic: PRESENT.includes(now.current.state) ? engagement.deep() : null,
       });
-      if (!live || reply === null || !reply.changed) return;
+      if (!live || reply === null) return;
+      setDrift(reply.drift);
+      if (!reply.changed) return;
       // The form is physical. A curator can change what a device shows and
       // what language it opens in; they cannot turn a wall into a booth from
       // a console, so the form is carried over rather than taken from the wire.
@@ -67,7 +82,7 @@ export function useFleetConfig(
       live = false;
       clearInterval(timer);
     };
-  }, [deviceId, enabled, form]);
+  }, [deviceId, enabled, form, engagement]);
 
-  return pushed ?? shipped;
+  return { device: pushed ?? shipped, drift };
 }

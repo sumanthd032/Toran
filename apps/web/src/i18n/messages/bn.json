@@ -385,7 +385,8 @@
   "fleet.waitingOffline": "সংস্করণ হিসাবে সংরক্ষণ করা হয়েছে {version}। যন্ত্রটি রিপোর্ট করছে না, এবং এটি পরবর্তী সময়ে এটি গ্রহণ করে।",
   "fleet.applied": "যন্ত্রটি চলমান সংস্করণ {version}।",
   "fleet.behind": "চলমান ভি {running}, হওয়া উচিত ভি {wanted}",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 91 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "kiosk.nearby": "কাছাকাছি যা পড়া হচ্ছে তার সঙ্গে সম্পর্কিত",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 92 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -477,6 +478,7 @@
     "fleet.waiting",
     "fleet.waitingOffline",
     "fleet.applied",
-    "fleet.behind"
+    "fleet.behind",
+    "kiosk.nearby"
   ]
 }

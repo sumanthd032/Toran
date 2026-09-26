@@ -281,8 +281,11 @@ export function createCore(options: CoreOptions): Core {
 
   router.post(`${CORE_API}/fleet/:deviceId/beat`, ({ params, body }) => {
     try {
-      const { config, changed } = fleet.beat(params['deviceId'] ?? '', readBeat(body));
-      return ok({ config, changed });
+      const { config, changed, drift } = fleet.beat(
+        params['deviceId'] ?? '',
+        readBeat(body),
+      );
+      return ok({ config, changed, drift });
     } catch (error) {
       // A device nobody configured is not an error the device can fix, and it
       // must not be a 500. It is told, and it keeps running what it has.

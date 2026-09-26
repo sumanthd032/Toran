@@ -36,6 +36,7 @@ import { hitMarks } from './highlight';
 import { DossierView } from './DossierView';
 import { SearchView } from './SearchView';
 import styles from './reading.module.css';
+import { useReportTopic } from '../../engagement';
 
 /** What opening a document needs: its id and the kind of thing it is. */
 interface Target {
@@ -234,6 +235,8 @@ export function ReadingRoom({ live }: { live: boolean }) {
       ? loaded
       : null;
   const page = current?.opened.document.kind === 'page' ? current.opened.document : null;
+  // The work on screen, for the Honeypot Fleet. A search list is not a work.
+  useReportTopic(current?.opened.document.workId ?? null);
 
   return (
     <div className={styles.room}>

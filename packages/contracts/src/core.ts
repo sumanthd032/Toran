@@ -18,6 +18,7 @@
  */
 
 import { CitationError } from './citation.ts';
+import { readTopic } from './honeypot.ts';
 import { restore, type StoredItem } from './dossier.ts';
 import {
   DEFAULT_ACCESSIBILITY,
@@ -97,6 +98,11 @@ export interface DeviceBeat {
   /** The version the device is actually running, which is how Core sees drift. */
   readonly configVersion: number;
   readonly uptimeSeconds: number;
+  /**
+   * The work a visitor here has stayed with past DEEP_ENGAGEMENT_MS, or null.
+   * A work id and nothing else: never a token, never a page. honeypot.ts.
+   */
+  readonly topic: string | null;
 }
 
 /**
@@ -106,6 +112,8 @@ export interface DeviceBeat {
 export interface BeatReply {
   readonly config: DeviceConfig;
   readonly changed: boolean;
+  /** The work being read at a device near this one, for its ambient loop. */
+  readonly drift: string | null;
 }
 
 /** A card's session and what it holds. No device, no times beyond the issue. */
@@ -259,12 +267,19 @@ export function readBeat(raw: unknown): DeviceBeat {
     state,
     configVersion: whole(b['configVersion'], 'configVersion'),
     uptimeSeconds: whole(b['uptimeSeconds'], 'uptimeSeconds'),
+    // A beat from before the Honeypot Fleet carries no topic, and one that
+    // carries something that is not a work id is read as carrying none.
+    topic: readTopic(b['topic']),
   };
 }
 
 export function readBeatReply(raw: unknown): BeatReply {
   const r = record(raw, 'beat reply');
-  return { config: readDeviceConfig(r['config']), changed: r['changed'] === true };
+  return {
+    config: readDeviceConfig(r['config']),
+    changed: r['changed'] === true,
+    drift: readTopic(r['drift']),
+  };
 }
 
 const SCALES = ['default', 'large', 'largest'] as const;

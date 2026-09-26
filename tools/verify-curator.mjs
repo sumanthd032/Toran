@@ -20,12 +20,10 @@
  * Uses Chrome when there is one, and Firefox otherwise.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import puppeteer from 'puppeteer-core';
+import { launchBrowser, serveExport, startCore } from './lib/stage.mjs';
 
 const ROOT = process.cwd();
 const CORE_PORT = Number(process.env.CORE_PORT ?? 8791);
@@ -83,85 +81,13 @@ const before = {
 
 // ---- Core and the static site -----------------------------------------------
 
-const core = spawn(
-  process.execPath,
-  ['--no-warnings=ExperimentalWarning', 'apps/core/src/main.ts'],
-  {
-    env: {
-      ...process.env,
-      TORAN_CORE_PORT: String(CORE_PORT),
-      TORAN_CORE_DB: path.join(scratch, 'core.sqlite'),
-      TORAN_CURATOR_KEY: KEY,
-      TORAN_ARCHIVE_ROOT: scratch,
-    },
-    stdio: ['ignore', 'ignore', 'inherit'],
-  },
-);
-
-const TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript',
-  '.mjs': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.woff2': 'font/woff2',
-  '.wasm': 'application/wasm',
-  '.onnx': 'application/octet-stream',
-  '.bin': 'application/octet-stream',
-  '.opus': 'audio/ogg',
-  '.mp4': 'video/mp4',
-  '.wav': 'audio/wav',
-};
-const site = http.createServer((req, res) => {
-  const url = new URL(req.url ?? '/', WEB);
-  let file = path.join(OUT, decodeURIComponent(url.pathname));
-  if (!file.startsWith(OUT)) {
-    res.writeHead(403).end();
-    return;
-  }
-  if (fs.existsSync(file) && fs.statSync(file).isDirectory())
-    file = path.join(file, 'index.html');
-  if (!fs.existsSync(file)) {
-    res.writeHead(404).end();
-    return;
-  }
-  res.writeHead(200, {
-    'content-type': TYPES[path.extname(file)] ?? 'application/octet-stream',
-  });
-  fs.createReadStream(file).pipe(res);
+const stopCore = await startCore(CORE_PORT, {
+  TORAN_CORE_DB: path.join(scratch, 'core.sqlite'),
+  TORAN_CURATOR_KEY: KEY,
+  TORAN_ARCHIVE_ROOT: scratch,
 });
-await new Promise((resolve) => site.listen(WEB_PORT, '127.0.0.1', resolve));
-
-async function waitForCore() {
-  for (let i = 0; i < 100; i++) {
-    try {
-      if ((await fetch(`${CORE}/v1/status`)).ok) return true;
-    } catch {
-      // Not listening yet.
-    }
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  return false;
-}
-
-const chrome = process.env.CHROME ?? '/usr/bin/google-chrome';
-const browser = fs.existsSync(chrome)
-  ? await puppeteer.launch({
-      executablePath: chrome,
-      headless: 'new',
-      args: ['--no-sandbox'],
-    })
-  : await puppeteer.launch({
-      browser: 'firefox',
-      executablePath: process.env.FIREFOX ?? '/usr/bin/firefox',
-      headless: true,
-    });
-const engine = fs.existsSync(chrome) ? 'chrome' : 'firefox';
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const stopSite = await serveExport(OUT, WEB_PORT);
+const { browser, engine } = await launchBrowser();
 
 /** Waits for text anywhere on the page. */
 async function sees(page, text, timeout = 8000) {
@@ -222,7 +148,6 @@ console.log(`Step 10: the Curator Console, in ${engine}\n`);
 
 let page = null;
 try {
-  if (!(await waitForCore())) throw new Error('Core did not start');
   page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 1000 });
 
@@ -500,8 +425,8 @@ try {
   if (page !== null) await shot(page, 'failure');
 } finally {
   await browser.close();
-  core.kill('SIGTERM');
-  site.close();
+  stopCore();
+  await stopSite();
   fs.rmSync(scratch, { recursive: true, force: true });
 }
 

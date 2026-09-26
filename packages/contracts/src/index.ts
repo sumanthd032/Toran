@@ -12,3 +12,4 @@ export * from './core.ts';
 export * from './assistant.ts';
 export * from './media.ts';
 export * from './curation.ts';
+export * from './honeypot.ts';

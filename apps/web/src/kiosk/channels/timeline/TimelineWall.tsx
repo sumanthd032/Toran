@@ -40,6 +40,8 @@ import {
   type OpenCard,
 } from './model';
 import styles from './timeline.module.css';
+import { useDrift, useReportTopic } from '../../engagement';
+import { useRelatedWorks } from '../../useRelatedWorks';
 
 const wearKey = (year: number) => `year:${year}`;
 
@@ -175,6 +177,22 @@ export function TimelineWall() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [years, patina, worn]);
 
+  // The work behind the card the visitor last touched, for the Honeypot Fleet.
+  const lastTouched = cards.reduce<OpenCard | null>(
+    (latest, card) => (latest === null || card.touched > latest.touched ? card : latest),
+    null,
+  );
+  useReportTopic(
+    data === null || lastTouched === null
+      ? null
+      : (data.events.find((e) => e.id === lastTouched.eventId)?.passages[0].citation
+          .workId ?? null),
+  );
+
+  // The wall's own loop drifts too: while something related is read nearby,
+  // the story tells only the events that cite it.
+  const related = useRelatedWorks(useDrift());
+
   if (failed) return <p className={styles.status}>{t('timeline.failed')}</p>;
   if (data === null) {
     return (
@@ -185,7 +203,16 @@ export function TimelineWall() {
   }
 
   const byId = new Map(data.events.map((e) => [e.id, e]));
-  const featured = data.events[story] ?? data.events[0]!;
+  const drifted =
+    related === null
+      ? []
+      : data.events.filter((e) =>
+          e.passages.some((p) => related.includes(p.citation.workId)),
+        );
+  const featured =
+    drifted.length > 0
+      ? drifted[story % drifted.length]!
+      : (data.events[story] ?? data.events[0]!);
   const openYears = new Set(cards.map((c) => byId.get(c.eventId)!.date.year));
 
   return (
@@ -243,7 +270,13 @@ export function TimelineWall() {
         </ReachTools>
       )}
       <AmbientContent>
-        <EventCard key={featured.id} event={featured} timeline={data} mode="ambient" />
+        <EventCard
+          key={featured.id}
+          event={featured}
+          timeline={data}
+          mode="ambient"
+          nearby={drifted.length > 0}
+        />
       </AmbientContent>
     </div>
   );

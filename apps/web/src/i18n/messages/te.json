@@ -385,7 +385,8 @@
   "fleet.waitingOffline": "సంస్కరణగా నిల్వ చేయబడింది {version}. పరికరం నివేదించడం లేదు, మరియు అది తదుపరి చేసినప్పుడు దానిని తీసుకుంటుంది.",
   "fleet.applied": "పరికరం వెర్షన్ నడుస్తోంది {version}.",
   "fleet.behind": "నడుస్తున్న v {running}, v {wanted} అయి ఉండాలి",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 92 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "kiosk.nearby": "సమీపంలో చదవబడుతున్నదానికి సంబంధించినది",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 93 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -478,6 +479,7 @@
     "fleet.waiting",
     "fleet.waitingOffline",
     "fleet.applied",
-    "fleet.behind"
+    "fleet.behind",
+    "kiosk.nearby"
   ]
 }

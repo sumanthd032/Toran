@@ -14,6 +14,7 @@
 
 import {
   beatIsFresh,
+  driftFor,
   readDeviceConfig,
   type DeviceBeat,
   type DeviceConfig,
@@ -138,8 +139,14 @@ export class Fleet {
     return wanted;
   }
 
-  /** A device reporting in. Returns its config and whether it is behind. */
-  beat(deviceId: string, beat: DeviceBeat): { config: DeviceConfig; changed: boolean } {
+  /**
+   * A device reporting in. Returns its config, whether it is behind, and the
+   * work being read nearby, if any.
+   */
+  beat(
+    deviceId: string,
+    beat: DeviceBeat,
+  ): { config: DeviceConfig; changed: boolean; drift: string | null } {
     const config = this.config(deviceId);
     if (config === null) throw new UnknownDevice(deviceId);
     run(
@@ -158,7 +165,51 @@ export class Fleet {
       beat.state,
       beat.uptimeSeconds,
     );
-    return { config, changed: beat.configVersion !== config.version };
+    if (beat.topic === null) {
+      run(this.db, 'delete from device_topic where device_id = ?', deviceId);
+    } else {
+      run(
+        this.db,
+        `insert into device_topic (device_id, topic) values (?, ?)
+           on conflict(device_id) do update set topic = excluded.topic`,
+        deviceId,
+        beat.topic,
+      );
+    }
+    return {
+      config,
+      changed: beat.configVersion !== config.version,
+      drift: driftFor(config, this.engaged()),
+    };
+  }
+
+  /**
+   * Devices whose visitor is deep in a work right now. A device that stopped
+   * reporting is not engaged, whatever it last said: its reader may have gone
+   * an hour ago with the power.
+   */
+  private engaged(): {
+    deviceId: string;
+    position: DeviceConfig['position'];
+    topic: string;
+  }[] {
+    const at = this.now();
+    const fresh = new Set(
+      this.health()
+        .filter((h) => beatIsFresh(h.lastSeen, at))
+        .map((h) => h.deviceId),
+    );
+    const placed = new Map(this.configs().map((c) => [c.deviceId, c.position]));
+    return rows<{ device_id: string; topic: string }>(
+      this.db,
+      'select * from device_topic',
+    )
+      .filter((r) => fresh.has(r.device_id) && placed.has(r.device_id))
+      .map((r) => ({
+        deviceId: r.device_id,
+        position: placed.get(r.device_id)!,
+        topic: r.topic,
+      }));
   }
 
   health(): readonly DeviceHealth[] {

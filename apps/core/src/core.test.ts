@@ -111,6 +111,7 @@ test('a device running an old config is told it changed', () => {
     state: 'ambient',
     configVersion: 1,
     uptimeSeconds: 60,
+    topic: null,
   });
   assert.equal(behind.changed, false);
 
@@ -119,6 +120,7 @@ test('a device running an old config is told it changed', () => {
     state: 'ambient',
     configVersion: 1,
     uptimeSeconds: 90,
+    topic: null,
   });
   assert.equal(now.changed, true);
   assert.equal(now.config.channel, 'timeline');
@@ -127,7 +129,12 @@ test('a device running an old config is told it changed', () => {
 
 test('a device that stops reporting goes offline on its own', () => {
   const { fleet, advance } = core();
-  fleet.beat('dev-09', { state: 'subtle', configVersion: 1, uptimeSeconds: 10 });
+  fleet.beat('dev-09', {
+    state: 'subtle',
+    configVersion: 1,
+    uptimeSeconds: 10,
+    topic: null,
+  });
   assert.equal(fleet.health()[0]?.online, true);
   // Two missed beats and a margin. Nothing that crashes sends a goodbye.
   advance(91_000);
@@ -137,7 +144,13 @@ test('a device that stops reporting goes offline on its own', () => {
 test('a beat from a device nobody configured is refused by name', () => {
   const { fleet } = core();
   assert.throws(
-    () => fleet.beat('dev-99', { state: 'ambient', configVersion: 1, uptimeSeconds: 1 }),
+    () =>
+      fleet.beat('dev-99', {
+        state: 'ambient',
+        configVersion: 1,
+        uptimeSeconds: 1,
+        topic: null,
+      }),
     /no device dev-99/,
   );
 });
@@ -705,4 +718,52 @@ test('the links Core sends are the links the console reads', () => {
   assert.equal(read.length, 1, 'the link with no evidence is not sent');
   assert.equal(read[0]?.from.title, 'Draft Article 11');
   assert.equal(read[0]?.evidence[0]?.citation.pageId, 'baws-v1-p0100');
+});
+
+test('a work read deeply at one device drifts to its neighbour, and only while it is read', () => {
+  let clock = 1_000_000;
+  const db = openDb(':memory:');
+  const fleet = new Fleet(db, () => clock);
+  fleet.seed([
+    { ...HALL[0]!, deviceId: 'dev-03', position: [0, 0, 0] },
+    { ...HALL[0]!, deviceId: 'dev-04', position: [2, 0, 0] },
+    { ...HALL[0]!, deviceId: 'dev-10', position: [0, 0, -30] },
+  ]);
+  const beat = (id: string, topic: string | null) =>
+    fleet.beat(id, {
+      state: topic === null ? 'ambient' : 'personal',
+      configVersion: 1,
+      uptimeSeconds: 1,
+      topic,
+    });
+
+  assert.equal(beat('dev-04', null).drift, null, 'nobody is reading anything yet');
+  beat('dev-03', 'coi-art17');
+  assert.equal(beat('dev-04', null).drift, 'coi-art17', 'two metres away');
+  assert.equal(beat('dev-10', null).drift, null, 'thirty metres away');
+  assert.equal(
+    beat('dev-03', 'coi-art17').drift,
+    null,
+    'a device never drifts toward itself',
+  );
+
+  // The reader leaves, and the neighbour stops drifting on its next beat.
+  beat('dev-03', null);
+  assert.equal(beat('dev-04', null).drift, null);
+
+  // A device that went quiet mid-read is not still being read.
+  beat('dev-03', 'baws-v1');
+  clock += 91_000;
+  assert.equal(beat('dev-04', null).drift, null);
+
+  // What Core keeps is a work id per device. No time, no token.
+  const columns = rows<{ name: string }>(
+    db,
+    "select name from pragma_table_info('device_topic')",
+  );
+  assert.deepEqual(
+    columns.map((c) => c.name),
+    ['device_id', 'topic'],
+  );
+  db.close();
 });

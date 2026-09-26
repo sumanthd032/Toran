@@ -37,6 +37,7 @@ import { DeepZoom } from './DeepZoom';
 import { boxOf, preferred, readingOf, regionAt, type Reading } from './model';
 import styles from './manuscript.module.css';
 import { Transcript } from './Transcript';
+import { useReportTopic } from '../../engagement';
 
 type View = 'both' | 'scan' | 'text';
 
@@ -79,6 +80,8 @@ export function ManuscriptStation() {
   }, []);
 
   const scan = loaded?.scans[pageIndex] ?? null;
+  // The work this page belongs to, for the Honeypot Fleet.
+  useReportTopic(scan?.citation.workId ?? null);
   const readings: readonly Reading[] = useMemo(() => {
     if (loaded === null || scan === null) return [];
     return (loaded.readings.get(scan.id) ?? []).map((tr) =>

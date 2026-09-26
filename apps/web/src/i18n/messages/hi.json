@@ -385,7 +385,8 @@
   "fleet.waitingOffline": "संस्करण {version} के रूप में संग्रहीत। उपकरण रिपोर्ट नहीं कर रहा है, और जब यह आगे करता है तो इसे ले जाता है।",
   "fleet.applied": "उपकरण संस्करण {version} चला रहा है।",
   "fleet.behind": "चल रहा v {running}, v {wanted} होना चाहिए",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 131 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "kiosk.nearby": "जो पास में पढ़ा जा रहा है उससे संबंधित",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 132 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -517,6 +518,7 @@
     "fleet.waiting",
     "fleet.waitingOffline",
     "fleet.applied",
-    "fleet.behind"
+    "fleet.behind",
+    "kiosk.nearby"
   ]
 }

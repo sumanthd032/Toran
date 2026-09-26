@@ -14,6 +14,7 @@ import { DEVICES, type HallDevice } from '@/fleet/devices';
 import { I18nProvider, useI18n } from '@/i18n';
 import { AmbientSlot } from './ambient';
 import { AnnounceProvider } from './announce';
+import { createEngagementTracker, EngagementProvider } from './engagement';
 import { KioskShell } from './KioskShell';
 import { ResearchDesk } from './channels/assistant/ResearchDesk';
 import { AudioBooth } from './channels/audio/AudioBooth';
@@ -112,7 +113,13 @@ function Kiosk({
   // What this device is now, which is what it shipped with until a curator
   // pushes something else. Only a standalone kiosk reports in: one opened in
   // the Twin is a view of a device, not the device.
-  const device = useFleetConfig(shipped, proximity.state, context === 'standalone');
+  const engagement = useMemo(() => createEngagementTracker(), []);
+  const { device, drift } = useFleetConfig(
+    shipped,
+    proximity.state,
+    context === 'standalone',
+    engagement,
+  );
 
   // Physical calibration. The ambient headline is sized in real millimetres,
   // which only holds if CSS millimetres are real on this panel. A kiosk is
@@ -152,23 +159,27 @@ function Kiosk({
       touch={touch}
       defaultLanguage={device.defaultLanguage}
     >
-      <KioskRoot
-        device={device}
-        proximity={proximity}
-        touch={touch}
-        driverKind={driver.kind}
-        driverStatus={driverStatus}
-        showStatus={context === 'twin' || (query?.has('status') ?? false)}
-        onExit={onExit}
-      >
-        {channelFor(device, live)}
-      </KioskRoot>
+      <EngagementProvider tracker={engagement} drift={drift}>
+        <KioskRoot
+          device={device}
+          drift={drift}
+          proximity={proximity}
+          touch={touch}
+          driverKind={driver.kind}
+          driverStatus={driverStatus}
+          showStatus={context === 'twin' || (query?.has('status') ?? false)}
+          onExit={onExit}
+        >
+          {channelFor(device, live)}
+        </KioskRoot>
+      </EngagementProvider>
     </VisitorProvider>
   );
 }
 
 function KioskRoot({
   device,
+  drift,
   proximity,
   touch,
   driverKind,
@@ -178,6 +189,7 @@ function KioskRoot({
   children,
 }: {
   device: HallDevice;
+  drift: string | null;
   proximity: Proximity;
   touch: () => void;
   driverKind: DriverKind;
@@ -188,7 +200,7 @@ function KioskRoot({
 }) {
   const { lang, dir } = useI18n();
   const { profile, visit } = useVisitor();
-  const passages = useAmbient();
+  const { passages, nearby } = useAmbient(drift);
   const nav = useNavSlot();
   const [tools, setTools] = useState<HTMLDivElement | null>(null);
   const [ambient, setAmbient] = useState<HTMLDivElement | null>(null);
@@ -227,6 +239,7 @@ function KioskRoot({
                 driverKind={driverKind}
                 driverStatus={driverStatus}
                 passages={passages}
+                nearby={nearby}
                 showStatus={showStatus}
                 bootedAt={bootedAt}
                 onBack={() => {
