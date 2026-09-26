@@ -879,3 +879,43 @@ test("one kiosk cannot spend the hall's speech recognition in a minute", async (
     close();
   }
 });
+
+test('Core serves the built Twin from its own origin, and nothing outside it', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toran-web-'));
+  fs.mkdirSync(path.join(root, 'kiosk/dev-01'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'index.html'), '<h1>hall</h1>');
+  fs.writeFileSync(path.join(root, 'kiosk/dev-01/index.html'), '<h1>kiosk</h1>');
+  fs.writeFileSync(path.join(root, '404.html'), '<h1>missing</h1>');
+  fs.writeFileSync(path.join(root, 'film.mp4'), Buffer.from('0123456789'));
+  fs.writeFileSync(path.join(os.tmpdir(), 'toran-secret.txt'), 'not for the web');
+  const db = openDb(':memory:');
+  const core = createCore({ db, version: 'test', origins: ['*'], seed: HALL });
+  const server = core.router.listen(0, '127.0.0.1', root);
+  await new Promise((resolve) => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${String((server.address() as { port: number }).port)}`;
+  try {
+    assert.equal(await (await fetch(`${base}/`)).text(), '<h1>hall</h1>');
+    assert.equal(await (await fetch(`${base}/kiosk/dev-01/`)).text(), '<h1>kiosk</h1>');
+    const bare = await fetch(`${base}/kiosk/dev-01`, { redirect: 'manual' });
+    assert.equal(bare.status, 308, 'a route without its slash is sent to it');
+    const missing = await fetch(`${base}/nowhere/`);
+    assert.equal(missing.status, 404);
+    assert.equal(await missing.text(), '<h1>missing</h1>');
+    const ranged = await fetch(`${base}/film.mp4`, { headers: { range: 'bytes=2-5' } });
+    assert.equal(ranged.status, 206);
+    assert.equal(await ranged.text(), '2345');
+    // The API is still the API.
+    assert.equal((await (await fetch(`${base}/v1/status`)).json()).service, 'toran-core');
+    for (const escape of [
+      '/../toran-secret.txt',
+      '/%2e%2e/toran-secret.txt',
+      '/..%2ftoran-secret.txt',
+    ]) {
+      const r = await fetch(`${base}${escape}`);
+      assert.notEqual(await r.text(), 'not for the web', escape);
+    }
+  } finally {
+    server.close();
+    db.close();
+  }
+});

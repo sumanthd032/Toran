@@ -57,10 +57,25 @@ const core = createCore({
   archiveRoot: process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,
 });
 
-const server = core.router.listen(port, host);
+// The built Twin, served from this origin, so a deployed hall and localhost
+// are the same program on the same paths. D-160.
+const webRoot = (process.env['TORAN_WEB_ROOT'] ?? '').trim();
+const web = webRoot === '' ? undefined : path.resolve(ROOT, webRoot);
+if (web !== undefined && !fs.existsSync(path.join(web, 'index.html'))) {
+  console.error(
+    `core: TORAN_WEB_ROOT names ${web}, which has no index.html. Build the web app first.`,
+  );
+  process.exit(1);
+}
+
+const server = core.router.listen(port, host, web);
 
 console.log(`Toran Core on http://${host}:${String(port)}${'/v1/status'}`);
 console.log(`  store     ${path.relative(ROOT, file)}`);
+if (web !== undefined)
+  console.log(
+    `  twin      ${path.relative(ROOT, web)}, at http://${host}:${String(port)}/`,
+  );
 console.log(`  devices   ${String(core.fleet.configs().length)}`);
 console.log(`  sessions  ${String(core.sessions.count())} live`);
 console.log(`  services  ${core.services.join(', ')}`);

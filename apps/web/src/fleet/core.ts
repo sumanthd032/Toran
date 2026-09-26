@@ -48,7 +48,10 @@ import {
  */
 export function coreUrl(search?: string): string | null {
   const fromBuild = process.env.NEXT_PUBLIC_CORE_URL ?? '';
-  if (typeof window === 'undefined') return fromBuild === '' ? null : fromBuild;
+  if (typeof window === 'undefined') {
+    // 'self' is an origin only a browser knows.
+    return fromBuild === '' || fromBuild === 'self' ? null : fromBuild;
+  }
 
   const asked = new URLSearchParams(search ?? window.location.search).get('core');
   if (asked !== null) {
@@ -74,6 +77,8 @@ export function coreUrl(search?: string): string | null {
 function valid(raw: string): string | null {
   const trimmed = raw.trim().replace(/\/+$/, '');
   if (trimmed === '') return null;
+  // A build served by Core itself finds it at its own origin. D-160.
+  if (trimmed === 'self') return window.location.origin;
   try {
     const url = new URL(trimmed);
     // Anything but http keeps a kiosk from being pointed at a javascript: or

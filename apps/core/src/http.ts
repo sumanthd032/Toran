@@ -8,6 +8,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { serveStatic } from './web.ts';
 
 export interface Reply {
   readonly status: number;
@@ -108,8 +109,23 @@ export class Router {
     return null;
   }
 
-  listen(port: number, host: string) {
-    const server = createServer((req, res) => void this.handle(req, res));
+  /**
+   * `webRoot`, when given, is the built Twin: every GET outside the API is a
+   * file from it. The API keeps its prefix, so the two cannot collide.
+   */
+  listen(port: number, host: string, webRoot?: string) {
+    const server = createServer((req, res) => {
+      const api = (req.url ?? '/').startsWith('/v1/') || req.url === '/v1';
+      if (
+        !api &&
+        webRoot !== undefined &&
+        (req.method === 'GET' || req.method === 'HEAD')
+      ) {
+        serveStatic(webRoot, req, res);
+        return;
+      }
+      void this.handle(req, res);
+    });
     server.listen(port, host);
     return server;
   }

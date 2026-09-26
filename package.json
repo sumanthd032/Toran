@@ -11,6 +11,8 @@
     "dev": "npm run dev --workspace @toran/web",
     "build": "npm run build --workspace @toran/web",
     "build:quiet": "npm run build:quiet --workspace @toran/web",
+    "build:hall": "NEXT_PUBLIC_CORE_URL=self npm run build:quiet --workspace @toran/web",
+    "start": "TORAN_WEB_ROOT=apps/web/out npm run start --workspace @toran/core",
     "serve": "npm run serve --workspace @toran/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
