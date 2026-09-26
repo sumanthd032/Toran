@@ -11,8 +11,10 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { OperatorProvider } from '@/curator/operator';
 import { Button, ReachZone } from '@/design/primitives';
 import { DEVICES } from '@/fleet/devices';
+import { FleetProvider, useFleet } from '@/fleet/FleetProvider';
 import { useI18n } from '@/i18n';
 import { KioskApp } from '@/kiosk/KioskApp';
 import { searchStarted, sharedSearch } from '@/search/shared';
@@ -38,6 +40,7 @@ const isDevice = (id: string | null): id is string =>
 function Hall() {
   const { t } = useI18n();
   const { entered, open, phase, openDevice, closeDevice } = useTwinState();
+  const fleet = useFleet();
   const [boot, setBoot] = useState<{
     deepLink: string | null;
     pinned: Tier | null;
@@ -202,6 +205,7 @@ function Hall() {
             <KioskApp
               key={open}
               deviceId={open}
+              device={fleet.devices.find((d) => d.deviceId === open)}
               context="twin"
               onExit={close}
               live={covered}
@@ -219,7 +223,11 @@ function Hall() {
 export default function Home() {
   return (
     <TwinStateProvider>
-      <Hall />
+      <OperatorProvider>
+        <FleetProvider>
+          <Hall />
+        </FleetProvider>
+      </OperatorProvider>
     </TwinStateProvider>
   );
 }

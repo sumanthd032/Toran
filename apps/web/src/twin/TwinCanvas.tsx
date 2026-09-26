@@ -13,11 +13,11 @@ import {
   Vignette,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CameraRig } from './camera/CameraRig';
 import { ENTRY } from './camera/director';
-import { fixtureHealth } from '@/fleet/devices';
+import { useFleet } from '@/fleet/FleetProvider';
 import { hallMaterials } from './materials';
 import { QualityContext, type Tier } from './quality';
 import { useTwinState } from './state';
@@ -126,7 +126,7 @@ function Scene({
   replayToken: number;
   skipEntry: boolean;
 }) {
-  const health = useMemo(() => fixtureHealth(), []);
+  const { devices, health } = useFleet();
   return (
     <>
       <color attach="background" args={['#0b0a09']} />
@@ -193,7 +193,7 @@ function Scene({
       <Library />
       <Gallery />
       <Shadows />
-      <Devices health={health} />
+      <Devices devices={devices} health={health} />
       <Atmosphere />
       <CameraRig replayToken={replayToken} skipEntry={skipEntry} />
       <TransitionDirector tier={tier} />

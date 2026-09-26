@@ -3,88 +3,33 @@
 /**
  * Every device, as a list. This is the path to each device that does not need
  * a pointer on a 3D canvas: keyboard, screen reader, switch access. It is also
- * how an operator sees the whole fleet's status at once.
+ * where an operator sees the whole fleet's status at once and, with a curator
+ * key, changes what a device shows. ARCHITECTURE.md section 10.
  */
 
-import { Badge, Button, Dialog } from '@/design/primitives';
-import { useI18n, type MessageKey } from '@/i18n';
-import { CHANNEL_ORDER, DEVICES, fixtureHealth, statusOf } from '@/fleet/devices';
+import { Dialog } from '@/design/primitives';
+import { FleetPanel } from '@/fleet/FleetPanel';
+import { useFleet } from '@/fleet/FleetProvider';
+import { useI18n } from '@/i18n';
 import { useTwinState } from './state';
 
 export function DeviceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
-  const { selected, openDevice } = useTwinState();
-  const health = fixtureHealth();
-  const ordered = [...DEVICES].sort(
-    (a, b) => CHANNEL_ORDER.indexOf(a.channel) - CHANNEL_ORDER.indexOf(b.channel),
-  );
+  const { openDevice } = useTwinState();
+  const { devices } = useFleet();
 
   return (
     <Dialog
       open={open}
-      title={t('twin.devices.count', { count: DEVICES.length })}
+      title={t('twin.devices.count', { count: devices.length })}
       onClose={onClose}
     >
-      <ul
-        style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'grid',
-          gap: 'var(--s-1)',
+      <FleetPanel
+        onOpen={(id) => {
+          onClose();
+          openDevice(id);
         }}
-      >
-        {ordered.map((d) => {
-          const h = health.get(d.deviceId);
-          const status = statusOf(h);
-          const minutes =
-            h !== undefined
-              ? Math.round((Date.now() - new Date(h.lastSeen).getTime()) / 60_000)
-              : 0;
-          return (
-            <li key={d.deviceId}>
-              <Button
-                fullWidth
-                variant={selected === d.deviceId ? 'primary' : 'secondary'}
-                aria-pressed={selected === d.deviceId}
-                onClick={() => {
-                  onClose();
-                  openDevice(d.deviceId);
-                }}
-                style={{ justifyContent: 'space-between' }}
-              >
-                <span>{t(`device.channel.${d.channel}` as MessageKey)}</span>
-                <span
-                  style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center' }}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'var(--t-meta)',
-                      opacity: 0.8,
-                    }}
-                  >
-                    {d.deviceId}
-                  </span>
-                  <Badge
-                    tone={
-                      status === 'online'
-                        ? 'confirmed'
-                        : status === 'offline'
-                          ? 'unconfirmed'
-                          : 'neutral'
-                    }
-                  >
-                    {status === 'offline'
-                      ? t('device.status.offlineFor', { minutes })
-                      : t(`device.status.${status}` as MessageKey)}
-                  </Badge>
-                </span>
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+      />
     </Dialog>
   );
 }

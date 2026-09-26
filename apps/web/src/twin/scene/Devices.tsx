@@ -8,8 +8,11 @@
  * name plates carry per-device textures and are drawn individually.
  *
  * A device is selected by tapping it or by choosing it from the device sheet.
- * Selection marks it with a brass ring on the floor. Flying the camera to it
- * and opening its application is step 5.
+ * Selection marks it with a brass ring on the floor.
+ *
+ * The bodies are baked from the shipped roster, because a device's place and
+ * form are physical. What its screen says comes from the fleet, so a channel
+ * a curator changed shows on the hall at the next poll.
  */
 
 import { Billboard } from '@react-three/drei';
@@ -224,7 +227,13 @@ function Marker() {
   );
 }
 
-export function Devices({ health }: { health: ReadonlyMap<string, DeviceHealth> }) {
+export function Devices({
+  devices,
+  health,
+}: {
+  devices: readonly HallDevice[];
+  health: ReadonlyMap<string, DeviceHealth>;
+}) {
   const m = hallMaterials();
 
   const { body, trim } = useMemo(() => {
@@ -242,7 +251,7 @@ export function Devices({ health }: { health: ReadonlyMap<string, DeviceHealth> 
     <group>
       <mesh geometry={body} material={m.bronze} />
       <mesh geometry={trim} material={m.brass} />
-      {DEVICES.map((d) => (
+      {devices.map((d) => (
         <Device key={d.deviceId} device={d} health={health.get(d.deviceId)} />
       ))}
       <Marker />

@@ -84,7 +84,7 @@ export function telemetry(): TwinTelemetry {
     framesDrawn: 0,
     searchStarted: null,
     searchReady: null,
-    // Device health comes from a fixture until the fleet service exists.
+    // The fixture until FleetProvider hears from a Core.
     statusSource: 'fixture',
   };
   return window.__toranTwin;
