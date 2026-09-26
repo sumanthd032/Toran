@@ -84,7 +84,13 @@ function sectionsOf(workPages) {
   return sections;
 }
 
-fs.rmSync(OUT, { recursive: true, force: true });
+// Only what this build writes is cleared. The graph, the timeline, the scans,
+// the abstracts and the prepared answers share this directory and come from
+// other builds, one of them from Groq, so clearing the whole directory here
+// deleted them. The Curator Console republishes through this build after a
+// metadata edit, so it has to leave the rest alone.
+const OWNED = ['pages', 'sittings', 'articles', 'acts', 'translations', 'narration', 'manifest.json'];
+for (const owned of OWNED) fs.rmSync(path.join(OUT, owned), { recursive: true, force: true });
 for (const dir of ['pages', 'sittings', 'articles', 'acts']) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 const write = (rel, value) => fs.writeFileSync(path.join(OUT, rel), JSON.stringify(value));
 
