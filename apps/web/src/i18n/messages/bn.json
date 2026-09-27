@@ -396,7 +396,8 @@
   "twin.nearby": "কাছাকাছি পড়ুন: {title}",
   "fleet.simulated": "সিমুলেটেড পরিদর্শক",
   "fleet.source.simulatedCount": "এই ডিভাইসগুলির মধ্যে {count} টোরান কোর থেকে সিমুলেটেড দর্শক, কিয়স্ক নয়।",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 102 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.stepBack": "হলঘরে ফিরে আসুন",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 103 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -499,6 +500,7 @@
     "device.status.simulated",
     "twin.nearby",
     "fleet.simulated",
-    "fleet.source.simulatedCount"
+    "fleet.source.simulatedCount",
+    "twin.stepBack"
   ]
 }

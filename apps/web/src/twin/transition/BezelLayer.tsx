@@ -26,9 +26,29 @@ export function BezelLayer({ canvasWrap, interactive, children }: BezelLayerProp
     const apply = (f: BezelFrame) => {
       const el = layer.current;
       if (el === null) return;
+      const { rect } = f;
+
+      // On the screen in the hall: laid out at the device's own resolution,
+      // placed on the screen's rectangle and scaled to it, never grown.
+      if (f.layout !== null) {
+        const s = rect.w / f.layout.w;
+        el.style.width = `${String(f.layout.w)}px`;
+        el.style.height = `${String(f.layout.h)}px`;
+        el.style.inset = 'auto';
+        el.style.left = '0';
+        el.style.top = '0';
+        el.style.transform = `translate3d(${String(rect.x)}px, ${String(rect.y)}px, 0) scale(${String(s)})`;
+        el.style.clipPath = 'none';
+        el.style.opacity = String(f.opacity);
+        el.style.visibility = f.opacity < 0.002 ? 'hidden' : 'visible';
+        applyHall(f);
+        return;
+      }
+      el.style.width = '';
+      el.style.height = '';
+      el.style.inset = '0';
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const { rect } = f;
 
       // Cover the screen rectangle, centred on it, then clip to it. A screen
       // whose aspect differs from the viewport, such as the portrait welcome
@@ -47,7 +67,9 @@ export function BezelLayer({ canvasWrap, interactive, children }: BezelLayerProp
       el.style.clipPath = `inset(${insetY}px ${insetX}px)`;
       el.style.opacity = String(f.opacity);
       el.style.visibility = f.opacity < 0.002 ? 'hidden' : 'visible';
-
+      applyHall(f);
+    };
+    const applyHall = (f: BezelFrame) => {
       const wrap = canvasWrap.current;
       if (wrap !== null) {
         wrap.style.opacity = String(f.canvas);
@@ -73,6 +95,9 @@ export function BezelLayer({ canvasWrap, interactive, children }: BezelLayerProp
         pointerEvents: interactive ? 'auto' : 'none',
         zIndex: 10,
         willChange: 'transform, opacity, clip-path',
+        // The kiosk sizes its reach zone and attract type against this box,
+        // with container units, so it lays out as it would on the device.
+        containerType: 'size',
       }}
     >
       {children}

@@ -396,7 +396,8 @@
   "twin.nearby": "அருகில் படிக்கவும்: {title}",
   "fleet.simulated": "உருவகப்படுத்தப்பட்ட பார்வையாளர்",
   "fleet.source.simulatedCount": "இந்த சாதனங்களில் {count} டோரன் கோரின் உருவகப்படுத்தப்பட்ட பார்வையாளர்கள், கியோஸ்குகள் அல்ல.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 103 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.stepBack": "மண்டபத்திற்குத் திரும்பிச் செல்லுங்கள்",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 104 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -500,6 +501,7 @@
     "device.status.simulated",
     "twin.nearby",
     "fleet.simulated",
-    "fleet.source.simulatedCount"
+    "fleet.source.simulatedCount",
+    "twin.stepBack"
   ]
 }

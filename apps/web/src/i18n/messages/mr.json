@@ -396,7 +396,8 @@
   "twin.nearby": "जवळचे वाचा: {title}",
   "fleet.simulated": "सिम्युलेटेड अभ्यागत",
   "fleet.source.simulatedCount": "यापैकी {count} उपकरणे कियोस्क नव्हे तर तोरान कोअरमधून अनुकरण केलेले अभ्यागत आहेत.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 142 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.stepBack": "हॉलमध्ये परत जा",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 143 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -539,6 +540,7 @@
     "device.status.simulated",
     "twin.nearby",
     "fleet.simulated",
-    "fleet.source.simulatedCount"
+    "fleet.source.simulatedCount",
+    "twin.stepBack"
   ]
 }

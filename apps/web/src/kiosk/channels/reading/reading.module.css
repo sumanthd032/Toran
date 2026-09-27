@@ -528,3 +528,20 @@
   font-size: var(--t-meta);
   color: var(--text-soft);
 }
+
+/*
+  On the 1280 wide tablet the search field was left five characters wide.
+  Where the reach zone gives the search under 640 px, the Search button keeps
+  its magnifier and gives its word to the field. The icon carries it alone, as
+  CLAUDE.md section 10 asks every primary control to be able to.
+*/
+@container (max-width: 640px) {
+  .searchBar .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

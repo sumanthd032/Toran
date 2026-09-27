@@ -79,10 +79,10 @@ export function TimelineWall() {
     if (el === null || probe === null) return;
     const measure = () => {
       const gap = Number.parseFloat(getComputedStyle(el).columnGap) || 0;
-      const min = probe.getBoundingClientRect();
+      // Layout sizes, so the wall fits the same cards when the Twin scales it.
       const next = cardsThatFit(
         { width: el.clientWidth, height: el.clientHeight },
-        { width: min.width, height: min.height },
+        { width: probe.offsetWidth, height: probe.offsetHeight },
         gap,
       );
       setFit(next);

@@ -318,11 +318,7 @@ export function ReadingRoom({ live }: { live: boolean }) {
                   spoken.state === 'listening' ? 'speech.stop' : 'speech.speak',
                 )}
                 data-testid="reading-speak"
-              >
-                <span className={styles.label}>
-                  {t(spoken.state === 'listening' ? 'speech.stop' : 'speech.speak')}
-                </span>
-              </Button>
+              />
             )}
             <Button
               type="submit"

@@ -1,0 +1,96 @@
+/*
+  The plaque under a screen, and the way back into the hall. Brass on the dark
+  of the hall, set in the metadata face, like the engraved label beside an
+  object in a case. Hairline, no shadow.
+*/
+
+.plaque {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 11;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0 var(--s-3);
+  padding-block-start: var(--s-1);
+  border-block-start: var(--hairline) solid var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--text);
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
+.name {
+  color: var(--accent-text);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.meta {
+  opacity: 0.8;
+}
+
+.drift {
+  color: var(--accent-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Below a landscape screen there is one line of margin, so the plaque keeps to it. */
+.plaque[data-side='below'] {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.plaque[data-side='beside'] {
+  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.stepBack {
+  position: fixed;
+  left: var(--s-3);
+  top: var(--s-1);
+  z-index: 12;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 36px;
+  padding: 0 var(--s-2) 0 var(--s-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-meta);
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.back:hover,
+.back:focus-visible {
+  border-color: var(--accent);
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.back svg {
+  inline-size: 18px;
+  block-size: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

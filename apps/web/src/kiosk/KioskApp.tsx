@@ -64,6 +64,8 @@ export interface KioskAppProps {
    * in the Twin does not report in, so it is told rather than asking.
    */
   drift?: string | null | undefined;
+  /** The operator status strip. The Twin sets it from its Hall panel; standalone, ?status does. */
+  showStatus?: boolean | undefined;
 }
 
 function channelFor(device: HallDevice, live: boolean): ReactNode {
@@ -96,6 +98,7 @@ function Kiosk({
   live = true,
   device: current,
   drift: told = null,
+  showStatus: statusShown,
 }: KioskAppProps) {
   const { t } = useI18n();
   const shipped = current ?? DEVICES.find((d) => d.deviceId === deviceId);
@@ -174,7 +177,7 @@ function Kiosk({
           touch={touch}
           driverKind={driver.kind}
           driverStatus={driverStatus}
-          showStatus={context === 'twin' || (query?.has('status') ?? false)}
+          showStatus={statusShown ?? query?.has('status') ?? false}
           onExit={onExit}
         >
           {channelFor(device, live)}

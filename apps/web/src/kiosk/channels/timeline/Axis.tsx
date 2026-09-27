@@ -87,7 +87,8 @@ export function Axis({
     if (el === null || marker === null) return;
     const measure = () => {
       const width = el.clientWidth;
-      const min = marker.getBoundingClientRect().width * 1.2;
+      // A layout width, which a scale transform in the Twin does not change.
+      const min = marker.offsetWidth * 1.2;
       setView({ width, year: Math.max(width / YEARS_IN_VIEW, min) });
     };
     measure();

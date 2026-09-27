@@ -23,7 +23,7 @@ import type { Tier } from '../quality';
 import { useTwinState } from '../state';
 import { telemetry } from '../telemetry';
 import { framingFor, type Framing } from './framing';
-import { bezel, type Rect } from './store';
+import { bezel, modeFor, openMode, type OpenMode, type Rect } from './store';
 
 export const FLY_MS = 1100;
 export const EXPAND_MS = 450;
@@ -31,6 +31,13 @@ const REVEAL_FROM = 0.7;
 const FADE_OUT_MS = 280;
 const DIM = 0.42;
 const BLUR_PX = 7;
+/**
+ * The hall around a device opened in place. Dimmer than the hall, so the
+ * screen is the brightest thing in view and reads as lit, and blurred only
+ * a little, so the bezel and the stand stay recognisable. D-165.
+ */
+const HALL_DIM = 0.3;
+const HALL_BLUR_PX = 2.5;
 /**
  * The gaze arrives first. The camera turns to face the screen over the first
  * 55 percent of the move, then walks straight at it. Leaving mirrors this:
@@ -73,6 +80,8 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
 
   const saved = useRef<Pose | null>(null);
   const frame = useRef<Framing | null>(null);
+  // The mode is read when a device is opened, and held until it is closed.
+  const mode = useRef<OpenMode>('hall');
   const started = useRef<number | null>(null);
   const lastFrame = useRef(0);
   const scratch = useMemo(
@@ -139,7 +148,28 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
   }
 
   function arrive(rect: Rect) {
-    bezel.write({ rect, expand: 1, opacity: 1, canvas: 0, dim: DIM, blur: 0 });
+    const f = frame.current;
+    if (mode.current === 'hall' && f !== null) {
+      bezel.write({
+        rect,
+        expand: 0,
+        opacity: 1,
+        canvas: 1,
+        dim: HALL_DIM,
+        blur: 0,
+        layout: f.layout,
+      });
+      return;
+    }
+    bezel.write({
+      rect,
+      expand: 1,
+      opacity: 1,
+      canvas: 0,
+      dim: DIM,
+      blur: 0,
+      layout: null,
+    });
   }
 
   // Phase changes set up the move; frames carry it out.
@@ -153,6 +183,10 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
     const aspect = size.width / size.height;
     frame.current = framingFor(device, fov, aspect);
     const reduced = prefersReducedMotion();
+
+    if (phase === 'in' || (phase === 'open' && deepLinked)) {
+      mode.current = modeFor(device.form, openMode.get());
+    }
 
     if (phase === 'in') {
       saved.current = readPose(controls, camera);
@@ -194,6 +228,7 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
           canvas: 1,
           dim: 0,
           blur: 0,
+          layout: mode.current === 'hall' ? frame.current.layout : null,
         });
         handBack();
       }
@@ -203,6 +238,16 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
     // restart the move from wherever the camera happened to be.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, open]);
+
+  // A window resized while a device is open in the hall: the camera has not
+  // moved, so the screen is where it was, projected into the new viewport.
+  useEffect(() => {
+    if (phase !== 'open' || mode.current !== 'hall' || frame.current === null) return;
+    const last = bezel.latest();
+    if (last === null) return;
+    bezel.write({ ...last, rect: project(frame.current.corners) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size.width, size.height, phase]);
 
   function handBack() {
     const s = saved.current;
@@ -232,7 +277,10 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
     lastFrame.current = now;
     if (started.current === null) started.current = now;
     const t = now - started.current;
-    const blurMax = tier === 'high' ? BLUR_PX : 0;
+    const inHall = mode.current === 'hall';
+    const blurMax = tier === 'high' ? (inHall ? HALL_BLUR_PX : BLUR_PX) : 0;
+    const dimMax = inHall ? HALL_DIM : DIM;
+    const layout = inHall ? f.layout : null;
 
     if (phase === 'in') {
       const k = clamp01(t / FLY_MS);
@@ -245,12 +293,28 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
           expand: 0,
           opacity: smooth((k - REVEAL_FROM) / (1 - REVEAL_FROM)),
           canvas: 1,
-          dim: DIM * u,
+          dim: dimMax * u,
           blur: blurMax * smooth((k - 0.55) / 0.45),
+          layout,
         });
         return;
       }
       if (telemetry().arrivalRect === null) telemetry().arrivalRect = rect;
+      // In the hall, the application stays on its screen: arrival is the end.
+      if (inHall) {
+        bezel.write({
+          rect,
+          expand: 0,
+          opacity: 1,
+          canvas: 1,
+          dim: dimMax,
+          blur: blurMax,
+          layout,
+        });
+        lastFrame.current = 0;
+        setPhase('open');
+        return;
+      }
       const e = easeInOutSine(clamp01((t - FLY_MS) / EXPAND_MS));
       bezel.write({
         rect,
@@ -259,6 +323,7 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
         canvas: 1 - e,
         dim: DIM,
         blur: blurMax,
+        layout,
       });
       if (e >= 1) {
         lastFrame.current = 0;
@@ -267,9 +332,11 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
       return;
     }
 
-    // Out: collapse onto the screen, fade the application, fly home.
+    // Out: collapse onto the screen, fade the application, fly home. In the
+    // hall there is nothing to collapse: the application is already on it.
+    const collapse = inHall ? 0 : EXPAND_MS;
     const rectAtScreen = project(f.corners);
-    if (t < EXPAND_MS) {
+    if (t < collapse) {
       const c = easeInOutSine(clamp01(t / EXPAND_MS));
       bezel.write({
         rect: rectAtScreen,
@@ -278,19 +345,21 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
         canvas: c,
         dim: DIM,
         blur: blurMax * (1 - c),
+        layout,
       });
       return;
     }
-    const k = clamp01((t - EXPAND_MS) / FLY_MS);
+    const k = clamp01((t - collapse) / FLY_MS);
     const u = easeInOutSine(k);
     pose(p.positions.getPoint(1 - u, scratch.p), gaze(1 - k, scratch.t));
     bezel.write({
       rect: project(f.corners),
       expand: 0,
-      opacity: 1 - clamp01((t - EXPAND_MS) / FADE_OUT_MS),
+      opacity: 1 - clamp01((t - collapse) / FADE_OUT_MS),
       canvas: 1,
-      dim: DIM * (1 - u),
+      dim: dimMax * (1 - u),
       blur: 0,
+      layout,
     });
     if (k >= 1) {
       lastFrame.current = 0;

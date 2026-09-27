@@ -396,7 +396,8 @@
   "twin.nearby": "पास में पढ़िए: {title}",
   "fleet.simulated": "सिम्युलेटेड आगंतुक",
   "fleet.source.simulatedCount": "इन उपकरणों में से {count} टोरन कोर से नकली आगंतुक हैं, न कि कियोस्क।",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 142 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.stepBack": "हॉल में वापस जाएँ",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 143 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -539,6 +540,7 @@
     "device.status.simulated",
     "twin.nearby",
     "fleet.simulated",
-    "fleet.source.simulatedCount"
+    "fleet.source.simulatedCount",
+    "twin.stepBack"
   ]
 }

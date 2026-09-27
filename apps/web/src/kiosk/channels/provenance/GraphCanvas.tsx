@@ -72,8 +72,14 @@ export function GraphCanvas({
     const node = probe.current;
     if (el === null || node === null) return;
     const measure = () => {
-      const r = node.getBoundingClientRect();
-      setSize({ w: el.clientWidth, h: el.clientHeight, nodeW: r.width, nodeH: r.height });
+      // Layout sizes, not the bounding box: in the Twin this room runs scaled
+      // onto a screen, and a transformed box would lay the graph out small.
+      setSize({
+        w: el.clientWidth,
+        h: el.clientHeight,
+        nodeW: node.offsetWidth,
+        nodeH: node.offsetHeight,
+      });
     };
     measure();
     const observer = new ResizeObserver(measure);

@@ -396,7 +396,8 @@
   "twin.nearby": "సమీపంలో చదవండి: {title}",
   "fleet.simulated": "అనుకరణ సందర్శకులు",
   "fleet.source.simulatedCount": "ఈ పరికరాలలో {count} టోరాన్ కోర్ నుండి అనుకరణ సందర్శకులు, కియోస్క్లు కాదు.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-26. Written by hand except the 103 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.stepBack": "హాల్లోకి తిరిగి అడుగు పెట్టండి",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 104 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -500,6 +501,7 @@
     "device.status.simulated",
     "twin.nearby",
     "fleet.simulated",
-    "fleet.source.simulatedCount"
+    "fleet.source.simulatedCount",
+    "twin.stepBack"
   ]
 }

@@ -100,7 +100,9 @@
   --touch-comfortable: calc(36mm * var(--device-scale));
 
   /* The bottom third belongs to the hand. See ReachZone. */
-  --reach-zone: 33.333vh;
+  /* Container units, so a kiosk running on a screen in the Twin measures its
+     own screen. With no container they fall back to the viewport. D-165. */
+  --reach-zone: 33.333cqh;
 
   /* ---- line and radius. This is paper, so almost no shadow. ---- */
   --hairline: 1px;

@@ -23,6 +23,8 @@ import { PerfOverlay } from '@/twin/PerfOverlay';
 import { pinnedTier, type Tier } from '@/twin/quality';
 import { TwinStateProvider, useTwinState } from '@/twin/state';
 import { BezelLayer } from '@/twin/transition/BezelLayer';
+import { FrameChrome } from '@/twin/transition/FrameChrome';
+import { modeFor, openMode, type OpenMode } from '@/twin/transition/store';
 import styles from './twin.module.css';
 
 // WebGL has no server render, and the static export must not try to give it one.
@@ -41,6 +43,13 @@ function Hall() {
   const { t } = useI18n();
   const { entered, open, phase, openDevice, closeDevice } = useTwinState();
   const fleet = useFleet();
+  const [mode, setMode] = useState<OpenMode>('hall');
+  useEffect(() => {
+    openMode.load();
+    return openMode.subscribe(setMode);
+  }, []);
+  const openDeviceForm = fleet.devices.find((d) => d.deviceId === open)?.form ?? 'kiosk';
+  const openedIn = modeFor(openDeviceForm, mode);
   const [boot, setBoot] = useState<{
     deepLink: string | null;
     pinned: Tier | null;
@@ -170,7 +179,8 @@ function Hall() {
             onTier={setTier}
             replayToken={replay}
             skipEntry={boot.deepLink !== null}
-            rendering={!covered}
+            // A device opened in the hall keeps the hall around it, alive.
+            rendering={!covered || openedIn === 'hall'}
           />
         )}
       </div>
@@ -207,6 +217,7 @@ function Hall() {
               deviceId={open}
               device={fleet.devices.find((d) => d.deviceId === open)}
               drift={fleet.drift.get(open) ?? null}
+              showStatus={false}
               context="twin"
               onExit={close}
               live={covered}
@@ -215,6 +226,12 @@ function Hall() {
         )}
       </div>
 
+      {open !== null && openedIn === 'hall' && phase === 'open' && (
+        <FrameChrome
+          device={fleet.devices.find((d) => d.deviceId === open) ?? DEVICES[0]!}
+          onStepBack={close}
+        />
+      )}
       <DeviceSheet open={sheet} onClose={() => setSheet(false)} />
       {perf && <PerfOverlay />}
     </main>

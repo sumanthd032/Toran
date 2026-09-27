@@ -17,7 +17,29 @@ export interface Framing {
   readonly target: THREE.Vector3;
   /** The four corners of the screen area in world space, for projection. */
   readonly corners: readonly THREE.Vector3[];
+  /**
+   * The size, in CSS pixels, the application is laid out at when it runs on
+   * this screen in the hall: the device's own resolution, at the screen's own
+   * aspect. D-165.
+   */
+  readonly layout: { readonly w: number; readonly h: number };
 }
+
+/**
+ * Each form's panel height in pixels. A kiosk is the 1280 by 800 tablet the
+ * kiosk contracts are measured on; the Timeline Wall is a 1920 panel; the
+ * welcome totem is a portrait 1080 by 1920. A portrait screen in a landscape
+ * window is drawn small, but a narrower layout was tried and the welcome's two
+ * columns collapsed to a word a line, so the totem keeps its real size.
+ */
+const LAYOUT_HEIGHT: Readonly<Record<HallDevice['form'], number>> = {
+  kiosk: 800,
+  desk: 800,
+  booth: 800,
+  console: 800,
+  wall: 1200,
+  totem: 1920,
+};
 
 /** Fraction of the viewport the screen fills when the camera arrives. */
 export const FILL = 0.86;
@@ -120,9 +142,11 @@ export function framingFor(
     distance *= fill / FILL;
   }
 
+  const layoutH = LAYOUT_HEIGHT[device.form];
   return {
     position: aim.clone().addScaledVector(normal, distance),
     target: aim,
     corners,
+    layout: { w: Math.round((layoutH * halfW) / halfH), h: layoutH },
   };
 }

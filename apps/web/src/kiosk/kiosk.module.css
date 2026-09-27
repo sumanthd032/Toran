@@ -120,7 +120,7 @@
   margin: 0;
   /* Atmosphere at a distance, readable from the implicit zone. Scales with
      the panel so a smaller screen does not push the citation off the edge. */
-  font-size: clamp(20px, min(2.4vw, 3.6vh), 42px);
+  font-size: clamp(20px, min(2.4cqw, 3.6cqh), 42px);
   line-height: 1.42;
   text-wrap: pretty;
   transition: opacity 1400ms var(--ease);
@@ -239,6 +239,7 @@
 .reach {
   grid-row: 3;
   grid-column: 1;
+  container-type: inline-size;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -270,6 +271,8 @@
 .tools {
   flex: 1;
   min-width: 0;
+  /* A room's own controls size themselves against the room they are given. */
+  container-type: inline-size;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,4 +464,21 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/*
+  On the 1280 wide tablet the three navigation buttons, labelled, left the
+  Reading Room a search field five characters wide. Under 1400 px the arrows
+  and the house carry Back, Home and Forward alone, as they already do at the
+  largest text size, and the room gets the width. D-166.
+*/
+@container (max-width: 1400px) {
+  .nav .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

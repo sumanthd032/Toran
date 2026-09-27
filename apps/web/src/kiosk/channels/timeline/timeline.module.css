@@ -430,7 +430,7 @@
 }
 
 .card[data-mode='ambient'] .excerpt p {
-  font-size: clamp(20px, min(2.1vw, 3.2vh), 40px);
+  font-size: clamp(20px, min(2.1cqw, 3.2cqh), 40px);
   line-height: 1.4;
 }
 

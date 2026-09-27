@@ -395,5 +395,6 @@
   "device.status.simulated": "{status}, simulated visitor",
   "twin.nearby": "Read nearby: {title}",
   "fleet.simulated": "Simulated visitor",
-  "fleet.source.simulatedCount": "{count} of these devices are simulated visitors from Toran Core, not kiosks."
+  "fleet.source.simulatedCount": "{count} of these devices are simulated visitors from Toran Core, not kiosks.",
+  "twin.stepBack": "Step back into the hall"
 }
