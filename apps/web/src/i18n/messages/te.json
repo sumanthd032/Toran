@@ -432,7 +432,11 @@
   "hall.living.label": "టోరాన్ కోర్ లో అనుకరణ సందర్శకులు",
   "hall.living.note": "ఇది ప్రతి వీక్షకుడి కోసం హాల్ను మారుస్తుంది. నివేదించే నిజమైన కియోస్క్ ఎల్లప్పుడూ దాని పరికరాన్ని తీసుకుంటుంది.",
   "hall.living.none": "ఈ ట్విన్ సిమ్యులేటెడ్ హాల్ను నడిపే టోరాన్ కోర్కు అనుసంధానించబడలేదు.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 139 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.screen.cited": "ఆర్కైవ్ నుండి సమాధానం ఇవ్వబడింది, ప్రతి దావా ఉదహరించబడింది",
+  "twin.screen.reporting": "{total} నివేదిస్తున్న పరికరాల {count}",
+  "twin.screen.simulated": "{count} అనుకరణ సందర్శకులు",
+  "twin.screen.drifting": "{count} సమీపంలోని పఠనం వైపు ఆకర్షించబడింది",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 143 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -572,6 +576,10 @@
     "hall.group.living",
     "hall.living.label",
     "hall.living.note",
-    "hall.living.none"
+    "hall.living.none",
+    "twin.screen.cited",
+    "twin.screen.reporting",
+    "twin.screen.simulated",
+    "twin.screen.drifting"
   ]
 }

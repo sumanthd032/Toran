@@ -432,7 +432,11 @@
   "hall.living.label": "तोरान कोअरमधील अनुकरण केलेले अभ्यागत",
   "hall.living.note": "यामुळे प्रत्येक दर्शकासाठी सभागृह बदलते. अहवाल देणारा खरा किऑस्क नेहमी त्याचे उपकरण ताब्यात घेतो.",
   "hall.living.none": "हे जुळे सिम्युलेटेड हॉल चालवणाऱ्या तोरान कोरशी जोडलेले नाही.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 178 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.screen.cited": "संग्रहातून उत्तर दिले, प्रत्येक दावा उद्धृत केला",
+  "twin.screen.reporting": "अहवाल देणाऱ्या {total} उपकरणांपैकी {count}",
+  "twin.screen.simulated": "{count} अनुकरण केलेले अभ्यागत",
+  "twin.screen.drifting": "{count} जवळच्या वाचनाकडे आकर्षित",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 182 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -611,6 +615,10 @@
     "hall.group.living",
     "hall.living.label",
     "hall.living.note",
-    "hall.living.none"
+    "hall.living.none",
+    "twin.screen.cited",
+    "twin.screen.reporting",
+    "twin.screen.simulated",
+    "twin.screen.drifting"
   ]
 }

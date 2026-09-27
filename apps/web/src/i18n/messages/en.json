@@ -431,5 +431,9 @@
   "hall.group.living": "The living hall, for everyone",
   "hall.living.label": "Simulated visitors in Toran Core",
   "hall.living.note": "This changes the hall for every viewer. A real kiosk that reports in always takes its device over.",
-  "hall.living.none": "This Twin is not connected to a Toran Core that runs a simulated hall."
+  "hall.living.none": "This Twin is not connected to a Toran Core that runs a simulated hall.",
+  "twin.screen.cited": "Answered from the archive, every claim cited",
+  "twin.screen.reporting": "{count} of {total} devices reporting",
+  "twin.screen.simulated": "{count} simulated visitors",
+  "twin.screen.drifting": "{count} drawn toward a nearby reading"
 }

@@ -432,7 +432,11 @@
   "hall.living.label": "तोरान कोर में सिम्युलेटेड आगंतुक",
   "hall.living.note": "यह प्रत्येक दर्शक के लिए हॉल को बदल देता है। एक वास्तविक कियोस्क जो रिपोर्ट करता है वह हमेशा अपने उपकरण को संभाल लेता है।",
   "hall.living.none": "यह जुड़वां एक तोरान कोर से जुड़ा नहीं है जो एक नकली हॉल चलाता है।",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 178 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.screen.cited": "अभिलेखागार से जवाब दिया गया, प्रत्येक दावे का हवाला दिया गया",
+  "twin.screen.reporting": "{total} रिपोर्टिंग उपकरणों का {count}",
+  "twin.screen.simulated": "{count} नकली आगंतुक",
+  "twin.screen.drifting": "{count} पास के पढ़ने की ओर खींचा गया",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 182 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "assistant.lead",
     "assistant.limit",
@@ -611,6 +615,10 @@
     "hall.group.living",
     "hall.living.label",
     "hall.living.note",
-    "hall.living.none"
+    "hall.living.none",
+    "twin.screen.cited",
+    "twin.screen.reporting",
+    "twin.screen.simulated",
+    "twin.screen.drifting"
   ]
 }

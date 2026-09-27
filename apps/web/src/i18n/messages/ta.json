@@ -432,7 +432,11 @@
   "hall.living.label": "டோரன் மையத்தில் உருவகப்படுத்தப்பட்ட பார்வையாளர்கள்",
   "hall.living.note": "இது ஒவ்வொரு பார்வையாளருக்கும் மண்டபத்தை மாற்றுகிறது. அறிக்கையிடும் ஒரு உண்மையான கியோஸ்க் எப்போதும் அதன் சாதனத்தை எடுத்துக்கொள்கிறது.",
   "hall.living.none": "இந்த இரட்டை ஒரு உருவகப்படுத்தப்பட்ட மண்டபத்தை இயக்கும் டோரன் கோருடன் இணைக்கப்படவில்லை.",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 139 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.screen.cited": "காப்பகத்திலிருந்து பதிலளிக்கப்பட்ட ஒவ்வொரு உரிமைகோரலும் மேற்கோள் காட்டப்பட்டது",
+  "twin.screen.reporting": "{count} இன் {total} அறிக்கையிடும் சாதனங்கள்",
+  "twin.screen.simulated": "{count} உருவகப்படுத்தப்பட்ட பார்வையாளர்கள்",
+  "twin.screen.drifting": "{count} அருகிலுள்ள வாசிப்பை நோக்கி இழுக்கப்பட்டது",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 143 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -572,6 +576,10 @@
     "hall.group.living",
     "hall.living.label",
     "hall.living.note",
-    "hall.living.none"
+    "hall.living.none",
+    "twin.screen.cited",
+    "twin.screen.reporting",
+    "twin.screen.simulated",
+    "twin.screen.drifting"
   ]
 }

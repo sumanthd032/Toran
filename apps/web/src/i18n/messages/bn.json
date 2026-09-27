@@ -432,7 +432,11 @@
   "hall.living.label": "তোরান কোর-এ অনুকরণকৃত দর্শনার্থীরা",
   "hall.living.note": "এটি প্রতিটি দর্শকের জন্য হল পরিবর্তন করে। একটি আসল কিয়স্ক যা রিপোর্ট করে সর্বদা তার যন্ত্রটি নিয়ে যায়।",
   "hall.living.none": "এই টুইন একটি সিমুলেটেড হল চালানো একটি তোরান কোরের সাথে সংযুক্ত নয়।",
-  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 138 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
+  "twin.screen.cited": "আর্কাইভ থেকে উত্তর দেওয়া, প্রতিটি দাবি উদ্ধৃত করা হয়েছে",
+  "twin.screen.reporting": "{count} এর {total} ডিভাইস রিপোর্টিং",
+  "twin.screen.simulated": "{count} সিমুলেটেড দর্শক",
+  "twin.screen.drifting": "{count} নিকটবর্তী পাঠের দিকে আকৃষ্ট",
+  "_provenance": "Bhashini, ai4bharat/indictrans-v2-all-gpu--t4, 2026-09-27. Written by hand except the 142 keys in _machine, which are machine translated and not yet reviewed by a speaker.",
   "_machine": [
     "citation.act",
     "reading.act.title",
@@ -571,6 +575,10 @@
     "hall.group.living",
     "hall.living.label",
     "hall.living.note",
-    "hall.living.none"
+    "hall.living.none",
+    "twin.screen.cited",
+    "twin.screen.reporting",
+    "twin.screen.simulated",
+    "twin.screen.drifting"
   ]
 }

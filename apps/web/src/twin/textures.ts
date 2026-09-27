@@ -13,6 +13,7 @@
  */
 
 import * as THREE from 'three';
+import type { ScreenContent } from './scene/screenContent';
 
 // ---------- noise ----------
 
@@ -359,6 +360,8 @@ export function sky(): THREE.CanvasTexture {
 
 const FONT_UI = 'Archivo, system-ui, sans-serif';
 const FONT_READ = 'Spectral, Georgia, serif';
+/** Devanagari, Bengali, Tamil and Telugu: the scripts the archive carries. */
+const INDIC_TEXT = /[\u0900-\u0C7F]/;
 const FONT_MONO = '"JetBrains Mono", ui-monospace, monospace';
 const FONT_INDIC = '"Noto Serif Devanagari", Spectral, serif';
 
@@ -788,6 +791,7 @@ export function screen(
   lang: string,
   portrait = false,
   note: string | null = null,
+  content: ScreenContent | null = null,
 ): THREE.CanvasTexture {
   const w = portrait ? 320 : 512;
   const h = portrait ? 576 : 320;
@@ -832,23 +836,68 @@ export function screen(
     ctx.fillStyle = color;
     ctx.fillRect(x, y, len, hh);
   };
+  /** Words set in a column, at most `max` lines, the last one ending in an ellipsis if cut. */
+  const words = (
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    lineH: number,
+    max: number,
+  ) => {
+    // Indic text in the Indic face: the others have no glyphs for it.
+    if (INDIC_TEXT.test(text))
+      ctx.font = ctx.font.replace(/(\d+px) .*$/, `$1 ${FONT_INDIC}`);
+    const out: string[] = [];
+    let current = '';
+    for (const word of text.split(/\s+/)) {
+      const tryLine = current === '' ? word : `${current} ${word}`;
+      if (ctx.measureText(tryLine).width <= width) current = tryLine;
+      else {
+        out.push(current);
+        current = word;
+        if (out.length === max) break;
+      }
+    }
+    if (out.length < max && current !== '') out.push(current);
+    if (out.length === max && ctx.measureText(out[max - 1]!).width > width - 16) {
+      out[max - 1] = `${out[max - 1]!.replace(/\S+$/, '')}…`;
+    }
+    out.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+    return out.length;
+  };
 
   switch (channel) {
     case 'reading': {
+      if (content?.kind === 'passage') {
+        ctx.font = `400 19px ${FONT_READ}`;
+        ctx.fillStyle = paper;
+        // The citation is never covered: with a drift line across the foot of
+        // the screen, the passage gives up two lines and its source moves up.
+        const citeY = note === null ? 272 : 214;
+        words(content.text, 24, 92, w - 48, 27, note === null ? 6 : 4);
+        line(24, citeY - 20, 40, brass, 2);
+        ctx.font = `400 12px ${FONT_MONO}`;
+        ctx.fillStyle = brass;
+        ctx.fillText(
+          content.cite.length > 60 ? `${content.cite.slice(0, 59)}…` : content.cite,
+          24,
+          citeY,
+        );
+        break;
+      }
       for (let i = 0; i < 7; i++)
         line(24, 78 + i * 22, 300 + ((i * 53) % 150), i === 3 ? brass : soft);
       ctx.fillStyle = 'rgba(200,155,82,0.25)';
       ctx.fillRect(22, 138, 190, 12);
-      ctx.font = `400 13px ${FONT_MONO}`;
-      ctx.fillStyle = brass;
-      ctx.fillText('BAWS vol. 1, p. 47', 24, 262);
       break;
     }
     case 'provenance': {
+      const chain = content?.kind === 'chain' ? content.nodes : null;
       const nodes: [number, number, string][] = [
-        [90, 150, '1936'],
-        [256, 110, '1948'],
-        [420, 150, '1950'],
+        [90, 150, chain?.[0]?.year ?? '1936'],
+        [256, 110, chain?.[1]?.year ?? '1948'],
+        [420, 150, chain?.[2]?.year ?? '1950'],
       ];
       ctx.strokeStyle = brass;
       ctx.lineWidth = 3;
@@ -879,12 +928,23 @@ export function screen(
       ctx.textAlign = 'left';
       ctx.font = `500 16px ${FONT_UI}`;
       ctx.fillStyle = brass;
-      ctx.fillText('Article 17', 24, 268);
+      if (chain !== null) {
+        // Where the chain began and where it arrived, in the documents' own titles.
+        ctx.fillText(`${chain[0]!.title} → ${chain[2]!.title}`.slice(0, 58), 24, 268);
+      } else ctx.fillText('Article 17', 24, 268);
       break;
     }
     case 'timeline': {
       line(24, 220, w - 48, soft, 2);
-      const years = ['1891', '1916', '1927', '1936', '1948', '1956'];
+      const years =
+        content?.kind === 'years' && content.years.length > 1
+          ? content.years
+          : ['1891', '1916', '1927', '1936', '1948', '1956'];
+      if (content?.kind === 'years') {
+        ctx.font = `500 16px ${FONT_READ}`;
+        ctx.fillStyle = paper;
+        ctx.fillText(content.title.slice(0, 44), 24, 72);
+      }
       years.forEach((y, i) => {
         const x = 34 + i * ((w - 88) / (years.length - 1));
         line(x, 212, 2, brass, 18);
@@ -921,6 +981,11 @@ export function screen(
       ctx.arc(380, 170, 70, 0, Math.PI * 2);
       ctx.stroke();
       for (let i = 0; i < 5; i++) line(330, 132 + i * 18, 100 - i * 8, soft, 5);
+      if (content?.kind === 'caption') {
+        ctx.font = `500 13px ${FONT_UI}`;
+        ctx.fillStyle = brass;
+        words(content.heading, 300, 262, w - 324, 16, 2);
+      }
       break;
     }
     case 'audio': {
@@ -943,8 +1008,17 @@ export function screen(
       ctx.lineTo(w / 2 - 16, 162);
       ctx.closePath();
       ctx.fill();
-      for (let i = 0; i < 3; i++)
-        line(24, 232 + i * 18, 380 - i * 60, i === 1 ? brass : soft, 5);
+      if (content?.kind === 'caption') {
+        ctx.font = `600 16px ${FONT_UI}`;
+        ctx.fillStyle = paper;
+        words(content.heading, 24, 240, w - 48, 20, 1);
+        ctx.font = `400 13px ${FONT_MONO}`;
+        ctx.fillStyle = brass;
+        ctx.fillText(content.sub.slice(0, 56), 24, 264);
+      } else {
+        for (let i = 0; i < 3; i++)
+          line(24, 232 + i * 18, 380 - i * 60, i === 1 ? brass : soft, 5);
+      }
       break;
     }
     case 'assistant': {
@@ -952,18 +1026,28 @@ export function screen(
       ctx.beginPath();
       ctx.roundRect(210, 70, 278, 52, 10);
       ctx.fill();
-      line(228, 92, 200, paper, 6);
+      if (content?.kind === 'caption') {
+        ctx.font = `500 13px ${FONT_UI}`;
+        ctx.fillStyle = paper;
+        words(content.heading, 222, 90, 254, 16, 2);
+      } else line(228, 92, 200, paper, 6);
       ctx.fillStyle = '#2a241f';
       ctx.beginPath();
       ctx.roundRect(24, 138, 350, 112, 10);
       ctx.fill();
       for (let i = 0; i < 3; i++) line(42, 160 + i * 22, 300 - i * 40, soft, 6);
-      ctx.font = `500 13px ${FONT_MONO}`;
-      ctx.fillStyle = brass;
-      ctx.fillText('CAD 7.62.185+', 42, 238);
       break;
     }
     case 'curator': {
+      if (content?.kind === 'fleet') {
+        ctx.font = `500 16px ${FONT_MONO}`;
+        content.lines.forEach((l, i) => {
+          ctx.fillStyle = i === 0 ? green : i === 2 ? brass : soft;
+          ctx.fillText(l, 24, 96 + i * 36);
+        });
+        line(24, 280, w - 48, '#2a241f', 10);
+        break;
+      }
       for (let r = 0; r < 7; r++) {
         const y = 74 + r * 28;
         line(24, y, w - 48, '#2a241f', 22);

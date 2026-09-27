@@ -28,6 +28,7 @@ import { hallMaterials } from '../materials';
 import { label as labelTexture, screen as screenTexture } from '../textures';
 import { useTwinState } from '../state';
 import { formSpec, type ScreenSpec } from './deviceForms';
+import { useScreenContent, type ScreenContent } from './screenContent';
 
 const matrix = new THREE.Matrix4();
 const quat = new THREE.Quaternion();
@@ -64,10 +65,12 @@ function Screen({
   spec,
   device,
   health,
+  content,
 }: {
   spec: ScreenSpec;
   device: HallDevice;
   health: DeviceHealth | undefined;
+  content: ScreenContent | null;
 }) {
   const { t, lang } = useI18n();
   const { drift, titleOf } = useFleet();
@@ -86,6 +89,7 @@ function Screen({
   const drifting = drift.get(device.deviceId);
   const note =
     drifting === undefined ? null : t('twin.nearby', { title: titleOf(drifting) });
+  const contentKey = JSON.stringify(content);
 
   const material = useMemo(() => {
     const map = screenTexture(
@@ -96,12 +100,15 @@ function Screen({
       lang,
       spec.portrait ?? false,
       note,
+      content,
     );
     const m = new THREE.MeshBasicMaterial({ map, toneMapped: false });
     // Push lit screens past the bloom threshold so they glow in the dim hall.
     m.color.setScalar(status === 'online' ? 1.35 : status === 'idle' ? 0.8 : 1);
     return m;
-  }, [device.channel, title, status, statusLabel, lang, spec.portrait, note]);
+    // Keyed on what the content says, not on the object, which is new each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [device.channel, title, status, statusLabel, lang, spec.portrait, note, contentKey]);
 
   useEffect(
     () => () => {
@@ -172,9 +179,11 @@ function NamePlate({
 function Device({
   device,
   health,
+  content,
 }: {
   device: HallDevice;
   health: DeviceHealth | undefined;
+  content: ScreenContent | null;
 }) {
   const spec = useMemo(() => formSpec(device.form), [device.form]);
   const { hover, openDevice, entered, phase } = useTwinState();
@@ -182,7 +191,7 @@ function Device({
   return (
     <group position={device.position} rotation={[0, device.rotationY, 0]}>
       {spec.screens.map((s, i) => (
-        <Screen key={i} spec={s} device={device} health={health} />
+        <Screen key={i} spec={s} device={device} health={health} content={content} />
       ))}
       <NamePlate device={device} health={health} y={spec.labelY} />
       {/* Hit volume. Invisible meshes are still raycast, and cost no draw. */}
@@ -247,6 +256,7 @@ export function Devices({
   health: ReadonlyMap<string, DeviceHealth>;
 }) {
   const m = hallMaterials();
+  const contentFor = useScreenContent();
 
   const { body, trim } = useMemo(() => {
     const bodyParts: Part[] = [];
@@ -263,8 +273,13 @@ export function Devices({
     <group>
       <mesh geometry={body} material={m.bronze} />
       <mesh geometry={trim} material={m.brass} />
-      {devices.map((d) => (
-        <Device key={d.deviceId} device={d} health={health.get(d.deviceId)} />
+      {devices.map((d, i) => (
+        <Device
+          key={d.deviceId}
+          device={d}
+          health={health.get(d.deviceId)}
+          content={contentFor(d, i)}
+        />
       ))}
       <Marker />
     </group>

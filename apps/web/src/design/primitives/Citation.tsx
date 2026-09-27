@@ -29,14 +29,17 @@ export interface CitationProps {
  * An inferred page number says so. The alternative is presenting a guess with
  * the same authority as a reading, which is how an archive loses its value.
  */
-export function Citation({
-  citation,
-  block = false,
-  translatedFrom = null,
-}: CitationProps) {
-  const t = useT();
+/**
+ * A citation's words: the corpus, and the locator's parts in order. The only
+ * place a citation is turned into text, so the Citation element and anything
+ * else that has to print one, such as a screen drawn in the Twin's hall, say
+ * exactly the same thing. D-168.
+ */
+export function citationParts(
+  citation: CitationData,
+  t: ReturnType<typeof useT>,
+): { corpus: string; parts: string[]; inferred: boolean } {
   const l = citation.locator;
-
   const parts: string[] = [];
   let inferred = false;
 
@@ -104,6 +107,17 @@ export function Citation({
     }
   }
 
+  return { corpus: t(CORPUS_KEY[citation.corpus]), parts, inferred };
+}
+
+export function Citation({
+  citation,
+  block = false,
+  translatedFrom = null,
+}: CitationProps) {
+  const t = useT();
+  const { corpus, parts, inferred } = citationParts(citation, t);
+
   return (
     <cite
       className={[
@@ -114,7 +128,7 @@ export function Citation({
         .filter(Boolean)
         .join(' ')}
     >
-      <span className={styles.corpus}>{t(CORPUS_KEY[citation.corpus])}</span>
+      <span className={styles.corpus}>{corpus}</span>
       <span className={styles.locator}>{parts.join(', ')}</span>
       {/* Said on the page, not in a tooltip: a group at a kiosk sees no hover. */}
       {inferred && <span className={styles.inferred}>{t('citation.inferred')}</span>}
