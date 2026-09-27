@@ -178,6 +178,15 @@
   outline-offset: 2px;
 }
 
+/* The guided tour points here: the button a visitor is told to look for. */
+:global(html[data-tour-point='hall']) .toggle {
+  color: var(--text);
+  background: var(--surface-raised);
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .toggle svg {
   inline-size: 18px;
   block-size: 18px;

@@ -48,7 +48,7 @@ function Hall() {
   const { t } = useI18n();
   const { entered, open, phase, openDevice, closeDevice } = useTwinState();
   const fleet = useFleet();
-  const [mode, setMode] = useState<OpenMode>('hall');
+  const [mode, setMode] = useState<OpenMode>('full');
   useEffect(() => {
     openMode.load();
     return openMode.subscribe(setMode);

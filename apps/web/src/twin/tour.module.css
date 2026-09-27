@@ -95,6 +95,30 @@
   line-height: 1.5;
 }
 
+.point {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  border: var(--hairline) solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.point svg {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin-block-start: 2px;
+  fill: none;
+  stroke: var(--accent-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .label {
   display: block;
   font-family: var(--font-mono);

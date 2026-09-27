@@ -456,8 +456,9 @@
   "tour.end": "End tour",
   "tour.hall.title": "The hall",
   "tour.hall.body": "Thirteen devices stand in the nave, each a kiosk with one job. Together they are one archive: Dr. Ambedkar's writings, the Constituent Assembly Debates and the Constitution, every passage cited to its volume and page.",
-  "tour.hall.try": "After the tour, drag to look around, scroll to walk, and click a device to open it.",
+  "tour.hall.try": "After the tour, drag to look around, scroll to walk, and click a device to open it. It opens full screen; Back brings you to the hall.",
   "tour.hall.note": "The visitors you see reported on the screens are simulated. The Hall panel can hide them.",
+  "tour.hall.point": "The Hall button in the top right corner opens the Hall panel. Every setting is in it, and so is this tour.",
   "tour.welcome.title": "The welcome totem",
   "tour.welcome.body": "The first thing inside the door. A visitor chooses a language and a text size, and takes a Sutra card from the bowl. The card carries those choices, and the passages they keep, to every other device.",
   "tour.welcome.try": "Choose हिन्दी or मराठी and see the totem change.",
@@ -487,6 +488,7 @@
   "tour.assistant.try": "Ask one of the prepared questions.",
   "tour.assistant.note": "New questions need Toran Core with a Groq key. Without one, it answers the prepared questions from its cache.",
   "tour.panel.title": "Running the Twin",
-  "tour.panel.body": "The Hall button in the top corner opens the Hall panel. From it you can place the visitor at an open kiosk, tap a card, change the language or graphics, show or hide the simulated visitors, and take this tour again.",
+  "tour.panel.point": "The Hall button, in the top right corner, is lit now. It is there whenever you are in the hall.",
+  "tour.panel.body": "From the Hall panel you choose how a device opens: full screen, which is the default, or on its own screen in the hall. You can also place the visitor at an open kiosk, tap a card, change the language or the graphics, show or hide the simulated visitors, and take this tour again.",
   "tour.panel.try": "Open the Hall panel after the tour, then open a device and stand the visitor across the hall to watch it fall asleep."
 }

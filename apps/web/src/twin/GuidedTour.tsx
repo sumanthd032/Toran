@@ -8,7 +8,9 @@
  * the caption stands beside the kiosk rather than over it, and the kiosk
  * stays in use: a visitor on the tour can search, trace a link, turn the
  * years. The caption says what the room is, one thing to try, and, where it
- * is true, what a browser cannot do that the real kiosk does.
+ * is true, what a browser cannot do that the real kiosk does. The first and
+ * last steps light the Hall button in the top right corner and say where it
+ * is, because every setting the tour mentions lives behind it.
  */
 
 import { useEffect, useState } from 'react';
@@ -23,10 +25,12 @@ interface Step {
   readonly device: string | null;
   /** Whether a browser does something here differently from the real kiosk, and says so. */
   readonly note: boolean;
+  /** Whether the step lights the Hall button and says where it is. */
+  readonly point?: boolean;
 }
 
 export const TOUR: readonly Step[] = [
-  { id: 'hall', device: null, note: true },
+  { id: 'hall', device: null, note: true, point: true },
   { id: 'welcome', device: 'dev-13', note: true },
   { id: 'reading', device: 'dev-01', note: false },
   { id: 'provenance', device: 'dev-03', note: false },
@@ -35,7 +39,7 @@ export const TOUR: readonly Step[] = [
   { id: 'audio', device: 'dev-08', note: true },
   { id: 'av', device: 'dev-09', note: false },
   { id: 'assistant', device: 'dev-11', note: true },
-  { id: 'panel', device: null, note: false },
+  { id: 'panel', device: null, note: false, point: true },
 ];
 
 export function GuidedTour({
@@ -70,6 +74,14 @@ export function GuidedTour({
     }
   }, [phase, open, step.device, openDevice, close]);
 
+  // The Hall button reads this attribute and lights up; see hall.module.css.
+  useEffect(() => {
+    if (step.point !== true) return;
+    const root = document.documentElement;
+    root.setAttribute('data-tour-point', 'hall');
+    return () => root.removeAttribute('data-tour-point');
+  }, [step.point]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -95,6 +107,14 @@ export function GuidedTour({
         <span className={styles.label}>{t('tour.try')}</span>
         {t(`tour.${step.id}.try` as MessageKey)}
       </p>
+      {step.point === true && (
+        <p className={styles.point} data-testid="tour-point">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+          {t(`tour.${step.id}.point` as MessageKey)}
+        </p>
+      )}
       {step.note && (
         <p className={styles.note}>{t(`tour.${step.id}.note` as MessageKey)}</p>
       )}
