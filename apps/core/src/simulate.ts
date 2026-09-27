@@ -22,13 +22,20 @@ import {
 } from '@toran/contracts';
 import type { Fleet } from './fleet.ts';
 
-/** Channels whose visitor reads one work long enough to be a topic. */
+/** Channels whose visitor reads one work at length. They stay longest, and always hold one. */
 const READING_CHANNELS: ReadonlySet<DeviceChannel> = new Set([
   'reading',
   'provenance',
   'timeline',
   'manuscript',
 ]);
+
+/**
+ * Channels whose visitor never holds a work: the welcome totem, where a card
+ * is picked up, and the curator's desk, which is staff at work, not reading.
+ * Every other room is about a work, so its visitor usually holds one.
+ */
+const NO_TOPIC: ReadonlySet<DeviceChannel> = new Set(['entrance', 'curator']);
 
 interface Visit {
   /** When each phase of the current cycle begins, in ms from its start. */
@@ -96,8 +103,9 @@ export class HallSimulator {
     const decaying =
       personal + (reading ? this.between(50_000, 160_000) : this.between(20_000, 60_000));
     const ambient = decaying + this.between(15_000, 30_000);
+    const holds = !NO_TOPIC.has(channel) && (reading || this.random() < 0.7);
     const topic =
-      reading && this.works.length > 0 && this.random() < 0.8
+      holds && this.works.length > 0
         ? this.works[Math.floor(this.random() * this.works.length)]!
         : null;
     return { implicit, subtle, personal, decaying, ambient, topic };
@@ -127,7 +135,6 @@ export class HallSimulator {
   tick(): void {
     const at = this.now();
     for (const config of this.fleet.configs()) {
-      if (config.channel === 'curator') continue;
       // A real kiosk reporting for this device has the floor.
       if (this.fleet.reportedByDevice(config.deviceId)) {
         this.devices.delete(config.deviceId);
@@ -135,11 +142,16 @@ export class HallSimulator {
       }
       let sim = this.devices.get(config.deviceId);
       if (sim === undefined) {
+        const visit = this.visitFor(config.channel);
         sim = {
-          started: at,
-          visit: this.visitFor(config.channel),
-          // Staggered, so thirteen devices do not report in the same instant.
-          nextBeat: at + this.random() * BEAT_INTERVAL_MS,
+          // A hall that opens mid-afternoon, not at dawn: each visitor starts
+          // somewhere in its visit, so the first look at the Twin finds some
+          // devices in use rather than every one in its empty spell.
+          started: at - this.random() * visit.ambient,
+          visit,
+          // Staggered over the first few seconds, so the hall is reporting
+          // by the time anyone looks, without thirteen beats in one instant.
+          nextBeat: at + this.random() * 3000,
           bootedAt: at - this.between(3600_000, 8 * 3600_000),
         };
         this.devices.set(config.deviceId, sim);

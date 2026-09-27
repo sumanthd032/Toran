@@ -970,8 +970,9 @@ test('the simulated hall reports through the fleet, says it is simulated, and gi
     [
       ['dev-03', true],
       ['dev-07', true],
+      ['dev-12', true],
     ],
-    'every device but the curator desk has a simulated visitor, and says so',
+    'every device has a simulated visitor, the curator desk too, and says so',
   );
   assert.ok(
     drifted,
@@ -985,6 +986,9 @@ test('the simulated hall reports through the fleet, says it is simulated, and gi
     hall.tick();
   }
   assert.equal(fleet.health().find((h) => h.deviceId === 'dev-07')?.configVersion, 2);
+
+  // The curator's desk is staff at work: never a topic, so it never drifts anyone.
+  assert.ok(fleet.snapshot().drift.every((d) => d.work === 'baws-v17-1'));
 
   // A real kiosk reports for dev-03; the simulator stops speaking for it.
   fleet.beat('dev-03', {

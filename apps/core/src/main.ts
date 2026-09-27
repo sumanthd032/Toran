@@ -81,17 +81,28 @@ const overlays =
     : [];
 
 const server = core.router.listen(port, host, web, overlays);
+// Said plainly, rather than as a stack trace after a banner that claims Core is up.
+server.on('error', (error: NodeJS.ErrnoException) => {
+  console.error(
+    error.code === 'EADDRINUSE'
+      ? `core: port ${String(port)} is already in use. Stop what holds it, or set TORAN_CORE_PORT.`
+      : `core: could not listen on ${host}:${String(port)}: ${error.message}`,
+  );
+  process.exit(1);
+});
 
 // The living hall: a simulated visitor at each device, for a Twin with no
-// kiosks in the building. Off unless asked for, and every beat it sends is
-// marked simulated. D-161.
+// kiosks in the building. On unless TORAN_SIMULATE_HALL=0, because the Twin is
+// the product (D-159) and a hall with no reports is thirteen dark screens. A
+// real kiosk that reports in takes its device over, and every simulated beat
+// is marked simulated. D-161, D-164.
 const archiveRoot = process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT;
 const worksFile = path.join(archiveRoot, 'data/dip/works.json');
 const works: string[] = fs.existsSync(worksFile)
   ? (JSON.parse(fs.readFileSync(worksFile, 'utf8')) as { id: string }[]).map((w) => w.id)
   : [];
 const hall =
-  process.env['TORAN_SIMULATE_HALL'] === '1'
+  process.env['TORAN_SIMULATE_HALL'] !== '0'
     ? new HallSimulator(core.fleet, works)
     : null;
 hall?.start();

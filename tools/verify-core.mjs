@@ -69,6 +69,7 @@ const child = spawn(
       TORAN_CORE_DB: DB,
       TORAN_CORE_ORIGINS: 'http://127.0.0.1:4173',
       TORAN_CURATOR_KEY: KEY,
+      TORAN_SIMULATE_HALL: '0',
       TORAN_ARCHIVE_ROOT: ARCHIVE,
     },
     stdio: ['ignore', 'pipe', 'inherit'],

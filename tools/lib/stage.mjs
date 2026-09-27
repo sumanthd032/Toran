@@ -62,7 +62,14 @@ export async function startCore(port, env) {
     process.execPath,
     ['--no-warnings=ExperimentalWarning', 'apps/core/src/main.ts'],
     {
-      env: { ...process.env, TORAN_CORE_PORT: String(port), ...env },
+      // The simulated hall is on by default (D-164). A check asks for it by name
+      // when it wants it, so no other check has made-up visitors in its hall.
+      env: {
+        ...process.env,
+        TORAN_CORE_PORT: String(port),
+        TORAN_SIMULATE_HALL: '0',
+        ...env,
+      },
       stdio: ['ignore', 'ignore', 'inherit'],
     },
   );
