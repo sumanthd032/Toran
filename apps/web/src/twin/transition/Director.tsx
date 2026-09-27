@@ -253,6 +253,9 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
     if (phase !== 'open' || mode.current !== 'hall' || frame.current === null) return;
     const last = bezel.latest();
     if (last === null) return;
+    // Posed first: a frame may have run since arrival, and the controls write
+    // the camera on every frame they get.
+    pose(frame.current.position, frame.current.target);
     bezel.write({ ...last, rect: project(frame.current.corners) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height, phase]);
@@ -274,6 +277,16 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
   }
 
   useFrame(() => {
+    // CameraControls runs its update earlier in every frame, enabled or not,
+    // and puts the camera back where the visitor last left it. With a device
+    // open in the hall the hall keeps drawing, so the camera is held on the
+    // screen here, after them, or the next resize measures the screen from
+    // across the room and the application lands on it a few pixels wide.
+    if (phase === 'open') {
+      const f = frame.current;
+      if (mode.current === 'hall' && f !== null) pose(f.position, f.target);
+      return;
+    }
     if (phase !== 'in' && phase !== 'out') return;
     const f = frame.current;
     const p = path.current;
