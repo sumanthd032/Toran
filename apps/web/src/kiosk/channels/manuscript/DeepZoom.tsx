@@ -254,30 +254,6 @@ export function DeepZoom({
       data-dim={dim || undefined}
     >
       <div ref={host} className={styles.canvas} data-testid="manuscript-canvas" />
-      {/* The boxes the machine drew, over the page, in the page's own
-          proportions. Nothing here takes a touch: a box that did would
-          swallow the pinch that was meant for the page under it. A region is
-          chosen from the transcription, and a long press asks the page
-          itself. */}
-      <svg
-        className={styles.boxes}
-        viewBox={`0 0 ${scan.width} ${scan.height}`}
-        preserveAspectRatio="xMidYMid meet"
-        aria-hidden="true"
-      >
-        {regions.map((region) => (
-          <rect
-            key={region.id}
-            className={styles.box}
-            data-heat={region.heat}
-            data-selected={region.id === selected || undefined}
-            x={region.box.x * scan.width}
-            y={region.box.y * scan.width}
-            width={region.box.width * scan.width}
-            height={region.box.height * scan.width}
-          />
-        ))}
-      </svg>
     </div>
   );
 }
