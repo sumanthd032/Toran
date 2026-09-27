@@ -69,3 +69,32 @@ have not been run on AWS.
 `deploy/toran.service` runs the same thing from a checkout at `/opt/toran`
 (with `data/` and `apps/web/out` copied in), under systemd, behind the same
 Caddyfile. The environment goes in `/etc/toran/core.env`.
+
+## As deployed
+
+The hall runs at **https://toran-hall.duckdns.org**, since 2026-09-27.
+
+| | |
+| --- | --- |
+| Instance | EC2 `t3.small`, `ap-south-1`, Ubuntu 24.04, 20 GB gp3, tagged `project=toran` |
+| Access | `ssh -i ~/.ssh/toran-hall.pem ubuntu@toran-hall.duckdns.org`, from the owner's IP only |
+| Container | `toran`, restarting unless stopped, volume `toran-data` |
+| HTTPS | Caddy, from `/etc/caddy/Caddyfile`, with a Let's Encrypt certificate |
+| Secrets | `/srv/toran/toran.env`, mode 600, from `deploy/toran.env` on the build machine |
+| Budget | `toran-hall`, 10 USD a month, emails at 50 percent actual and 100 percent forecast |
+
+The name is DuckDNS, pointed at the instance's public IP by hand. That IP stays
+through a reboot, but a **stop and start gives the instance a new one**, and
+DuckDNS then has to be updated with its token. The deployed hall's curator key
+is its own, in `deploy/toran.env`, and not the one in `.env.local`.
+
+To ship a new build: `npm run build:hall`, rebuild the image, copy it over as
+in step 4, then on the instance:
+
+```sh
+sudo docker rm -f toran
+sudo docker run -d --name toran --restart unless-stopped -p 127.0.0.1:8787:8787 \
+  --env-file /srv/toran/toran.env -v toran-data:/srv/toran/data toran-hall
+```
+
+Then check it: `HALL_URL=https://toran-hall.duckdns.org npm run verify:hall`.
