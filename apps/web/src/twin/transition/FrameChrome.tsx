@@ -20,9 +20,12 @@ import styles from './frame.module.css';
 export function FrameChrome({
   device,
   onStepBack,
+  stepBack = true,
 }: {
   device: HallDevice;
   onStepBack: () => void;
+  /** Off during the guided tour, whose own controls step out. */
+  stepBack?: boolean;
 }) {
   const { t } = useI18n();
   const { health, drift, titleOf } = useFleet();
@@ -70,7 +73,7 @@ export function FrameChrome({
           </span>
         )}
       </div>
-      <div className={styles.stepBack}>
+      <div className={styles.stepBack} hidden={!stepBack}>
         {/* Twin chrome for a desk and a mouse, not the kiosk's 30 mm controls:
             it has to fit the margin above the screen without covering it. */}
         <button

@@ -44,10 +44,24 @@ const LAYOUT_HEIGHT: Readonly<Record<HallDevice['form'], number>> = {
 /** Fraction of the viewport the screen fills when the camera arrives. */
 export const FILL = 0.86;
 
+/**
+ * Where on the viewport a framed screen sits. The default fills 86 percent
+ * of it, centred. The guided tour frames a screen smaller and to the left,
+ * so its caption can stand beside the kiosk rather than over it. D-169.
+ */
+export interface FramingPlacement {
+  readonly fill: number;
+  /** The screen's centre, in normalised device coordinates: 0 is the middle, -1 the left edge. */
+  readonly centreX: number;
+}
+
+export const CENTRED: FramingPlacement = { fill: FILL, centreX: 0 };
+
 export function framingFor(
   device: HallDevice,
   fovDegrees: number,
   aspect: number,
+  placement: FramingPlacement = CENTRED,
 ): Framing {
   const spec = formSpec(device.form);
   const deviceMatrix = new THREE.Matrix4().compose(
@@ -97,7 +111,8 @@ export function framingFor(
   }
 
   const tan = Math.tan(THREE.MathUtils.degToRad(fovDegrees) / 2);
-  let distance = Math.max(halfH / (tan * FILL), halfW / (tan * aspect * FILL));
+  const want = placement.fill;
+  let distance = Math.max(halfH / (tan * want), halfW / (tan * aspect * want));
 
   // The estimate above measures the screens flat in one plane. The curator's
   // two screens are angled toward each other, their outer edges nearer the
@@ -129,17 +144,19 @@ export function framingFor(
       maxX = Math.max(maxX, v.x);
       maxY = Math.max(maxY, v.y);
     }
-    const offX = (minX + maxX) / 2;
+    // How far the screen sits from where it should: the middle, or the
+    // placement's own centre, which pans the camera the opposite way.
+    const offX = (minX + maxX) / 2 - placement.centreX;
     const offY = (minY + maxY) / 2;
     const fill = Math.max((maxX - minX) / 2, (maxY - minY) / 2);
-    if (Math.abs(fill - FILL) < 0.001 && Math.abs(offX) < 0.001 && Math.abs(offY) < 0.001)
+    if (Math.abs(fill - want) < 0.001 && Math.abs(offX) < 0.001 && Math.abs(offY) < 0.001)
       break;
     right.setFromMatrixColumn(probe.matrixWorld, 0);
     upward.setFromMatrixColumn(probe.matrixWorld, 1);
     aim
       .addScaledVector(right, offX * tan * aspect * distance)
       .addScaledVector(upward, offY * tan * distance);
-    distance *= fill / FILL;
+    distance *= fill / want;
   }
 
   const layoutH = LAYOUT_HEIGHT[device.form];

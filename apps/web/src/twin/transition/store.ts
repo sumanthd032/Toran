@@ -41,6 +41,20 @@ export interface BezelFrame {
 export type OpenMode = 'hall' | 'full';
 
 /**
+ * Whether the guided tour is running. While it is, every device opens on its
+ * screen, placed to the left so the tour's caption stands beside it. D-169.
+ */
+let touring = false;
+export const tourFraming = {
+  get(): boolean {
+    return touring;
+  },
+  set(on: boolean): void {
+    touring = on;
+  },
+};
+
+/**
  * The mode a given device opens in. The curator's console always fills the
  * window: two angled screens make one very wide frame, and the console is a
  * desk a curator sits at with a mouse (D-153), not a screen a visitor stands

@@ -20,7 +20,9 @@ import { KioskApp } from '@/kiosk/KioskApp';
 import { searchStarted, sharedSearch } from '@/search/shared';
 import { DeviceSheet } from '@/twin/DeviceSheet';
 import { PerfOverlay } from '@/twin/PerfOverlay';
+import { GuidedTour } from '@/twin/GuidedTour';
 import { HallPanel } from '@/twin/HallPanel';
+import { hasBeenWelcomed, markWelcomed, Welcome } from '@/twin/Welcome';
 import hallStyles from '@/twin/hall.module.css';
 import { type Tier } from '@/twin/quality';
 import { hallSettings, useHallSettings } from '@/twin/settings';
@@ -52,7 +54,7 @@ function Hall() {
     return openMode.subscribe(setMode);
   }, []);
   const openDeviceForm = fleet.devices.find((d) => d.deviceId === open)?.form ?? 'kiosk';
-  const openedIn = modeFor(openDeviceForm, mode);
+  const chosenIn = modeFor(openDeviceForm, mode);
   const [boot, setBoot] = useState<{ deepLink: string | null } | null>(null);
   // The tier the performance monitor chose, used while quality is automatic.
   const [tier, setTier] = useState<Tier>('high');
@@ -60,8 +62,13 @@ function Hall() {
   const shownTier: Tier = settings.quality === 'auto' ? tier : settings.quality;
   const [sheet, setSheet] = useState(false);
   const [hallPanel, setHallPanel] = useState(false);
-  const [touring, setTouring] = useState(false);
-  const tourAt = useRef(0);
+  // The guided tour, and the note a first visit opens with. D-169.
+  const [guided, setGuided] = useState(false);
+  const [welcome, setWelcome] = useState(false);
+  const [welcomed, setWelcomed] = useState(true);
+  useEffect(() => setWelcomed(hasBeenWelcomed()), []);
+  // The tour opens every device on its screen, whatever the viewer chose.
+  const openedIn = guided ? 'hall' : chosenIn;
   const [replay, setReplay] = useState(0);
   const [drawn, setDrawn] = useState(false);
   const canvasWrap = useRef<HTMLDivElement>(null);
@@ -124,39 +131,6 @@ function Hall() {
     if (window.history.state?.device !== undefined) window.history.back();
     else closeDevice();
   }, [phase, closeDevice]);
-
-  // The tour: each device in turn, opened for a while and stepped back from,
-  // until the viewer does anything of their own. D-167.
-  useEffect(() => {
-    if (!touring) return;
-    let timer = 0;
-    if (phase === 'hall') {
-      timer = window.setTimeout(() => {
-        const stops = fleet.devices.filter((d) => d.form !== 'console');
-        const next = stops[tourAt.current % stops.length];
-        tourAt.current += 1;
-        if (next !== undefined) openDevice(next.deviceId);
-      }, 1500);
-    } else if (phase === 'open') {
-      timer = window.setTimeout(close, 9000);
-    }
-    return () => window.clearTimeout(timer);
-  }, [touring, phase, fleet.devices, openDevice, close]);
-
-  useEffect(() => {
-    if (!touring) return;
-    const stop = (e: Event) => {
-      const panel = document.querySelector('[data-testid="hall-panel"]');
-      if (panel !== null && e.target instanceof Node && panel.contains(e.target)) return;
-      setTouring(false);
-    };
-    window.addEventListener('pointerdown', stop, true);
-    window.addEventListener('keydown', stop, true);
-    return () => {
-      window.removeEventListener('pointerdown', stop, true);
-      window.removeEventListener('keydown', stop, true);
-    };
-  }, [touring]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -266,6 +240,7 @@ function Hall() {
         <FrameChrome
           device={fleet.devices.find((d) => d.deviceId === open) ?? DEVICES[0]!}
           onStepBack={close}
+          stepBack={!guided}
         />
       )}
       <DeviceSheet open={sheet} onClose={() => setSheet(false)} />
@@ -290,9 +265,32 @@ function Hall() {
         quality={settings.quality}
         onQuality={(quality) => hallSettings.set({ quality })}
         onReplay={() => setReplay((n) => n + 1)}
-        touring={touring}
-        onTour={() => setTouring((v) => !v)}
+        onTour={() => {
+          setHallPanel(false);
+          setGuided(true);
+        }}
+        onAbout={() => {
+          setHallPanel(false);
+          setWelcome(true);
+        }}
       />
+      {guided && <GuidedTour close={close} onClose={() => setGuided(false)} />}
+      {(welcome ||
+        (!welcomed && entered && phase === 'hall' && boot?.deepLink === null)) && (
+        <Welcome
+          onTour={() => {
+            markWelcomed();
+            setWelcomed(true);
+            setWelcome(false);
+            setGuided(true);
+          }}
+          onClose={() => {
+            markWelcomed();
+            setWelcomed(true);
+            setWelcome(false);
+          }}
+        />
+      )}
     </main>
   );
 }

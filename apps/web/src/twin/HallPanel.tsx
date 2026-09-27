@@ -128,8 +128,8 @@ export function HallPanel({
   quality,
   onQuality,
   onReplay,
-  touring,
   onTour,
+  onAbout,
 }: {
   open: boolean;
   onClose: () => void;
@@ -138,8 +138,10 @@ export function HallPanel({
   quality: Quality;
   onQuality: (q: Quality) => void;
   onReplay: () => void;
-  touring: boolean;
+  /** Starts the guided tour. */
   onTour: () => void;
+  /** Shows the note a first visit opens with. */
+  onAbout: () => void;
 }) {
   const { t, lang, setLang } = useI18n();
   const settings = useHallSettings();
@@ -294,10 +296,13 @@ export function HallPanel({
             <button
               type="button"
               className={styles.option}
-              aria-pressed={touring}
               onClick={onTour}
+              data-testid="hall-tour"
             >
-              {touring ? t('hall.tour.stop') : t('hall.tour.start')}
+              {t('hall.tour.start')}
+            </button>
+            <button type="button" className={styles.option} onClick={onAbout}>
+              {t('hall.about')}
             </button>
           </div>
         </Group>

@@ -22,8 +22,11 @@ import { easeInOutSine, HOME, prefersReducedMotion } from '../camera/director';
 import type { Tier } from '../quality';
 import { useTwinState } from '../state';
 import { telemetry } from '../telemetry';
-import { framingFor, type Framing } from './framing';
-import { bezel, modeFor, openMode, type OpenMode, type Rect } from './store';
+import { CENTRED, framingFor, type Framing } from './framing';
+import { bezel, modeFor, openMode, tourFraming, type OpenMode, type Rect } from './store';
+
+/** The tour's placement: the screen at 62 percent, its centre a third of the way left. */
+const TOUR_PLACEMENT = { fill: 0.62, centreX: -0.34 };
 
 export const FLY_MS = 1100;
 export const EXPAND_MS = 450;
@@ -181,11 +184,16 @@ export function TransitionDirector({ tier }: { tier: Tier }) {
     if (device === undefined) return;
 
     const aspect = size.width / size.height;
-    frame.current = framingFor(device, fov, aspect);
+    frame.current = framingFor(
+      device,
+      fov,
+      aspect,
+      tourFraming.get() ? TOUR_PLACEMENT : CENTRED,
+    );
     const reduced = prefersReducedMotion();
 
     if (phase === 'in' || (phase === 'open' && deepLinked)) {
-      mode.current = modeFor(device.form, openMode.get());
+      mode.current = tourFraming.get() ? 'hall' : modeFor(device.form, openMode.get());
     }
 
     if (phase === 'in') {

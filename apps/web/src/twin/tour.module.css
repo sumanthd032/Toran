@@ -1,0 +1,181 @@
+/*
+  The welcome note and the tour's caption. The hall's own slab, a brass rule,
+  and type at reading size: a gallery label, not a pop-up. The note sits over
+  a darkening of the hall and nothing else; the caption stands in the space
+  the tour leaves to the right of the kiosk.
+*/
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.welcome,
+.caption {
+  display: grid;
+  gap: 12px;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: var(--hairline) solid var(--border-strong);
+  border-block-start: 3px solid var(--accent);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+}
+
+.welcome {
+  inline-size: min(40rem, 100%);
+  max-block-size: calc(100dvh - 2 * var(--s-4));
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+.caption {
+  position: fixed;
+  z-index: 35;
+  inset-inline-end: var(--s-4);
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  inline-size: min(26rem, 32vw);
+  max-block-size: calc(100dvh - 2 * var(--s-6));
+  overflow-y: auto;
+  padding: 22px 24px;
+}
+
+.count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.title,
+.welcomeTitle {
+  margin: 0;
+  font-family: var(--font-read);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+}
+
+.title {
+  font-size: 28px;
+}
+
+.welcomeTitle {
+  font-size: 34px;
+}
+
+.body {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.list {
+  margin: 0;
+  padding-inline-start: 1.2em;
+  display: grid;
+  gap: 6px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.try {
+  margin: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--accent);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block-start: 6px;
+}
+
+.button,
+.primary,
+.quiet {
+  min-block-size: 40px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 15px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.button {
+  color: var(--text);
+  background: transparent;
+  border: var(--hairline) solid var(--border-strong);
+}
+
+.primary {
+  color: var(--text-inverse);
+  background: var(--accent);
+  border: var(--hairline) solid var(--accent);
+}
+
+.quiet {
+  margin-inline-start: auto;
+  color: var(--text-soft);
+  background: transparent;
+  border: 0;
+}
+
+.button:hover:not(:disabled),
+.button:focus-visible {
+  border-color: var(--accent);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.button:focus-visible,
+.primary:focus-visible,
+.quiet:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.button:disabled,
+.primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .caption {
+    inset-block: auto var(--s-3);
+    inset-inline: var(--s-3);
+    translate: none;
+    inline-size: auto;
+    max-block-size: 45dvh;
+  }
+}
