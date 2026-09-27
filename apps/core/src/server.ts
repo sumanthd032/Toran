@@ -36,6 +36,7 @@ import { checkFixity, listIngest, verifyRights } from './curation/ingest.ts';
 import { editMetadata, listWorks } from './curation/metadata.ts';
 import { correctOcr, listOcr } from './curation/ocr.ts';
 import { Fleet, UnknownDevice } from './fleet.ts';
+import type { HallSimulator } from './simulate.ts';
 import {
   BadRequest,
   fail,
@@ -67,6 +68,10 @@ export interface CoreOptions {
   readonly curatorKey?: string | undefined;
   /** Speech recognition for spoken queries. Absent when there are no Bhashini credentials. */
   readonly transcriber?: Transcriber | undefined;
+  /** Builds the hall simulator over this Core's fleet. Absent means none. */
+  readonly hall?: ((fleet: Fleet) => HallSimulator) | undefined;
+  /** Whether the simulator starts running. */
+  readonly simulate?: boolean | undefined;
   /** The repository the archive lives in. Required for curation. */
   readonly archiveRoot?: string | undefined;
   readonly now?: () => number;
@@ -108,6 +113,7 @@ const SPEECH_RESTING_MS = 60_000;
 export interface Core {
   readonly router: Router;
   readonly fleet: Fleet;
+  readonly hall: HallSimulator | null;
   readonly sessions: Sessions;
   readonly services: readonly CoreService[];
   readonly startedAt: string;
@@ -117,6 +123,8 @@ export function createCore(options: CoreOptions): Core {
   const now = options.now ?? Date.now;
   const fleet = new Fleet(options.db, now);
   const sessions = new Sessions(options.db, now);
+  const hall = options.hall?.(fleet) ?? null;
+  if (hall !== null && options.simulate === true) hall.start();
   const startedAt = new Date(now()).toISOString();
   fleet.seed(options.seed);
   sessions.sweep();
@@ -201,6 +209,23 @@ export function createCore(options: CoreOptions): Core {
   );
 
   router.get(`${CORE_API}/fleet`, () => ok(fleet.snapshot()));
+
+  // The living hall, which a curator may start and stop from the Twin. Anyone
+  // may ask whether it is running, since every simulated screen says so anyway.
+  router.get(`${CORE_API}/hall`, () =>
+    ok({ available: hall !== null, running: hall?.running ?? false }),
+  );
+
+  router.put(`${CORE_API}/hall`, (ctx) => {
+    operator(ctx);
+    if (hall === null) throw new Unavailable('this Core runs no hall simulator');
+    const body = ctx.body as { running?: unknown } | null;
+    if (typeof body?.running !== 'boolean')
+      throw new BadRequest('say whether it should run');
+    if (body.running) hall.start();
+    else hall.stop();
+    return ok({ available: true, running: hall.running });
+  });
 
   router.get(`${CORE_API}/fleet/:deviceId`, ({ params }) => {
     const config = fleet.config(params['deviceId'] ?? '');
@@ -424,5 +449,5 @@ export function createCore(options: CoreOptions): Core {
     }
   });
 
-  return { router, fleet, sessions, services, startedAt };
+  return { router, fleet, hall, sessions, services, startedAt };
 }

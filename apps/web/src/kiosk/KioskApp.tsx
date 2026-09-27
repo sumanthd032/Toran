@@ -37,6 +37,7 @@ import { useAmbient } from './useAmbient';
 import { useFleetConfig } from './useFleetConfig';
 import { useProximity } from './useProximity';
 import { useQuery } from './useQuery';
+import { twinDriver, twinReader, twinVisitor } from './sensor/twinVisitor';
 import { selectReader } from './visitor/card';
 import { useVisitor, VisitorProvider } from './visitor/VisitorProvider';
 import styles from './kiosk.module.css';
@@ -103,17 +104,21 @@ function Kiosk({
   const { t } = useI18n();
   const shipped = current ?? DEVICES.find((d) => d.deviceId === deviceId);
   const query = useQuery();
-  // A visitor in the Twin has no sensor in front of them, and opening a device
-  // is a deliberate act, so it starts engaged. Standalone, the URL decides.
-  const driver = useMemo(
-    () =>
-      context === 'twin' || query === null
-        ? nullDriver
-        : selectDriver(`?${query.toString()}`),
-    [context, query],
-  );
+  // In the Twin the visitor is the one the Hall panel plays, standing at the
+  // screen when the device opens, since opening it is a choice to use it.
+  // Standalone, the URL decides. D-167.
+  const driver = useMemo(() => {
+    if (context === 'twin') {
+      twinVisitor.reset();
+      return twinDriver;
+    }
+    return query === null ? nullDriver : selectDriver(`?${query.toString()}`);
+  }, [context, query]);
   const reader = useMemo(
-    () => selectReader(query === null ? '' : `?${query.toString()}`, context),
+    () =>
+      context === 'twin'
+        ? twinReader
+        : selectReader(query === null ? '' : `?${query.toString()}`, context),
     [context, query],
   );
   const { proximity, driverStatus, touch } = useProximity(driver, {

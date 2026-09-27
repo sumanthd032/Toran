@@ -1039,3 +1039,56 @@ test('the live archive answers /archive/ ahead of the export, so a curator decis
     db.close();
   }
 });
+
+test('a curator starts and stops the living hall, and stopping it clears what it reported', async () => {
+  const db = openDb(':memory:');
+  const core = createCore({
+    db,
+    version: 'test',
+    origins: ['*'],
+    seed: HALL,
+    curatorKey: 'a-curator-key-for-tests',
+    hall: (fleet) => new HallSimulator(fleet, ['baws-v1'], Date.now, seeded(3)),
+    simulate: true,
+  });
+  const server = core.router.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${String((server.address() as { port: number }).port)}/v1`;
+  const put = (running: boolean, key: string | null) =>
+    fetch(`${base}/hall`, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        ...(key === null ? {} : { authorization: `Bearer ${key}` }),
+      },
+      body: JSON.stringify({ running }),
+    });
+  try {
+    core.hall?.tick();
+    assert.deepEqual(await (await fetch(`${base}/hall`)).json(), {
+      available: true,
+      running: true,
+    });
+    assert.equal((await put(false, null)).status, 401, 'a visitor cannot stop the hall');
+    // Simulated beats are staggered over the first 3 s; bring them all in.
+    const settled = Date.now() + 4000;
+    while (Date.now() < settled) {
+      core.hall?.tick();
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    assert.ok(core.fleet.health().length > 0);
+    const stopped = await put(false, 'a-curator-key-for-tests');
+    assert.deepEqual(await stopped.json(), { available: true, running: false });
+    assert.equal(
+      core.fleet.health().length,
+      0,
+      'what the simulator reported is gone at once',
+    );
+    assert.equal((await put(true, 'a-curator-key-for-tests')).status, 200);
+    assert.equal(core.hall?.running, true);
+  } finally {
+    core.hall?.stop();
+    server.close();
+    db.close();
+  }
+});

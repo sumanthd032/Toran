@@ -183,8 +183,19 @@ export class HallSimulator {
     this.timer = setInterval(() => this.tick(), everyMs);
   }
 
+  /**
+   * Stops the visitors, and takes back what they reported, so the Twin shows
+   * the hall as its real kiosks report it at once rather than after the
+   * simulated beats go stale.
+   */
   stop(): void {
     if (this.timer !== null) clearInterval(this.timer);
     this.timer = null;
+    this.devices.clear();
+    this.fleet.forgetSimulated();
+  }
+
+  get running(): boolean {
+    return this.timer !== null;
   }
 }

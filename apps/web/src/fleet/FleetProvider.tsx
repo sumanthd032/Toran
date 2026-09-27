@@ -25,6 +25,7 @@ import {
 } from 'react';
 import type { DeviceHealth, FleetSnapshot } from '@toran/contracts';
 import { manifest } from '@/archive/client';
+import { hallSettings } from '@/twin/settings';
 import { sharedCore } from './core';
 import { DEVICES, fixtureHealth, type HallDevice } from './devices';
 
@@ -92,11 +93,13 @@ export function FleetProvider({ children }: { children: ReactNode }) {
 
   // Read after mount, so the first render matches the static export.
   useEffect(() => {
-    setVisitors(new URLSearchParams(window.location.search).get('visitors') !== '0');
+    setVisitors(hallSettings.get().visitors);
+    const unsubscribe = hallSettings.subscribe((s) => setVisitors(s.visitors));
     manifest().then(
       (m) => setTitles(new Map(m.works.map((w) => [w.id, w.title]))),
       () => undefined,
     );
+    return unsubscribe;
   }, []);
 
   const refresh = useCallback(() => setTick((n) => n + 1), []);

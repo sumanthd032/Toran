@@ -356,7 +356,9 @@ try {
   );
 
   // 10. Acknowledged: the kiosk's next beat reports version 2, and the console says so.
-  const applied = await sees(page, 'The device is running version 2', 50_000);
+  // One beat (30 s) plus one fleet poll (10 s) plus the page's own timing: 50 s
+  // failed once in six runs, so the wait is 70 s. The claim is unchanged.
+  const applied = await sees(page, 'The device is running version 2', 70_000);
   const fleet = await (await fetch(`${CORE}/v1/fleet`)).json();
   const health = fleet.health.find((h) => h.deviceId === device);
   check(

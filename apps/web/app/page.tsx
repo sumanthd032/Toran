@@ -20,7 +20,10 @@ import { KioskApp } from '@/kiosk/KioskApp';
 import { searchStarted, sharedSearch } from '@/search/shared';
 import { DeviceSheet } from '@/twin/DeviceSheet';
 import { PerfOverlay } from '@/twin/PerfOverlay';
-import { pinnedTier, type Tier } from '@/twin/quality';
+import { HallPanel } from '@/twin/HallPanel';
+import hallStyles from '@/twin/hall.module.css';
+import { type Tier } from '@/twin/quality';
+import { hallSettings, useHallSettings } from '@/twin/settings';
 import { TwinStateProvider, useTwinState } from '@/twin/state';
 import { BezelLayer } from '@/twin/transition/BezelLayer';
 import { FrameChrome } from '@/twin/transition/FrameChrome';
@@ -50,14 +53,16 @@ function Hall() {
   }, []);
   const openDeviceForm = fleet.devices.find((d) => d.deviceId === open)?.form ?? 'kiosk';
   const openedIn = modeFor(openDeviceForm, mode);
-  const [boot, setBoot] = useState<{
-    deepLink: string | null;
-    pinned: Tier | null;
-  } | null>(null);
+  const [boot, setBoot] = useState<{ deepLink: string | null } | null>(null);
+  // The tier the performance monitor chose, used while quality is automatic.
   const [tier, setTier] = useState<Tier>('high');
+  const settings = useHallSettings();
+  const shownTier: Tier = settings.quality === 'auto' ? tier : settings.quality;
   const [sheet, setSheet] = useState(false);
+  const [hallPanel, setHallPanel] = useState(false);
+  const [touring, setTouring] = useState(false);
+  const tourAt = useRef(0);
   const [replay, setReplay] = useState(0);
-  const [perf, setPerf] = useState(false);
   const [drawn, setDrawn] = useState(false);
   const canvasWrap = useRef<HTMLDivElement>(null);
   const kioskHolder = useRef<HTMLDivElement>(null);
@@ -68,10 +73,8 @@ function Hall() {
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const deepLink = query.get('device');
-    const pinned = pinnedTier();
-    if (pinned !== null) setTier(pinned);
-    setPerf(query.has('perf'));
-    setBoot({ deepLink: isDevice(deepLink) ? deepLink : null, pinned });
+    hallSettings.get();
+    setBoot({ deepLink: isDevice(deepLink) ? deepLink : null });
     if (isDevice(deepLink)) openDevice(deepLink, { deepLink: true });
 
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -121,6 +124,39 @@ function Hall() {
     if (window.history.state?.device !== undefined) window.history.back();
     else closeDevice();
   }, [phase, closeDevice]);
+
+  // The tour: each device in turn, opened for a while and stepped back from,
+  // until the viewer does anything of their own. D-167.
+  useEffect(() => {
+    if (!touring) return;
+    let timer = 0;
+    if (phase === 'hall') {
+      timer = window.setTimeout(() => {
+        const stops = fleet.devices.filter((d) => d.form !== 'console');
+        const next = stops[tourAt.current % stops.length];
+        tourAt.current += 1;
+        if (next !== undefined) openDevice(next.deviceId);
+      }, 1500);
+    } else if (phase === 'open') {
+      timer = window.setTimeout(close, 9000);
+    }
+    return () => window.clearTimeout(timer);
+  }, [touring, phase, fleet.devices, openDevice, close]);
+
+  useEffect(() => {
+    if (!touring) return;
+    const stop = (e: Event) => {
+      const panel = document.querySelector('[data-testid="hall-panel"]');
+      if (panel !== null && e.target instanceof Node && panel.contains(e.target)) return;
+      setTouring(false);
+    };
+    window.addEventListener('pointerdown', stop, true);
+    window.addEventListener('keydown', stop, true);
+    return () => {
+      window.removeEventListener('pointerdown', stop, true);
+      window.removeEventListener('keydown', stop, true);
+    };
+  }, [touring]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -174,8 +210,8 @@ function Hall() {
       >
         {boot !== null && (
           <TwinCanvas
-            tier={tier}
-            pinned={boot.pinned !== null}
+            tier={shownTier}
+            pinned={settings.quality !== 'auto'}
             onTier={setTier}
             replayToken={replay}
             skipEntry={boot.deepLink !== null}
@@ -217,7 +253,7 @@ function Hall() {
               deviceId={open}
               device={fleet.devices.find((d) => d.deviceId === open)}
               drift={fleet.drift.get(open) ?? null}
-              showStatus={false}
+              showStatus={settings.status}
               context="twin"
               onExit={close}
               live={covered}
@@ -233,7 +269,30 @@ function Hall() {
         />
       )}
       <DeviceSheet open={sheet} onClose={() => setSheet(false)} />
-      {perf && <PerfOverlay />}
+      {settings.perf && <PerfOverlay />}
+      {!hallPanel && (
+        <button
+          type="button"
+          className={hallStyles.toggle}
+          onClick={() => setHallPanel(true)}
+          data-testid="hall-toggle"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6" />
+          </svg>
+          {t('hall.title')}
+        </button>
+      )}
+      <HallPanel
+        open={hallPanel}
+        onClose={() => setHallPanel(false)}
+        deviceOpen={phase === 'open' && open !== null}
+        quality={settings.quality}
+        onQuality={(quality) => hallSettings.set({ quality })}
+        onReplay={() => setReplay((n) => n + 1)}
+        touring={touring}
+        onTour={() => setTouring((v) => !v)}
+      />
     </main>
   );
 }

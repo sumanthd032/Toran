@@ -197,6 +197,15 @@ export class Fleet {
     };
   }
 
+  /** Removes every report the hall simulator made. Real kiosks' reports stay. */
+  forgetSimulated(): void {
+    for (const deviceId of this.simulated) {
+      run(this.db, 'delete from device_health where device_id = ?', deviceId);
+      run(this.db, 'delete from device_topic where device_id = ?', deviceId);
+    }
+    this.simulated.clear();
+  }
+
   /** Whether a real kiosk has reported for this device recently. */
   reportedByDevice(deviceId: string): boolean {
     const at = this.realAt.get(deviceId);

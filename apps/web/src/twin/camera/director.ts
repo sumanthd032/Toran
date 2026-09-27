@@ -33,6 +33,7 @@
  */
 
 import * as THREE from 'three';
+import { motionReduced } from '../settings';
 
 export type Vec3 = readonly [number, number, number];
 
@@ -83,9 +84,7 @@ export class Flight {
   }
 }
 
+/** The system's setting, or the viewer's own from the Hall panel. D-167. */
 export function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  return motionReduced();
 }

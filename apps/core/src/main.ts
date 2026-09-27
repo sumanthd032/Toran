@@ -43,6 +43,20 @@ const groqKey = (process.env['GROQ_API_KEY'] ?? '').trim();
 const curatorKey = (process.env['TORAN_CURATOR_KEY'] ?? '').trim();
 const curatorKeyUsable = curatorKey.length >= 16;
 
+// The living hall: a simulated visitor at each device, for a Twin with no
+// kiosks in the building. Running unless TORAN_SIMULATE_HALL=0, because the
+// Twin is the product (D-159) and a hall with no reports is thirteen dark
+// screens; a curator can start and stop it from the Twin either way. A real
+// kiosk that reports in takes its device over, and every simulated beat is
+// marked simulated. D-161, D-164, D-167.
+const worksFile = path.join(
+  process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,
+  'data/dip/works.json',
+);
+const works: string[] = fs.existsSync(worksFile)
+  ? (JSON.parse(fs.readFileSync(worksFile, 'utf8')) as { id: string }[]).map((w) => w.id)
+  : [];
+
 fs.mkdirSync(path.dirname(file), { recursive: true });
 const db = openDb(file);
 const core = createCore({
@@ -53,6 +67,8 @@ const core = createCore({
   assistant: groqKey === '' ? undefined : groqProvider(groqKey),
   curatorKey: curatorKeyUsable ? curatorKey : undefined,
   transcriber: haveCredentials() ? bhashiniTranscriber() : undefined,
+  hall: (fleet) => new HallSimulator(fleet, works),
+  simulate: process.env['TORAN_SIMULATE_HALL'] !== '0',
   // The repository by default. A check points it at a copy, so a test
   // decision never lands in the real curation log.
   archiveRoot: process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT,
@@ -91,25 +107,9 @@ server.on('error', (error: NodeJS.ErrnoException) => {
   process.exit(1);
 });
 
-// The living hall: a simulated visitor at each device, for a Twin with no
-// kiosks in the building. On unless TORAN_SIMULATE_HALL=0, because the Twin is
-// the product (D-159) and a hall with no reports is thirteen dark screens. A
-// real kiosk that reports in takes its device over, and every simulated beat
-// is marked simulated. D-161, D-164.
-const archiveRoot = process.env['TORAN_ARCHIVE_ROOT'] ?? ROOT;
-const worksFile = path.join(archiveRoot, 'data/dip/works.json');
-const works: string[] = fs.existsSync(worksFile)
-  ? (JSON.parse(fs.readFileSync(worksFile, 'utf8')) as { id: string }[]).map((w) => w.id)
-  : [];
-const hall =
-  process.env['TORAN_SIMULATE_HALL'] !== '0'
-    ? new HallSimulator(core.fleet, works)
-    : null;
-hall?.start();
-
 console.log(`Toran Core on http://${host}:${String(port)}${'/v1/status'}`);
 console.log(`  store     ${path.relative(ROOT, file)}`);
-if (hall !== null) {
+if (core.hall?.running === true) {
   console.log(
     `  hall      simulated visitors at every device, over ${String(works.length)} works`,
   );
@@ -139,7 +139,7 @@ if (origins.includes('*')) {
 
 const stop = (signal: string) => {
   console.log(`\ncore: ${signal}, closing`);
-  hall?.stop();
+  core.hall?.stop();
   server.close(() => {
     db.close();
     process.exit(0);
