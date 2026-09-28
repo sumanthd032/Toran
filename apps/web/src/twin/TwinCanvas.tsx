@@ -31,7 +31,6 @@ import { Library } from './scene/Library';
 import { Lights } from './scene/Lights';
 import { Memorial } from './scene/Memorial';
 import { Outdoors } from './scene/Outdoors';
-import { Outside } from './scene/outside';
 import { Shadows } from './scene/Shadows';
 import { Toran } from './scene/Toran';
 import { recordTiming, telemetry } from './telemetry';
@@ -39,7 +38,7 @@ import { TransitionDirector } from './transition/Director';
 
 /**
  * Per-frame counters. info.autoReset is off, so these include every pass the
- * frame took, the reflector and bloom included, rather than only the last one.
+ * frame took, bloom included, rather than only the last one.
  */
 const TEXTURE_SLOTS = [
   'map',
@@ -182,11 +181,9 @@ function Scene({
         />
       </Environment>
       <Lights />
-      <Outside>
-        <Outdoors />
-        <Campus />
-        <Memorial />
-      </Outside>
+      <Outdoors />
+      <Campus />
+      <Memorial />
       <Architecture />
       <Toran />
       <Floor />
@@ -281,10 +278,9 @@ export default function TwinCanvas({
         {/*
           The monitor judges the hall at rest, and nothing else.
 
-          The tier decides whether there is bloom, whether the floor reflects,
-          how many motes are in the light shafts and how thickly the grounds
-          are planted, so a tier change is a visible change to every one of
-          them at once. It must never be made on a transient.
+          The tier decides whether there is bloom, how many motes are in the
+          light shafts and how thickly the grounds are planted, so a tier
+          change is a visible change to every one of them at once. It must never be made on a transient.
 
           Two transients sit either side of the threshold. The arrival crosses
           the whole site and its heaviest frames are nothing like the hall's.

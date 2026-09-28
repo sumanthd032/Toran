@@ -3,7 +3,7 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Two tiers. High adds bloom, a reflective floor and more particles. Low is
+ * Two tiers. High adds bloom and more particles. Low is
  * what a tablet gets when the performance monitor sees frames slipping, and it
  * must still look like the same building.
  *

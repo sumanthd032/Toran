@@ -21,8 +21,8 @@ export interface TwinTelemetry {
   };
   /**
    * Bytes of sampled texture data in the scene: width x height x 4, plus a
-   * third for mipmaps. Render targets (bloom, the reflector, the environment
-   * bake) are excluded; they scale with the screen, not with the content.
+   * third for mipmaps. Render targets (bloom, the environment bake) are
+   * excluded; they scale with the screen, not with the content.
    */
   textureBytes: number;
   /** Frame intervals while a device transition runs, in or out. */
