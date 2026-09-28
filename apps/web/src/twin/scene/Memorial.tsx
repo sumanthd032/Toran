@@ -28,6 +28,8 @@ const STEPS = 44;
 
 const AX = BOOK.spineHalf + BOOK.reach;
 const AZ = BOOK.lobeHalfLength;
+/** How far the platform's top sits under the hall floor, in metres. */
+const PAD_DROP = 0.02;
 
 /**
  * A page is spanned between two runs of points: the straight spine edge and
@@ -144,11 +146,15 @@ export function Memorial() {
     const fascia: Part[] = [];
     const glazing: Part[] = [];
 
-    // The platform, from the paving up to the level of the hall floor.
+    // The platform, from the paving up to just under the hall floor. Its top
+    // runs beneath the whole hall, and at exactly the floor's height the two
+    // surfaces fought for the depth buffer and the sandstone flashed through
+    // the floor as the camera moved. Two centimetres is invisible here and
+    // far above the depth precision anywhere in the hall.
     const pad = new THREE.Shape();
     pad.absellipse(0, -BOOK.lobeZ, AX + 4, AZ + 4, 0, Math.PI * 2, false, 0);
     const padGeometry = new THREE.ExtrudeGeometry(pad, {
-      depth: -SITE.groundY,
+      depth: -SITE.groundY - PAD_DROP,
       bevelEnabled: false,
       curveSegments: 40,
     });
