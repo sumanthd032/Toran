@@ -170,11 +170,12 @@ export function CameraRig({
       smoothTime={0.26}
       draggingSmoothTime={0.13}
       /*
-        Twice the default. The hall is 43m deep and a visitor crosses it often,
-        so the wheel is geared for the room rather than for a model on a desk.
-        Held back at 0.45 it took a dozen notches to get anywhere.
+        Three times the default. The hall is 43m deep and a visitor crosses it
+        often, so the wheel is geared for the room rather than for a model on a
+        desk. Held back at 0.45 it took a dozen notches to get anywhere, and at
+        2 the length of the nave was still 28 notches in Firefox. D-176.
       */
-      dollySpeed={2}
+      dollySpeed={3}
       truckSpeed={2.4}
       /* The wheel moves toward whatever is under the pointer, so a visitor
          goes to the thing they are looking at rather than to the middle. */
