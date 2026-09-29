@@ -146,7 +146,7 @@ export function HallPanel({
   const { t, lang, setLang } = useI18n();
   const settings = useHallSettings();
   const { source, simulated } = useFleet();
-  const [mode, setMode] = useState<OpenMode>('full');
+  const [mode, setMode] = useState<OpenMode>('hall');
   const [standing, setStanding] = useState<TwinDistance>('reading');
   useEffect(() => openMode.subscribe(setMode), []);
 
@@ -196,8 +196,8 @@ export function HallPanel({
             label={t('hall.openMode')}
             value={mode}
             options={[
-              { value: 'full', label: t('hall.openMode.full') },
               { value: 'hall', label: t('hall.openMode.hall') },
+              { value: 'full', label: t('hall.openMode.full') },
             ]}
             onChange={(v) => openMode.set(v)}
           />

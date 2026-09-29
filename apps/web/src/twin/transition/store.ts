@@ -34,10 +34,10 @@ export interface BezelFrame {
 }
 
 /**
- * How an opened device is shown. `full`: it grows to fill the window, as a
- * standalone kiosk looks, and is the default (D-172). `hall`: the application
- * runs on the device's screen, at the device's resolution, with the hall
- * around it. D-165.
+ * How an opened device is shown. `hall`: the application runs on the
+ * device's screen, at the device's resolution, with the hall around it, and
+ * is the default (D-165, D-175). `full`: it grows to fill the window, as a
+ * standalone kiosk looks.
  */
 export type OpenMode = 'hall' | 'full';
 
@@ -66,7 +66,7 @@ export function modeFor(form: string, chosen: OpenMode): OpenMode {
 }
 
 const MODE_KEY = 'toran.twin.open-mode';
-let mode: OpenMode = 'full';
+let mode: OpenMode = 'hall';
 const modeListeners = new Set<(m: OpenMode) => void>();
 
 export const openMode = {
@@ -88,7 +88,7 @@ export const openMode = {
       const saved = window.localStorage.getItem(MODE_KEY);
       if (saved === 'hall' || saved === 'full') mode = saved;
     } catch {
-      mode = 'full';
+      mode = 'hall';
     }
     for (const l of modeListeners) l(mode);
   },
