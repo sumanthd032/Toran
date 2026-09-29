@@ -9,7 +9,7 @@
  * stays in use: a visitor on the tour can search, trace a link, turn the
  * years. The caption says what the room is, one thing to try, and, where it
  * is true, what a browser cannot do that the real kiosk does. The first and
- * last steps light the Hall button in the top right corner and say where it
+ * last steps light the Custom button in the top right corner and say where it
  * is, because every setting the tour mentions lives behind it.
  */
 
@@ -25,7 +25,7 @@ interface Step {
   readonly device: string | null;
   /** Whether a browser does something here differently from the real kiosk, and says so. */
   readonly note: boolean;
-  /** Whether the step lights the Hall button and says where it is. */
+  /** Whether the step lights the Custom button and says where it is. */
   readonly point?: boolean;
 }
 
@@ -74,7 +74,7 @@ export function GuidedTour({
     }
   }, [phase, open, step.device, openDevice, close]);
 
-  // The Hall button reads this attribute and lights up; see hall.module.css.
+  // The Custom button reads this attribute and lights up; see hall.module.css.
   useEffect(() => {
     if (step.point !== true) return;
     const root = document.documentElement;
